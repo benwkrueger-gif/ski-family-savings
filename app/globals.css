@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+:root {
+  --font-display: var(--font-oswald);
+  --font-body: var(--font-barlow);
+  --color-background: #ffffff;
+  --color-subtle: #f4f4f4;
+  --color-text: #092340;
+  --color-muted: #575757;
+  --color-accent: #ffc72c;
+  --color-accent-hover: #e6b326;
+  --color-accent-blue: #007db7;
+  --color-dark: #092340;
+  --color-border: #d9d9d6;
+}
+
+@theme inline {
+  --color-background: #ffffff;
+  --color-subtle: #f4f4f4;
+  --color-text: #092340;
+  --color-muted: #575757;
+  --color-accent: #ffc72c;
+  --color-accent-hover: #e6b326;
+  --color-accent-blue: #007db7;
+  --color-dark: #092340;
+  --color-border: #d9d9d6;
+  --font-sans: var(--font-barlow);
+  --font-display: var(--font-oswald);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-dark);
+}
+
+.font-display {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+}
+
+.eyebrow {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  color: var(--color-accent-blue);
+}
+
+.rule-gold {
+  width: 3rem;
+  height: 4px;
+  background: var(--color-accent);
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+summary {
+  list-style: none;
+}
+
+.faq-item[open] .faq-icon {
+  transform: rotate(45deg);
+}
