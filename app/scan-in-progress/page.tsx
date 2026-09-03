@@ -4,7 +4,7 @@ import { SKIER_GIF_URL } from "@/lib/config";
 export const metadata: Metadata = {
   title: "We're On It | Ski Family Savings Scan",
   description:
-    "We've got your family's ski info and we're getting to work. Expect your Ski Family Savings Scan within 2 business days.",
+    "We've got your ski plans. Now we're doing the annoying part. Expect your Savings Scan within 2 business days.",
   robots: {
     index: false,
     follow: false,
@@ -12,36 +12,36 @@ export const metadata: Metadata = {
 };
 
 const receiveItems = [
-  "Your estimated potential savings",
+  "Our estimate of your total potential savings",
   "How many Jackpot opportunities we found",
   "How many Strong opportunities we found",
   "How many additional Useful opportunities we found",
-  "Any programs we think are worth keeping an eye on",
+  "Anything worth keeping an eye on",
 ];
 
 const huntRows = [
   {
     emoji: "🔥",
-    title: "Jackpot opportunities",
+    title: "JACKPOT",
     detail: "Potential savings of $250+",
     bar: "bg-accent",
   },
   {
     emoji: "🟢",
-    title: "Strong opportunities",
+    title: "STRONG",
     detail: "Potential savings of $50–$250",
     bar: "bg-accent-blue",
   },
   {
     emoji: "🟡",
-    title: "Useful opportunities",
-    detail: "Smaller or more situational savings",
+    title: "USEFUL",
+    detail: "Smaller savings that may still be worth grabbing",
     bar: "bg-[#6a6c69]",
   },
   {
     emoji: "🔔",
-    title: "Worth watching",
-    detail: "Programs or opportunities that could become relevant to your family later",
+    title: "WATCH",
+    detail: "Something that could become valuable later",
     bar: "bg-border",
   },
 ];
@@ -62,7 +62,7 @@ export default function ScanInProgressPage() {
           <div className="mx-auto max-w-xl text-center">
             <SkierGif />
             <p className="mt-3 text-sm text-muted">
-              Actual footage of us looking for your ski deals.
+              Actual footage of us hunting for your ski savings.
             </p>
           </div>
         </section>
@@ -74,15 +74,16 @@ export default function ScanInProgressPage() {
               We&apos;re digging into your family&apos;s ski savings.
             </h1>
             <div className="mt-7 space-y-4 text-[17px] leading-relaxed text-muted sm:text-lg">
-              <p>We&apos;ve got your family&apos;s ski info and we&apos;re getting to work!</p>
+              <p>We&apos;ve got your ski plans. Now we&apos;re doing the annoying part.</p>
               <p>
-                We&apos;ll look at how and where your family skis and search for
-                discounts, programs, passes and other savings that may apply
-                specifically to you.
+                We&apos;re looking at your family&apos;s ages, grades, location,
+                passes, resorts and trips to see where meaningful savings may be
+                hiding.
               </p>
               <p className="font-semibold text-dark">
-                This isn&apos;t an automated coupon search. We&apos;re actually researching
-                your family&apos;s situation and source-checking what we find.
+                This isn&apos;t a generic coupon search. We&apos;re researching your
+                family specifically and checking what we find against the actual
+                source.
               </p>
             </div>
           </div>
@@ -97,16 +98,18 @@ export default function ScanInProgressPage() {
               </h2>
             </div>
             <div className="mt-8 space-y-4 text-[17px] leading-relaxed text-muted sm:text-lg">
-              <p>We work through scans in the order they&apos;re received.</p>
-              <p className="font-semibold text-dark">
-                Most scans are completed within 2 business days. If we&apos;re getting a
-                surge of requests, yours may take a little longer.
+              <p>We work through scans in the order they come in.</p>
+              <p>
+                Most are finished within 2 business days. If we get slammed with
+                requests, yours may take a little longer.
               </p>
               <p>As soon as your scan is ready, we&apos;ll send it straight to your inbox.</p>
               <p className="font-semibold text-dark">
                 Keep an eye out for an email from Ski Family Savings.
               </p>
-              <p>If you don&apos;t see it, check Promotions or Spam too.</p>
+              <p className="text-sm">
+                And maybe check Promotions or Spam if it goes missing.
+              </p>
             </div>
           </div>
         </section>
@@ -114,7 +117,7 @@ export default function ScanInProgressPage() {
         <section className="bg-background px-5 py-16 sm:px-8 sm:py-20">
           <div className="mx-auto max-w-lg">
             <h2 className="text-center font-display text-3xl font-bold leading-[0.95] tracking-[-0.02em] text-dark sm:text-4xl">
-              Here&apos;s what we&apos;re hunting for.
+              We&apos;re looking for the savings that actually matter.
             </h2>
             <div className="mt-10 divide-y divide-border overflow-hidden rounded-[4px] border border-border bg-background">
               {huntRows.map((row) => (
@@ -130,11 +133,11 @@ export default function ScanInProgressPage() {
               ))}
             </div>
             <p className="mt-8 font-semibold text-dark">
-              The goal isn&apos;t to come back with the biggest possible list.
+              We&apos;re not trying to come back with the longest list.
             </p>
             <p className="mt-3 text-[17px] leading-relaxed text-muted">
-              It&apos;s to figure out whether there are meaningful savings that actually
-              fit <strong className="text-dark">your family and the way you ski.</strong>
+              We&apos;re trying to figure out which opportunities actually fit your
+              family — and which ones could meaningfully change what you spend.
             </p>
           </div>
         </section>
@@ -143,13 +146,13 @@ export default function ScanInProgressPage() {
           <div className="mx-auto max-w-2xl">
             <div className="text-center">
               <h2 className="font-display text-3xl font-bold leading-[0.95] tracking-[-0.02em] text-dark sm:text-4xl">
-                Your Savings Scan will answer one simple question:
+                Your Savings Scan answers one question:
               </h2>
               <p className="mt-6 inline-block bg-accent px-4 py-3 font-display text-[1.65rem] font-bold leading-[0.95] tracking-[-0.02em] text-dark sm:px-6 sm:py-4 sm:text-4xl lg:text-[2.5rem]">
-                How much could your family potentially save?
+                Is there enough money here to care about?
               </p>
             </div>
-            <p className="mt-10 text-[17px] text-muted">We&apos;ll send you:</p>
+            <p className="mt-10 text-[17px] text-muted">When we&apos;re done, you&apos;ll get:</p>
             <ul className="mt-5 space-y-3">
               {receiveItems.map((item) => (
                 <li key={item} className="flex items-start gap-3 text-[15px] font-semibold leading-snug text-dark">
@@ -158,6 +161,11 @@ export default function ScanInProgressPage() {
                 </li>
               ))}
             </ul>
+            <p className="mt-6 text-sm leading-relaxed text-muted">
+              We won&apos;t pretend we &ldquo;found&rdquo; savings you already told
+              us about, and we won&apos;t double-count deals that can&apos;t actually
+              be used together.
+            </p>
           </div>
         </section>
 
@@ -165,21 +173,21 @@ export default function ScanInProgressPage() {
           <div className="mx-auto max-w-2xl">
             <div className="rule-gold mb-6" />
             <h2 className="font-display text-3xl font-bold leading-[0.95] tracking-[-0.02em] text-dark sm:text-4xl">
-              This is where your answers matter.
+              Why all those questions mattered.
             </h2>
             <div className="mt-8 space-y-5 text-[17px] leading-relaxed text-muted sm:text-lg">
-              <p>A child&apos;s age or grade can unlock a completely different program.</p>
-              <p>Where you live can change what you&apos;re eligible for.</p>
+              <p>A kid&apos;s age or grade can unlock a completely different program.</p>
+              <p>Your ZIP code can change what you&apos;re eligible for.</p>
               <p>
-                A resort you&apos;re traveling to might offer savings your home mountain
-                doesn&apos;t.
+                A trip you&apos;re already planning can make an existing pass way
+                more valuable.
               </p>
               <p>
-                And a pass one family member qualifies for can sometimes change the
-                best option for everyone else.
+                And sometimes the cheapest-looking deal for one person is actually
+                the expensive option for the whole family.
               </p>
               <p className="font-semibold text-dark">
-                We&apos;re putting those pieces together for your family now.
+                We&apos;re putting those pieces together now.
               </p>
             </div>
           </div>
@@ -191,13 +199,13 @@ export default function ScanInProgressPage() {
               That&apos;s it. We&apos;ll do the digging from here.
             </h2>
             <p className="mt-6 text-[17px] leading-relaxed text-muted sm:text-lg">
-              We&apos;ll use the information you gave us to look for meaningful ski
-              savings that appear to fit your family.
+              If there&apos;s meaningful money hiding in your family&apos;s ski
+              plans, we&apos;ll find out how much appears to be worth pursuing.
             </p>
             <p className="mt-5 font-semibold text-dark sm:text-lg">
-              Keep an eye on your inbox. Your Ski Family Savings Scan should be
-              headed your way within 2 business days.
+              Your Savings Scan should be in your inbox within 2 business days.
             </p>
+            <p className="mt-4 text-sm text-muted">Go think about snow instead.</p>
           </div>
         </section>
       </main>
