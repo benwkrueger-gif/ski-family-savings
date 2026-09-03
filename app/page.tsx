@@ -218,8 +218,7 @@ function Hero() {
             <p className="font-semibold text-dark">So I&apos;m testing something simple:</p>
             <p>
               Tell me a little about your family and how you ski. I&apos;ll start
-              digging and tell you if I find meaningful savings, and roughly how
-              much.
+              digging and tell you if I find meaningful savings.
             </p>
             <p className="font-semibold text-dark">For free.</p>
           </div>
