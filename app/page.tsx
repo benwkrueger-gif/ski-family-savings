@@ -2,144 +2,140 @@ import Image from "next/image";
 import { CtaLink } from "@/components/CtaLink";
 import { StickyMobileCta } from "@/components/StickyMobileCta";
 
-const searchItems = [
-  "Kids-ski-free programs",
-  "Grade-school ski passports",
-  "Resident discounts",
-  "Youth pricing",
-  "Multi-mountain passes",
-  "Family pricing",
-  "Passholder benefits",
-  "Lesson deals",
-  "Rental deals",
-  "Ski-club and association offers",
-  "Resort promotions",
-  "Lodging packages",
-  "Limited-time offers",
-  "First-timer programs",
-  "Programs in destinations you're considering",
-  "Opportunities unlocked by another family member",
+const searchAreas = [
+  {
+    heading: "Kids & family programs",
+    body: "Kids-ski-free offers, age-based passes, grade-school passports and family programs.",
+  },
+  {
+    heading: "Season passes",
+    body: "Whether there are cheaper or less-obvious ways to cover the mountains you actually plan to ski.",
+  },
+  {
+    heading: "Multi-mountain access",
+    body: "Reciprocal benefits, partner resorts and access you may already have without realizing it.",
+  },
+  {
+    heading: "Lift-ticket deals",
+    body: "Local programs, resident offers, advance pricing and other alternatives to buying regular day tickets.",
+  },
+  {
+    heading: "Lessons & rentals",
+    body: "Youth programs, bundles, seasonal rentals and other ways those costs can sometimes come down.",
+  },
+  {
+    heading: "Ski trips",
+    body: "Existing pass access, destination programs, transportation or other trip-specific savings.",
+  },
+  {
+    heading: "Timing",
+    body: "Deadlines, price jumps and programs where when you buy matters almost as much as what you buy.",
+  },
 ];
 
 const whoItems = [
-  "Ski several days or more each winter",
-  "Have school-age kids",
-  "Ski at more than one resort",
-  "Take one or more ski trips",
-  "Are deciding between passes or ticket options",
-  "Spend meaningful money on lift access, lessons, rentals or lodging",
+  "You have kids skiing or snowboarding.",
+  "You ski more than one mountain.",
+  "You're comparing passes.",
+  "You take a ski trip or two each winter.",
+  "Your kids do lessons or need rentals.",
+  "You're already spending a few thousand bucks a season.",
+  "You sometimes have the nagging feeling that there's probably a cheaper way to do all this.",
 ];
 
 const faqs = [
   {
-    q: "Is the Ski Family Savings Scan really free?",
+    q: "Is this actually free?",
     a: (
       <>
-        <p>Yes.</p>
+        <p>Yep.</p>
         <p>
-          There is no charge and no credit card required to submit your family
-          information and receive your Ski Family Savings Scan.
+          There&apos;s no credit card required to have me look at your family and
+          tell you whether I find meaningful potential savings.
         </p>
       </>
     ),
   },
   {
-    q: "What will my Savings Scan tell me?",
+    q: "What exactly do I get from the free scan?",
     a: (
       <>
-        <p>We&apos;ll tell you:</p>
-        <ul className="list-none space-y-2 pl-0">
-          <li>How much potential savings we estimate may be available to your family</li>
-          <li>How many Jackpot savings opportunities we found</li>
-          <li>How many Strong opportunities we found</li>
-          <li>How many additional Useful opportunities we found</li>
-          <li>Whether there are programs we think are worth watching</li>
-        </ul>
-        <p>The goal of the scan is simple:</p>
+        <p>
+          I&apos;ll tell you whether I found savings worth pursuing, give you an
+          estimated savings range, and show you the general areas where the
+          biggest opportunities appear to be hiding.
+        </p>
+        <p>It&apos;s meant to answer:</p>
         <p className="font-semibold text-dark">
-          Help you understand whether your family appears to have meaningful ski
-          savings available and approximately how much.
+          &ldquo;Is there actually enough money here to care about?&rdquo;
+        </p>
+        <p>
+          The free scan is not a giant list of every exact program, eligibility
+          rule and source link I researched.
         </p>
       </>
     ),
   },
   {
-    q: "What kinds of families is this best for?",
+    q: "Why do you need so much information about my family?",
+    a: (
+      <p>
+        Because otherwise I&apos;m just making a generic list of ski discounts.
+        Your ZIP code, kids&apos; ages/grades, passes, mountains, trips and other
+        plans are what let me figure out which opportunities might actually apply
+        to you.
+      </p>
+    ),
+  },
+  {
+    q: "How long does it take?",
     a: (
       <>
+        <p>The form takes around 5 minutes.</p>
+        <p>I&apos;m currently aiming to get scans back within 2 business days.</p>
         <p>
-          It&apos;s especially useful for families who ski enough that lift tickets,
-          passes, trips, lessons, rentals or lodging are a meaningful household
-          expense.
-        </p>
-        <p>
-          Families who ski multiple resorts or travel to ski may have even more
-          opportunities available.
+          If a bunch of ski parents suddenly bury me in submissions, it might
+          take a little longer. I&apos;ll keep you posted.
         </p>
       </>
     ),
   },
   {
-    q: "Do I need to live near a ski resort?",
+    q: "Is this only for Vermont families?",
     a: (
       <>
-        <p>No.</p>
-        <p>Some savings depend on where you live.</p>
         <p>
-          Others depend on a child&apos;s age or grade, a resort you&apos;re visiting, an
-          existing pass, or other details about your family.
+          I&apos;m starting heavily in Vermont and New England because that&apos;s
+          where I live and ski.
+        </p>
+        <p>
+          But if you&apos;re a New England family taking trips elsewhere,
+          definitely include those. Some of the biggest savings can show up
+          around destination trips.
         </p>
       </>
     ),
   },
   {
-    q: "What if I already know about some ski discounts?",
+    q: "Are the savings guaranteed?",
     a: (
       <>
-        <p>That&apos;s expected.</p>
+        <p>Nope.</p>
         <p>
-          When you complete your family profile, tell us about programs, passes or
-          discounts you&apos;re already using.
+          Programs change, inventory disappears, dates matter and eligibility
+          rules can get weird.
         </p>
-        <p className="font-semibold text-dark">
-          We&apos;re especially interested in uncovering meaningful savings you
-          didn&apos;t already know about.
+        <p>
+          I use current sources and try not to count anything that looks shaky,
+          but the number I send you is still an estimate of potential savings,
+          not money already sitting in your bank account.
         </p>
       </>
     ),
   },
   {
-    q: "Are the estimated savings guaranteed?",
-    a: (
-      <>
-        <p>No.</p>
-        <p>Programs, pricing, availability and eligibility rules can change.</p>
-        <p>
-          We research current published information and source-check the
-          opportunities we use to create your Savings Scan.
-        </p>
-        <p>
-          Your result is an estimate of potential savings based on the
-          information available and the details you provide.
-        </p>
-      </>
-    ),
-  },
-  {
-    q: "Why are you doing these manually?",
-    a: (
-      <>
-        <p>Because every ski family is different.</p>
-        <p>
-          Age, grade, location, passes, resorts and travel plans can completely
-          change which savings opportunities matter.
-        </p>
-        <p>
-          We&apos;re researching families individually so your Savings Scan reflects
-          your actual situation rather than a generic list of ski discounts.
-        </p>
-      </>
-    ),
+    q: "What if you don't find anything good?",
+    a: <p>Then I&apos;ll tell you.</p>,
   },
 ];
 
@@ -154,31 +150,42 @@ export default function Home() {
       </a>
 
       <header className="sticky top-0 z-40 border-b border-border bg-background">
-        <div className="mx-auto flex h-[72px] max-w-6xl items-center justify-between px-5 sm:px-8">
+        <div className="mx-auto flex h-[72px] max-w-6xl items-center justify-between gap-4 px-5 sm:px-8">
           <a href="#hero" className="font-display text-[15px] font-bold tracking-wide text-dark">
-            Ski Family Savings
+            SKI FAMILY SAVINGS
           </a>
-          <CtaLink variant="nav">Get My Free Scan</CtaLink>
+          <CtaLink variant="nav">See what I can find →</CtaLink>
         </div>
       </header>
 
       <main id="main" className="pb-24 md:pb-0">
         <Hero />
         <ExampleResult />
-        <WhyThisIsHard />
+        <WhyThisExists />
         <HowItWorks />
-        <WhatWeSearch />
+        <WhatISearch />
         <WhoThisIsFor />
-        <Trust />
+        <Founder />
         <Faq />
         <FinalCta />
       </main>
 
       <footer className="border-t-4 border-accent bg-dark">
         <div className="mx-auto max-w-6xl px-5 py-12 sm:px-8">
-          <p className="font-display text-[15px] font-bold tracking-wide text-white">Ski Family Savings</p>
+          <p className="font-display text-[15px] font-bold tracking-wide text-white">
+            SKI FAMILY SAVINGS
+          </p>
           <p className="mt-2 max-w-md text-sm leading-relaxed text-white/70">
-            Built for families who love skiing and hate paying more than they need to.
+            A little ski-family savings experiment made in Vermont.
+          </p>
+          <p className="mt-4 text-sm text-white/70">Contact:</p>
+          <p className="mt-1 text-sm">
+            <a
+              href="mailto:ben@skifamilysavings.com"
+              className="text-accent hover:text-accent-hover"
+            >
+              ben@skifamilysavings.com
+            </a>
           </p>
         </div>
       </footer>
@@ -193,32 +200,33 @@ function Hero() {
     <section id="hero" className="relative overflow-hidden bg-background">
       <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-12 sm:px-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-14 lg:py-16">
         <div className="max-w-xl">
-          <p className="eyebrow">FREE SKI FAMILY SAVINGS SCAN</p>
+          <p className="eyebrow">A LITTLE SKI-DAD EXPERIMENT</p>
           <h1 className="mt-4 font-display text-[2.35rem] font-bold leading-[0.95] tracking-[-0.02em] text-dark sm:text-5xl lg:text-[3.5rem]">
-            How much could your family save on skiing this winter?
+            Skiing with kids is stupid expensive.
           </h1>
+          <p className="mt-4 font-display text-xl font-bold text-dark sm:text-2xl">
+            I&apos;m trying to make it a little less so.
+          </p>
 
           <div className="mt-7 space-y-4 text-[17px] leading-relaxed text-muted sm:text-lg">
-            <p className="font-semibold text-dark">Skiing with kids has gotten ridiculously expensive.</p>
             <p>
-              Luckily, there are all kinds of ways to save that your family may
-              qualify for: kids-ski-free programs, grade-school passes, resident
-              discounts, family pricing, passholder perks and more.
+              I&apos;m Ben, a ski dad in Vermont. I started digging into all the
+              weird kids programs, grade-school passports, pass deals, resort
+              discounts and other ways families can save, and realized this stuff
+              is scattered all over the place.
             </p>
+            <p className="font-semibold text-dark">So I&apos;m testing something simple:</p>
             <p>
-              The problem is figuring out which ones actually apply to{" "}
-              <em>your</em> family, and which combination could save you the most.
+              Tell me a little about your family and how you ski. I&apos;ll start
+              digging and tell you if I find meaningful savings, and roughly how
+              much.
             </p>
-            <p>Tell us about your family and how you ski.</p>
-            <p className="font-semibold text-dark">
-              We&apos;ll manually search for savings your family may qualify for and
-              tell you how much potential savings we find.
-            </p>
+            <p className="font-semibold text-dark">For free.</p>
           </div>
 
           <div className="mt-8">
-            <CtaLink>Find My Savings Potential →</CtaLink>
-            <p className="mt-3 text-sm text-muted">Free scan. No credit card required.</p>
+            <CtaLink>See what you can find for my family →</CtaLink>
+            <p className="mt-3 text-sm text-muted">Takes about 5 minutes. No spammy sales nonsense.</p>
           </div>
         </div>
 
@@ -250,7 +258,7 @@ function ExampleResult() {
     {
       emoji: "🟢",
       title: "4 Strong opportunities",
-      detail: "Likely savings of $50–$250",
+      detail: "Likely savings of $50-$250",
       bar: "bg-accent-blue",
     },
     {
@@ -270,13 +278,18 @@ function ExampleResult() {
   return (
     <section className="bg-subtle px-5 py-20 sm:px-8 sm:py-28">
       <div className="mx-auto max-w-3xl text-center">
-        <p className="eyebrow">WHAT YOUR FREE SAVINGS SCAN COULD LOOK LIKE</p>
+        <p className="eyebrow">WHAT COMES BACK</p>
         <h2 className="mt-4 font-display text-3xl font-bold leading-[0.95] tracking-[-0.02em] text-dark sm:text-4xl lg:text-[2.85rem]">
-          We found $1,240+ in potential ski savings for your family
+          Sometimes there&apos;s real money hiding in there.
         </h2>
         <p className="mx-auto mt-5 max-w-2xl text-[17px] leading-relaxed text-muted">
-          Instead of sending you hundreds of generic ski deals, we look at your
-          actual family and how you ski.
+          For one test family, the digging turned up $1,240+ in potential ski
+          savings worth looking into.
+        </p>
+        <p className="mx-auto mt-4 max-w-2xl text-[17px] leading-relaxed text-muted">
+          Not generic &ldquo;ski on weekdays!&rdquo; advice. Actual programs,
+          pass options and family-specific opportunities that appeared relevant
+          to how they ski.
         </p>
       </div>
 
@@ -305,50 +318,55 @@ function ExampleResult() {
         </div>
       </div>
 
-      <p className="mx-auto mt-8 max-w-2xl text-center text-sm font-semibold leading-relaxed text-dark">
-        This is an example. Your results depend on where you live, who&apos;s in your
-        family, your kids&apos; ages and grades, where you ski, which passes you
-        already own and your plans for the season.
-      </p>
+      <div className="mx-auto mt-8 max-w-2xl space-y-4 text-center text-[17px] leading-relaxed text-muted">
+        <p>
+          The free scan gives you the big picture: whether I found worthwhile
+          savings, roughly how much, and where the biggest opportunities appear
+          to be hiding.
+        </p>
+        <p>
+          It&apos;s not a giant coupon dump. The whole point is figuring out what
+          looks relevant to your family.
+        </p>
+      </div>
 
       <div className="mt-8 text-center">
-        <CtaLink>Find My Savings Potential →</CtaLink>
+        <CtaLink>See what you can find for us →</CtaLink>
       </div>
     </section>
   );
 }
 
-function WhyThisIsHard() {
+function WhyThisExists() {
   return (
     <section className="bg-background">
       <div className="mx-auto max-w-3xl px-5 py-20 sm:px-8 sm:py-28">
-        <div className="rule-gold mb-6" />
-        <h2 className="font-display text-3xl font-bold leading-[0.95] tracking-[-0.02em] text-dark sm:text-4xl lg:text-[2.6rem]">
-          The savings exist. Finding the right ones is the pain in the a$$.
+        <p className="eyebrow">WHY THIS EXISTS</p>
+        <h2 className="mt-4 font-display text-3xl font-bold leading-[0.95] tracking-[-0.02em] text-dark sm:text-4xl lg:text-[2.6rem]">
+          The annoying part isn&apos;t that ski savings don&apos;t exist.
         </h2>
-        <div className="mt-8 space-y-5 text-[17px] leading-relaxed text-muted sm:text-lg">
-          <p>A 5th grader might qualify for a ski passport covering dozens of mountains.</p>
+        <p className="mt-4 font-display text-xl font-bold text-dark sm:text-2xl">
+          It&apos;s that they&apos;re scattered everywhere.
+        </p>
+        <div className="mt-8 space-y-4 text-[17px] leading-relaxed text-muted sm:text-lg">
+          <p>There are kids-ski-free programs.</p>
+          <p>Grade-school passports.</p>
+          <p>Cheap little-kid passes buried on resort websites.</p>
+          <p>Resident deals.</p>
+          <p>Pass-holder perks.</p>
+          <p>Reciprocal mountain access.</p>
+          <p>Lesson and rental offers.</p>
+          <p>Early-purchase deadlines.</p>
           <p>
-            A younger child might ski free at one resort, but not the mountain next
-            door.
+            And a bunch of weird little programs you&apos;d probably never search
+            for because you don&apos;t know they exist.
           </p>
-          <p>
-            Your home state might unlock one program, while the state you&apos;re
-            traveling to unlocks another.
-          </p>
-          <p>
-            The pass your child buys might unlock a completely different savings
-            opportunity for a parent.
-          </p>
-          <p>
-            And the whole thing changes depending on your family&apos;s ages, grades,
-            location, passes, ski days and travel plans.
-          </p>
-          <p className="font-semibold text-dark">No single discount is that complicated.</p>
+          <p>Individually, none of this is rocket science.</p>
+          <p>The pain in the ass is figuring out:</p>
           <p className="font-semibold text-dark">
-            Figuring out which ones actually matter for your family is.
+            Which of this stuff actually applies to my family?
           </p>
-          <p>That&apos;s what we look for.</p>
+          <p>That&apos;s the part I&apos;m trying to solve.</p>
         </div>
       </div>
     </section>
@@ -359,27 +377,26 @@ function HowItWorks() {
   return (
     <section className="bg-subtle px-5 py-20 sm:px-8 sm:py-28">
       <div className="mx-auto max-w-6xl">
-        <p className="eyebrow">SIMPLE ON PURPOSE</p>
+        <p className="eyebrow">PRETTY SIMPLE</p>
         <h2 className="mt-4 max-w-xl font-display text-3xl font-bold leading-[0.95] tracking-[-0.02em] text-dark sm:text-4xl">
-          Three steps. No ski-pass PhD required.
+          Three steps.
         </h2>
 
         <div className="mt-14 grid gap-10 lg:grid-cols-3 lg:gap-8">
           <article>
             <p className="font-display text-6xl font-bold leading-none text-accent">1</p>
             <h3 className="mt-4 font-display text-xl font-bold tracking-tight text-dark">
-              Tell us about your ski family
+              Tell me how your family skis.
             </h3>
-            <p className="mt-3 text-[15px] text-muted">We&apos;ll ask things like:</p>
+            <p className="mt-3 text-[15px] text-muted">Things like:</p>
             <ul className="mt-3 space-y-2 text-[15px] leading-relaxed text-muted">
               {[
-                "Where you live",
-                "Your kids' ages and grades",
-                "Where you usually ski",
-                "Passes you already own",
-                "Mountains or regions you're considering",
-                "Ski trips you're planning",
-                "Whether you need lessons or rentals",
+                "where you live",
+                "your kids' ages and grades",
+                "where you normally ski",
+                "passes you already have or are considering",
+                "trips you're planning",
+                "lessons, rentals, etc.",
               ].map((item) => (
                 <li key={item} className="flex gap-2">
                   <span className="mt-2 h-1 w-1 shrink-0 bg-accent" />
@@ -387,33 +404,39 @@ function HowItWorks() {
                 </li>
               ))}
             </ul>
+            <p className="mt-4 text-[15px] leading-relaxed text-muted">
+              Basically the stuff that changes which deals actually matter.
+            </p>
           </article>
 
           <article>
             <p className="font-display text-6xl font-bold leading-none text-accent">2</p>
             <h3 className="mt-4 font-display text-xl font-bold tracking-tight text-dark">
-              We do the digging
+              I start digging.
             </h3>
-            <p className="mt-4 text-[15px] leading-relaxed text-muted">
-              A real human manually searches the current ski-savings landscape and
-              source-checks the opportunities that appear relevant to your family.
-            </p>
+            <div className="mt-4 space-y-4 text-[15px] leading-relaxed text-muted">
+              <p>
+                I dig through the current programs, passes, resort offers and
+                other savings that seem relevant to your family.
+              </p>
+              <p>
+                Right now I&apos;m doing these mostly by hand because I&apos;m still
+                learning where the good stuff hides.
+              </p>
+            </div>
           </article>
 
           <article>
             <p className="font-display text-6xl font-bold leading-none text-accent">3</p>
             <h3 className="mt-4 font-display text-xl font-bold tracking-tight text-dark">
-              See how much potential savings we find
+              I tell you if there&apos;s money hiding there.
             </h3>
-            <p className="mt-4 text-[15px] text-muted">
-              We&apos;ll send you your <strong className="text-dark">Ski Family Savings Scan</strong> showing:
-            </p>
+            <p className="mt-4 text-[15px] text-muted">You&apos;ll get a simple readout showing:</p>
             <ul className="mt-3 space-y-3">
               {[
-                "How many Jackpot opportunities we found",
-                "Any programs we think are worth keeping an eye on",
-                "How many Strong and Useful opportunities we found",
-                "Your estimated potential savings",
+                "roughly how much potential savings I found",
+                "where the biggest opportunities seem to be",
+                "anything important I'd want to double-check",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-3 text-[15px] font-semibold leading-snug text-dark">
                   <CheckIcon />
@@ -421,43 +444,46 @@ function HowItWorks() {
                 </li>
               ))}
             </ul>
+            <p className="mt-4 text-[15px] leading-relaxed text-muted">And if I don&apos;t find much?</p>
+            <p className="mt-2 text-[15px] font-semibold text-dark">I&apos;ll tell you that too.</p>
           </article>
         </div>
 
         <div className="mt-14 text-center">
-          <CtaLink>Get My Free Savings Scan →</CtaLink>
-          <p className="mt-3 text-sm text-muted">Free. No credit card required.</p>
+          <CtaLink>Alright, poke around →</CtaLink>
         </div>
       </div>
     </section>
   );
 }
 
-function WhatWeSearch() {
+function WhatISearch() {
   return (
     <section className="bg-background">
       <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 sm:py-28">
-        <div className="rule-gold mb-6" />
-        <h2 className="max-w-xl font-display text-3xl font-bold leading-[0.95] tracking-[-0.02em] text-dark sm:text-4xl">
-          We look beyond coupon codes.
+        <p className="eyebrow">THE RABBIT HOLE</p>
+        <h2 className="mt-4 max-w-xl font-display text-3xl font-bold leading-[0.95] tracking-[-0.02em] text-dark sm:text-4xl">
+          What am I actually looking for?
         </h2>
-        <p className="mt-5 text-[17px] text-muted">Depending on your family, we may search for:</p>
 
-        <ul className="mt-10 grid gap-x-10 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
-          {searchItems.map((item) => (
-            <li key={item} className="flex items-start gap-3 text-[15px] leading-snug text-dark">
-              <CheckIcon />
-              <span>{item}</span>
-            </li>
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {searchAreas.map((item) => (
+            <article key={item.heading} className="border border-border bg-subtle p-5 sm:p-6">
+              <h3 className="font-display text-lg font-bold text-dark">{item.heading}</h3>
+              <p className="mt-2 text-[15px] leading-relaxed text-muted">{item.body}</p>
+            </article>
           ))}
-        </ul>
+        </div>
 
         <div className="mt-12 max-w-xl">
-          <h3 className="font-display text-2xl font-bold leading-tight text-dark sm:text-3xl">
-            Our goal isn&apos;t to find the most deals.
-          </h3>
+          <p className="font-display text-xl font-bold text-dark">One important rule:</p>
+          <p className="mt-3 text-[17px] leading-relaxed text-muted">
+            I don&apos;t want to pretend I &ldquo;found&rdquo; money you already knew
+            about.
+          </p>
           <p className="mt-3 font-semibold text-dark">
-            It&apos;s to find the savings that actually matter to your family.
+            The interesting stuff is the savings you probably wouldn&apos;t have
+            found on your own.
           </p>
         </div>
       </div>
@@ -484,11 +510,12 @@ function WhoThisIsFor() {
   return (
     <section className="bg-subtle">
       <div className="mx-auto max-w-3xl px-5 py-20 sm:px-8 sm:py-28">
-        <h2 className="font-display text-3xl font-bold leading-[0.95] tracking-[-0.02em] text-dark sm:text-4xl">
-          Especially useful if your family skis enough to feel it.
+        <p className="eyebrow">IS THIS ACTUALLY FOR YOU?</p>
+        <h2 className="mt-4 font-display text-3xl font-bold leading-[0.95] tracking-[-0.02em] text-dark sm:text-4xl">
+          This gets more interesting when your family&apos;s ski life is a little complicated.
         </h2>
         <p className="mt-6 text-[17px] leading-relaxed text-muted">
-          The Ski Family Savings Scan is especially useful for families who:
+          It&apos;s probably especially useful if:
         </p>
         <ul className="mt-6 space-y-3">
           {whoItems.map((item) => (
@@ -498,36 +525,99 @@ function WhoThisIsFor() {
             </li>
           ))}
         </ul>
-        <p className="mt-8 font-semibold text-dark">You don&apos;t need to check every box.</p>
-        <p className="mt-3 text-[17px] leading-relaxed text-muted">
-          If skiing is a meaningful family expense, we&apos;ll see what we can find.
-        </p>
+
+        <div className="mt-12 border-t border-border pt-10">
+          <h3 className="font-display text-xl font-bold text-dark sm:text-2xl">
+            You probably don&apos;t need me if...
+          </h3>
+          <p className="mt-4 text-[17px] leading-relaxed text-muted">
+            You ski one inexpensive local hill, already know all of its
+            family/kid programs, don&apos;t really travel, and have your setup
+            dialed.
+          </p>
+          <p className="mt-4 text-[17px] leading-relaxed text-muted">
+            There just may not be enough hiding there to make this particularly
+            interesting.
+          </p>
+        </div>
+
         <div className="mt-10">
-          <CtaLink>Find My Savings Potential →</CtaLink>
+          <CtaLink>Okay, my ski life is complicated →</CtaLink>
         </div>
       </div>
     </section>
   );
 }
 
-function Trust() {
+function Founder() {
   return (
     <section className="bg-background">
-      <div className="mx-auto max-w-3xl px-5 py-20 text-center sm:px-8 sm:py-28">
-        <p className="eyebrow">YES, A HUMAN IS ACTUALLY DOING THIS</p>
-        <h2 className="mt-4 font-display text-3xl font-bold leading-[0.95] tracking-[-0.02em] text-dark sm:text-4xl">
-          Your family&apos;s scan isn&apos;t coming from a generic coupon list.
-        </h2>
-        <p className="mt-8 text-[17px] leading-relaxed text-muted sm:text-lg">
-          That means we&apos;re actually looking at your family&apos;s ages, grades,
-          location, passes, ski plans and other details to search for savings that
-          appear relevant to <strong className="text-dark">you</strong>.
-        </p>
-        <p className="mt-5 text-[17px] leading-relaxed text-muted sm:text-lg">
-          Then we source-check what we find.
-        </p>
-        <div className="mt-10">
-          <CtaLink>Get My Free Savings Scan →</CtaLink>
+      <div className="mx-auto grid max-w-6xl items-start gap-10 px-5 py-20 sm:px-8 sm:py-28 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-14">
+        {/* Swap public/founder.jpg with a casual personal ski/family photo. */}
+        <div className="relative mx-auto w-full max-w-md lg:max-w-none">
+          <div className="relative aspect-[4/5] overflow-hidden rounded-[4px] bg-subtle">
+            <Image
+              src="/founder.jpg"
+              alt="Ben, a ski dad in Vermont"
+              fill
+              sizes="(min-width: 1024px) 420px, 100vw"
+              className="object-cover object-center"
+            />
+          </div>
+        </div>
+
+        <div>
+          <p className="eyebrow">HI, I&apos;M BEN 👋</p>
+          <h2 className="mt-4 font-display text-3xl font-bold leading-[0.95] tracking-[-0.02em] text-dark sm:text-4xl">
+            This is basically a ski-dad rabbit hole that got out of hand.
+          </h2>
+          <div className="mt-8 space-y-5 text-[17px] leading-relaxed text-muted sm:text-lg">
+            <p>
+              I live in Vermont with my wife and kids, and skiing and snowboarding
+              are a big part of our winters.
+            </p>
+            <p>
+              I started looking into all this for my own family and kept finding
+              these strange little programs, discounts and pass options buried in
+              different corners of the internet.
+            </p>
+            <p>
+              At the same time, I kept hearing other parents talk about how
+              insanely expensive skiing with a family has become. And once you add
+              together passes, lift tickets, lessons, rentals, trips and trying to
+              figure out which kid qualifies for what, the whole thing can feel
+              like a total clusterf*ck.
+            </p>
+            <p>And eventually I thought:</p>
+            <p className="font-semibold text-dark">
+              How much could I save a family if I actually looked through all of
+              it for them?
+            </p>
+            <p>So that&apos;s what I&apos;m testing.</p>
+            <p>
+              There isn&apos;t some giant Ski Family Savings corporation behind the
+              curtain. It&apos;s me.
+            </p>
+            <p>
+              I&apos;m personally looking at these scans, building up a database of
+              what I find, and figuring out whether this is useful enough to turn
+              into something bigger.
+            </p>
+            <p>Sometimes I&apos;ll probably find a lot.</p>
+            <p>Sometimes I won&apos;t.</p>
+            <p>
+              Either way, I&apos;d rather tell you the truth than manufacture a
+              giant &ldquo;savings&rdquo; number just to make this look impressive.
+            </p>
+            <p>And if this whole experiment eventually goes nowhere?</p>
+            <p>
+              Hopefully at least a few ski families spend less money this winter.
+            </p>
+            <p>That seems like a pretty decent outcome.</p>
+          </div>
+          <div className="mt-10">
+            <CtaLink>Let Ben dig through mine →</CtaLink>
+          </div>
         </div>
       </div>
     </section>
@@ -538,7 +628,11 @@ function Faq() {
   return (
     <section className="bg-subtle">
       <div className="mx-auto max-w-3xl px-5 py-20 sm:px-8 sm:py-28">
-        <div className="divide-y divide-border border-y border-border">
+        <p className="eyebrow">QUESTIONS YOU MIGHT REASONABLY HAVE</p>
+        <h2 className="mt-4 font-display text-3xl font-bold tracking-[-0.02em] text-dark sm:text-4xl">
+          The fine print, minus most of the fine print.
+        </h2>
+        <div className="mt-10 divide-y divide-border border-y border-border">
           {faqs.map((item) => (
             <details key={item.q} className="faq-item group py-1">
               <summary className="flex cursor-pointer items-start justify-between gap-6 py-5 text-left font-display text-[17px] font-bold tracking-tight text-dark">
@@ -578,17 +672,19 @@ function FinalCta() {
       <div className="relative mx-auto max-w-6xl px-5 py-24 sm:px-8 sm:py-32">
         <div className="max-w-xl text-white">
           <h2 className="font-display text-3xl font-bold leading-[0.95] tracking-[-0.02em] sm:text-4xl lg:text-[2.75rem]">
-            Let&apos;s find out how much your family could save.
+            Want me to see what I can find?
           </h2>
           <div className="mt-6 space-y-4 text-[17px] leading-relaxed text-white/85">
-            <p>Tell us about your family and how you ski.</p>
+            <p>Tell me how your family skis and I&apos;ll go poke around.</p>
+            <p>Worst case, I don&apos;t find much and we both learn something.</p>
+            <p>Best case?</p>
             <p className="font-semibold text-white">
-              We&apos;ll do the digging and tell you how much potential savings we find.
+              There&apos;s a surprising amount of money hiding in there.
             </p>
           </div>
           <div className="mt-9">
-            <CtaLink variant="onDark">Find My Savings Potential →</CtaLink>
-            <p className="mt-3 text-sm text-white/75">Free scan. No credit card required.</p>
+            <CtaLink variant="onDark">See what you can find for my family →</CtaLink>
+            <p className="mt-3 text-sm text-white/75">Free • About 5 minutes</p>
           </div>
         </div>
       </div>

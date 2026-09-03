@@ -46,7 +46,7 @@ export function StickyMobileCta() {
       }`}
       style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
     >
-      <CtaLink variant="sticky">Get My Free Scan</CtaLink>
+      <CtaLink variant="sticky">See what I can find →</CtaLink>
     </div>
   );
 }

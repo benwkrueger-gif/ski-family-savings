@@ -18,7 +18,7 @@ const barlow = Barlow({
 const title =
   "Free Ski Family Savings Scan | Find Out How Much Your Family Could Save";
 const description =
-  "Tell us about your family and how you ski. We'll manually search kids programs, ski passes, resident discounts and other savings to estimate how much your family could save this winter.";
+  "Tell me a little about your family and how you ski. I'll start digging and tell you if I find meaningful savings, and roughly how much. For free.";
 
 export const metadata: Metadata = {
   title,
