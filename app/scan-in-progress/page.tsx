@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { SKIER_GIF_URL } from "@/lib/config";
 
 export const metadata: Metadata = {
-  title: "We're On It | Ski Family Savings Scan",
+  title: "I'm On It | Ski Family Savings Scan",
   description:
-    "We've got your ski plans. Now we're doing the annoying part. Expect your Savings Scan within 2 business days.",
+    "I've got your ski plans. Now I'm doing the annoying part. Expect your Savings Scan within 2 business days.",
   robots: {
     index: false,
     follow: false,
@@ -12,10 +12,10 @@ export const metadata: Metadata = {
 };
 
 const receiveItems = [
-  "Our estimate of your total potential savings",
-  "How many Jackpot opportunities we found",
-  "How many Strong opportunities we found",
-  "How many additional Useful opportunities we found",
+  "My estimate of your total potential savings",
+  "How many Jackpot opportunities I found",
+  "How many Strong opportunities I found",
+  "How many additional Useful opportunities I found",
   "Anything worth keeping an eye on",
 ];
 
@@ -62,27 +62,27 @@ export default function ScanInProgressPage() {
           <div className="mx-auto max-w-xl text-center">
             <SkierGif />
             <p className="mt-3 text-sm text-muted">
-              Actual footage of us hunting for your ski savings.
+              Actual footage of me hunting for your ski savings.
             </p>
           </div>
         </section>
 
         <section className="bg-background px-5 pb-16 sm:px-8 sm:pb-20">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="eyebrow">WE&apos;RE ON IT</p>
+            <p className="eyebrow">I&apos;M ON IT</p>
             <h1 className="mt-4 font-display text-[2.15rem] font-bold leading-[0.95] tracking-[-0.02em] text-dark sm:text-5xl">
-              We&apos;re digging into your family&apos;s ski savings.
+              I&apos;m digging into your family&apos;s ski savings.
             </h1>
             <div className="mt-7 space-y-4 text-[17px] leading-relaxed text-muted sm:text-lg">
-              <p>We&apos;ve got your ski plans. Now we&apos;re doing the annoying part.</p>
+              <p>I&apos;ve got your ski plans. Now I&apos;m doing the annoying part.</p>
               <p>
-                We&apos;re looking at your family&apos;s ages, grades, location,
+                I&apos;m looking at your family&apos;s ages, grades, location,
                 passes, resorts and trips to see where meaningful savings may be
                 hiding.
               </p>
               <p className="font-semibold text-dark">
-                This isn&apos;t a generic coupon search. We&apos;re researching your
-                family specifically and checking what we find against the actual
+                This isn&apos;t a generic coupon search. I&apos;m researching your
+                family specifically and checking what I find against the actual
                 source.
               </p>
             </div>
@@ -98,12 +98,12 @@ export default function ScanInProgressPage() {
               </h2>
             </div>
             <div className="mt-8 space-y-4 text-[17px] leading-relaxed text-muted sm:text-lg">
-              <p>We work through scans in the order they come in.</p>
+              <p>I work through scans in the order they come in.</p>
               <p>
-                Most are finished within 2 business days. If we get slammed with
+                Most are finished within 2 business days. If I get slammed with
                 requests, yours may take a little longer.
               </p>
-              <p>As soon as your scan is ready, we&apos;ll send it straight to your inbox.</p>
+              <p>As soon as your scan is ready, I&apos;ll send it straight to your inbox.</p>
               <p className="font-semibold text-dark">
                 Keep an eye out for an email from Ski Family Savings.
               </p>
@@ -117,7 +117,7 @@ export default function ScanInProgressPage() {
         <section className="bg-background px-5 py-16 sm:px-8 sm:py-20">
           <div className="mx-auto max-w-lg">
             <h2 className="text-center font-display text-3xl font-bold leading-[0.95] tracking-[-0.02em] text-dark sm:text-4xl">
-              We&apos;re looking for the savings that actually matter.
+              I&apos;m looking for the savings that actually matter.
             </h2>
             <div className="mt-10 divide-y divide-border overflow-hidden rounded-[4px] border border-border bg-background">
               {huntRows.map((row) => (
@@ -133,10 +133,10 @@ export default function ScanInProgressPage() {
               ))}
             </div>
             <p className="mt-8 font-semibold text-dark">
-              We&apos;re not trying to come back with the longest list.
+              I&apos;m not trying to come back with the longest list.
             </p>
             <p className="mt-3 text-[17px] leading-relaxed text-muted">
-              We&apos;re trying to figure out which opportunities actually fit your
+              I&apos;m trying to figure out which opportunities actually fit your
               family — and which ones could meaningfully change what you spend.
             </p>
           </div>
@@ -152,7 +152,7 @@ export default function ScanInProgressPage() {
                 Is there enough money here to care about?
               </p>
             </div>
-            <p className="mt-10 text-[17px] text-muted">When we&apos;re done, you&apos;ll get:</p>
+            <p className="mt-10 text-[17px] text-muted">When I&apos;m done, you&apos;ll get:</p>
             <ul className="mt-5 space-y-3">
               {receiveItems.map((item) => (
                 <li key={item} className="flex items-start gap-3 text-[15px] font-semibold leading-snug text-dark">
@@ -162,8 +162,8 @@ export default function ScanInProgressPage() {
               ))}
             </ul>
             <p className="mt-6 text-sm leading-relaxed text-muted">
-              We won&apos;t pretend we &ldquo;found&rdquo; savings you already told
-              us about, and we won&apos;t double-count deals that can&apos;t actually
+              I won&apos;t pretend I &ldquo;found&rdquo; savings you already told
+              me about, and I won&apos;t double-count deals that can&apos;t actually
               be used together.
             </p>
           </div>
@@ -187,7 +187,7 @@ export default function ScanInProgressPage() {
                 the expensive option for the whole family.
               </p>
               <p className="font-semibold text-dark">
-                We&apos;re putting those pieces together now.
+                I&apos;m putting those pieces together now.
               </p>
             </div>
           </div>
@@ -196,11 +196,11 @@ export default function ScanInProgressPage() {
         <section className="bg-subtle px-5 py-16 sm:px-8 sm:py-20">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="font-display text-3xl font-bold leading-[0.95] tracking-[-0.02em] text-dark sm:text-4xl">
-              That&apos;s it. We&apos;ll do the digging from here.
+              That&apos;s it. I&apos;ll do the digging from here.
             </h2>
             <p className="mt-6 text-[17px] leading-relaxed text-muted sm:text-lg">
               If there&apos;s meaningful money hiding in your family&apos;s ski
-              plans, we&apos;ll find out how much appears to be worth pursuing.
+              plans, I&apos;ll figure out how much appears to be worth pursuing.
             </p>
             <p className="mt-5 font-semibold text-dark sm:text-lg">
               Your Savings Scan should be in your inbox within 2 business days.
