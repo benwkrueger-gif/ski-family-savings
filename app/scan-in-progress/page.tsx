@@ -71,7 +71,7 @@ export default function ScanInProgressPage() {
           <div className="mx-auto max-w-2xl text-center">
             <p className="eyebrow">I&apos;M ON IT</p>
             <h1 className="mt-4 font-display text-[2.15rem] font-bold leading-[0.95] tracking-[-0.02em] text-dark sm:text-5xl">
-              I&apos;m digging into your family&apos;s ski savings.
+              I&apos;m diving in to find your family&apos;s ski savings.
             </h1>
             <div className="mt-7 space-y-4 text-[17px] leading-relaxed text-muted sm:text-lg">
               <p>I&apos;ve got your ski plans. Now I&apos;m doing the annoying part.</p>
