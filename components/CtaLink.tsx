@@ -1,3 +1,11 @@
+"use client";
+
+import type { FocusEvent, MouseEvent, ReactNode } from "react";
+import {
+  buildAttributedTallyUrl,
+  trackScanStart,
+  type CtaLocation,
+} from "@/lib/analytics";
 import { TALLY_FORM_URL } from "@/lib/config";
 
 type CtaVariant = "primary" | "nav" | "sticky" | "onDark";
@@ -14,18 +22,35 @@ const styles: Record<CtaVariant, string> = {
 
 export function CtaLink({
   children,
+  ctaLocation,
   variant = "primary",
   className = "",
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
+  ctaLocation: CtaLocation;
   variant?: CtaVariant;
   className?: string;
 }) {
+  const prepareLink = (
+    event: MouseEvent<HTMLAnchorElement> | FocusEvent<HTMLAnchorElement>
+  ) => {
+    event.currentTarget.href = buildAttributedTallyUrl(TALLY_FORM_URL);
+  };
+
+  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    prepareLink(event);
+    trackScanStart(ctaLocation);
+  };
+
   return (
     <a
       href={TALLY_FORM_URL}
       target="_blank"
       rel="noopener noreferrer"
+      data-cta-location={ctaLocation}
+      onFocus={prepareLink}
+      onMouseEnter={prepareLink}
+      onClick={handleClick}
       className={`${styles[variant]} ${className}`}
     >
       {children}

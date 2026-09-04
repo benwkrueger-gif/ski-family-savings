@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Barlow, Oswald } from "next/font/google";
+import { AnalyticsScripts } from "@/components/AnalyticsScripts";
 import "./globals.css";
 
 const oswald = Oswald({
@@ -50,6 +51,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full bg-background font-sans text-text">
         {children}
+        <AnalyticsScripts />
       </body>
     </html>
   );

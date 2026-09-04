@@ -154,7 +154,9 @@ export default function Home() {
           <a href="#hero" className="font-display text-[15px] font-bold tracking-wide text-dark">
             SKI FAMILY SAVINGS
           </a>
-          <CtaLink variant="nav">See what I can find →</CtaLink>
+          <CtaLink ctaLocation="header" variant="nav">
+            See what I can find →
+          </CtaLink>
         </div>
       </header>
 
@@ -224,7 +226,9 @@ function Hero() {
           </div>
 
           <div className="mt-8">
-            <CtaLink>See what you can find for my family →</CtaLink>
+            <CtaLink ctaLocation="hero">
+              See what you can find for my family →
+            </CtaLink>
             <p className="mt-3 text-sm text-muted">Takes about 5 minutes. No spammy sales nonsense.</p>
           </div>
         </div>
@@ -330,7 +334,9 @@ function ExampleResult() {
       </div>
 
       <div className="mt-8 text-center">
-        <CtaLink>See what you can find for us →</CtaLink>
+        <CtaLink ctaLocation="example_result">
+          See what you can find for us →
+        </CtaLink>
       </div>
     </section>
   );
@@ -449,7 +455,7 @@ function HowItWorks() {
         </div>
 
         <div className="mt-14 text-center">
-          <CtaLink>Alright, poke around →</CtaLink>
+          <CtaLink ctaLocation="how_it_works">Alright, poke around →</CtaLink>
         </div>
       </div>
     </section>
@@ -541,7 +547,9 @@ function WhoThisIsFor() {
         </div>
 
         <div className="mt-10">
-          <CtaLink>Okay, my ski life is complicated →</CtaLink>
+          <CtaLink ctaLocation="who_its_for">
+            Okay, my ski life is complicated →
+          </CtaLink>
         </div>
       </div>
     </section>
@@ -615,7 +623,7 @@ function Founder() {
             <p>That seems like a pretty decent outcome.</p>
           </div>
           <div className="mt-10">
-            <CtaLink>Let Ben dig through mine →</CtaLink>
+            <CtaLink ctaLocation="founder">Let Ben dig through mine →</CtaLink>
           </div>
         </div>
       </div>
@@ -682,7 +690,9 @@ function FinalCta() {
             </p>
           </div>
           <div className="mt-9">
-            <CtaLink variant="onDark">See what you can find for my family →</CtaLink>
+            <CtaLink ctaLocation="final_cta" variant="onDark">
+              See what you can find for my family →
+            </CtaLink>
             <p className="mt-3 text-sm text-white/75">Free • About 5 minutes</p>
           </div>
         </div>

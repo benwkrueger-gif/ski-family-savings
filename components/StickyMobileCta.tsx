@@ -46,7 +46,9 @@ export function StickyMobileCta() {
       }`}
       style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
     >
-      <CtaLink variant="sticky">See what I can find →</CtaLink>
+      <CtaLink ctaLocation="sticky_mobile" variant="sticky">
+        See what I can find →
+      </CtaLink>
     </div>
   );
 }
