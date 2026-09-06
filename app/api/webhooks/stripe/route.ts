@@ -1,0 +1,84 @@
+import { log } from "@/lib/logger";
+import { constructStripeEvent, stripeClient } from "@/lib/stripe/client";
+import { claimWebhookEvent, getReportById, updateReport } from "@/lib/pipeline/store";
+import { fulfillPaidPlan, type StripeSessionLike } from "@/lib/pipeline/fulfillment";
+import type Stripe from "stripe";
+
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
+export async function POST(request: Request) {
+  const rawBody = await request.text();
+  const signature = request.headers.get("stripe-signature");
+
+  let event: Stripe.Event;
+  try {
+    event = constructStripeEvent(rawBody, signature);
+  } catch (error) {
+    log.warn("stripe_webhook_invalid_signature", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return new Response("Invalid signature", { status: 400 });
+  }
+
+  const claimed = await claimWebhookEvent({
+    provider: "stripe",
+    eventId: event.id,
+    payload: { type: event.type },
+  });
+  if (!claimed) {
+    log.info("stripe_webhook_duplicate_event", { eventId: event.id, type: event.type });
+    return new Response("ok", { status: 200 });
+  }
+
+  log.info("stripe_payment_received", { eventId: event.id, type: event.type });
+
+  try {
+    if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const full =
+        session.payment_status && session.client_reference_id
+          ? session
+          : await stripeClient().checkout.sessions.retrieve(session.id);
+
+      const reportId = full.client_reference_id ?? undefined;
+      if (reportId) {
+        const report = await getReportById(reportId);
+        if (report) {
+          await updateReport(report.id, {
+            status: report.status === "PLAN_DELIVERED" ? report.status : "PURCHASED",
+            stripeCheckoutSessionId: full.id,
+            stripePaymentStatus: full.payment_status ?? "paid",
+            stripePaidAt: new Date(),
+            purchasedAt: report.purchasedAt ?? new Date(),
+          });
+        }
+      }
+
+      await fulfillPaidPlan({
+        stripeEventId: event.id,
+        session: {
+          id: full.id,
+          payment_status: full.payment_status,
+          status: full.status,
+          client_reference_id: full.client_reference_id,
+          customer_email: full.customer_email,
+          customer_details: full.customer_details,
+        } satisfies StripeSessionLike,
+      });
+    }
+
+    if (event.type === "checkout.session.async_payment_failed") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      log.warn("stripe_async_payment_failed", { sessionId: session.id });
+    }
+  } catch (error) {
+    log.error("stripe_webhook_error", {
+      eventId: event.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return new Response("error", { status: 500 });
+  }
+
+  return new Response("ok", { status: 200 });
+}

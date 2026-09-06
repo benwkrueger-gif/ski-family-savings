@@ -1,0 +1,117 @@
+@page {
+  size: Letter;
+  margin: 0;
+}
+
+* {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.report-root {
+  color: var(--color-text);
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+}
+
+.report-page-single {
+  box-sizing: border-box;
+  width: 8.5in;
+  height: 11in;
+  overflow: hidden;
+  padding: 0.36in 0.44in 0;
+  background: #ffffff;
+}
+
+.report-full {
+  box-sizing: border-box;
+  width: 8.5in;
+  background: #ffffff;
+}
+
+.report-sheet {
+  box-sizing: border-box;
+  width: 8.5in;
+  min-height: 11in;
+  padding: 0.48in 0.5in 0.5in;
+  background: #ffffff;
+}
+
+.report-sheet-auto,
+.report-flow {
+  box-sizing: border-box;
+  width: 8.5in;
+  padding: 0.42in 0.48in 0.4in;
+  background: #ffffff;
+}
+
+.opp-section {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.break-before {
+  break-before: page;
+  page-break-before: always;
+}
+
+.avoid-break {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.break-after {
+  break-after: page;
+  page-break-after: always;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+@media screen {
+  body.report-preview-body {
+    background: #e8e8e6;
+  }
+
+  .report-preview-frame {
+    background: #e8e8e6;
+    padding: 28px 0 48px;
+  }
+
+  .report-page-single,
+  .report-sheet,
+  .report-sheet-auto,
+  .report-flow {
+    margin: 0 auto 28px;
+    box-shadow: 0 1px 3px rgb(9 35 64 / 0.12);
+  }
+
+  .report-full {
+    margin: 0 auto;
+  }
+}
+
+@media print {
+  .print-hidden,
+  .report-dev-nav {
+    display: none !important;
+  }
+
+  .report-preview-frame {
+    background: #ffffff;
+    padding: 0;
+  }
+
+  .report-page-single,
+  .report-sheet,
+  .report-sheet-auto,
+  .report-flow,
+  .report-full {
+    margin: 0;
+    box-shadow: none;
+  }
+}

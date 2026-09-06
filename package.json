@@ -4,23 +4,45 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "tsx reports/scripts/compile-css.ts && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "tsx --test tests/**/*.test.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "db:push": "drizzle-kit push",
+    "report:preview": "next dev",
+    "report:pdf": "tsx reports/scripts/generate-pdf.tsx",
+    "report:qa": "tsx reports/scripts/qa.ts",
+    "report:all": "tsx reports/scripts/report-all.ts",
+    "report:latest": "tsx reports/scripts/report-all.ts --latest"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
+    "@sparticuz/chromium": "^149.0.0",
+    "drizzle-orm": "^0.45.2",
+    "googleapis": "^178.0.0",
     "next": "16.3.1",
+    "openai": "^7.10.0",
+    "puppeteer-core": "^25.10.0",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "stripe": "^22.6.1",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.3.1",
+    "pdf-to-img": "^7.0.0",
+    "playwright": "^1.62.1",
     "tailwindcss": "^4",
+    "tsx": "^4.23.13",
     "typescript": "^5"
   }
 }

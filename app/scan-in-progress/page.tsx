@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { FreeScanConversion } from "@/components/FreeScanConversion";
 import { SKIER_GIF_URL } from "@/lib/config";
 
@@ -53,9 +54,9 @@ export default function ScanInProgressPage() {
       <FreeScanConversion />
       <header className="sticky top-0 z-40 border-b border-border bg-background">
         <div className="mx-auto flex h-[72px] max-w-6xl items-center justify-between px-5 sm:px-8">
-          <a href="/" className="font-display text-[15px] font-bold tracking-wide text-dark">
+          <Link href="/" className="font-display text-[15px] font-bold tracking-wide text-dark">
             Ski Family Savings
-          </a>
+          </Link>
         </div>
       </header>
 

@@ -1,8 +1,44 @@
 # Ski Family Savings Scan
 
-A single-page landing site for a manual beta: get ski families to complete a Tally intake form for a free personalized Ski Family Savings Scan.
+A Next.js site for the Ski Family Savings Scan landing page, plus the automated report pipeline that turns Tally submissions into branded PDFs, Gmail drafts, and paid fulfillment.
 
-No accounts, dashboard, database, or backend. Static Next.js + Tailwind. Every CTA opens `TALLY_FORM_URL`.
+## Landing page
+
+Every primary CTA still opens `TALLY_FORM_URL` from [`lib/config.ts`](lib/config.ts).
+
+```bash
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+## Report pipeline
+
+The pipeline lives behind `/admin` and `/api/webhooks/*`. Copy [`.env.example`](.env.example), fill in secrets, then:
+
+```bash
+npm run db:migrate
+npm run dev
+```
+
+Open [http://localhost:3000/admin/submissions](http://localhost:3000/admin/submissions).
+
+Offer-mode threshold: [`config/compelling-savings.ts`](config/compelling-savings.ts) (`COMPELLING_SAVINGS_MIN`, default `$100` conservative core savings).
+
+Existing branded PDF templates are unchanged: [`reports/templates/FreeScanReport.tsx`](reports/templates/FreeScanReport.tsx) and [`reports/templates/FullReport.tsx`](reports/templates/FullReport.tsx).
+
+Manual PDF generation from JSON still works:
+
+```bash
+npm run report:latest
+```
+
+## Deploy
+
+Vercel is the expected host. You need a Postgres database (Neon works), the env vars from `.env.example`, and a Vercel plan that allows long-running functions for PDF generation (300s on the OpenAI webhook / admin PDF routes).
+
+Do not point the live Tally webhook at production until Google, Stripe test mode, and one historical submission have been verified end to end.
 
 ## Change the Tally form URL
 
@@ -31,6 +67,12 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+## Generating a customer report
+
+1. Save completed customer JSON into `reports/data/`
+2. Run `npm run report:latest`
+3. PDFs appear in `reports/output/`
+
 ## Deploy to Vercel (simplest)
 
 1. Push this repo to GitHub.
@@ -42,4 +84,4 @@ Or from this folder, with the Vercel CLI:
 npx vercel
 ```
 
-Accept the defaults. Framework preset should be Next.js. No environment variables are required unless you later move the Tally URL into one.
+Accept the defaults. Framework preset should be Next.js. Add the env vars from `.env.example` before turning on the live Tally webhook.
