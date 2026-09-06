@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { compileReportCss } from "./render-report";
+import { compileReportCss } from "../compile-report-css";
 
 const output = path.join(process.cwd(), "reports/styles/report.generated.css");
 

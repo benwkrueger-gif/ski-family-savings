@@ -5,7 +5,7 @@ import { decideOfferModeFromResearch } from "@/lib/research/offer-mode";
 import { parseResearch, type CanonicalResearch } from "@/lib/research/schema";
 import { freeScanLeakFlags, researchToReportData } from "@/lib/research/to-report";
 import { buildSavingsPlanCheckoutUrl } from "@/lib/stripe/checkout";
-import { generateReportPdfBuffer } from "@/reports/scripts/render-report";
+import { generateReportPdfBuffer } from "@/reports/generate-pdf-buffer";
 import { ensureCustomerFolder, upsertDrivePdf } from "@/lib/google/drive";
 import { upsertGmailDraft } from "@/lib/google/gmail";
 import { assertDraftCopySafe, buildInitialDraftEmail } from "@/lib/copy/emails";
