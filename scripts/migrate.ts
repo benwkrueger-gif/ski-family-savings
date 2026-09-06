@@ -1,6 +1,9 @@
 import fs from "fs";
 import path from "path";
+import { loadEnvConfig } from "@next/env";
 import { neon } from "@neondatabase/serverless";
+
+loadEnvConfig(process.cwd());
 
 async function main() {
   const url = process.env.DATABASE_URL;
