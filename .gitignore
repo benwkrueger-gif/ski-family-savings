@@ -48,3 +48,4 @@ next-env.d.ts
 
 # customer report JSON drop folder
 /reports/data/*.json
+.neon

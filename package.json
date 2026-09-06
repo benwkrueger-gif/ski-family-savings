@@ -18,6 +18,8 @@
     "report:latest": "tsx reports/scripts/report-all.ts --latest"
   },
   "dependencies": {
+    "@neon/config": "^1.3.0",
+    "@neon/env": "^1.2.1",
     "@neondatabase/serverless": "^1.1.0",
     "@sparticuz/chromium": "^149.0.0",
     "drizzle-orm": "^0.45.2",
