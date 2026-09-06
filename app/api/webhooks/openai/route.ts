@@ -35,10 +35,29 @@ export async function POST(request: Request) {
   if (!responseId) return new Response("ok", { status: 200 });
 
   if (type === "response.failed" || type === "response.incomplete" || type === "response.cancelled") {
-    const report = await getReportByOpenAiResponseId(responseId);
+    let report = await getReportByOpenAiResponseId(responseId);
+    let detail = `OpenAI ${type}`;
+    try {
+      const retrieved = await retrieveResearch(responseId);
+      detail = retrieved.error || detail;
+      if (!report) {
+        const reportId = metadataReportId(retrieved.metadata);
+        if (reportId) report = (await getReportById(reportId)) ?? undefined;
+      }
+    } catch (error) {
+      log.error("openai_failure_retrieve_failed", {
+        openaiResponseId: responseId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
     if (report) {
-      await markError(report.id, "RESEARCH_FAILED", `OpenAI ${type} for ${responseId}`);
-      log.error("research_failed", { reportId: report.id, openaiResponseId: responseId, type });
+      await markError(report.id, "RESEARCH_FAILED", detail);
+      log.error("research_failed", {
+        reportId: report.id,
+        openaiResponseId: responseId,
+        type,
+        detail,
+      });
     }
     return new Response("ok", { status: 200 });
   }

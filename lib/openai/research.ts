@@ -73,6 +73,21 @@ export function metadataReportId(metadata: Record<string, string> | null | undef
   return metadata?.internalReportId || metadata?.internal_report_id;
 }
 
+export function formatOpenAiResponseError(response: {
+  status?: string | null;
+  error?: { code?: string | null; message?: string | null } | null;
+  incomplete_details?: { reason?: string | null } | null;
+}): string {
+  const code = response.error?.code?.trim();
+  const message = response.error?.message?.trim();
+  if (code && message) return `${code}: ${message}`;
+  if (message) return message;
+  if (code) return code;
+  const reason = response.incomplete_details?.reason?.trim();
+  if (reason) return `incomplete (${reason})`;
+  return `OpenAI response status ${response.status ?? "unknown"}`;
+}
+
 export async function retrieveResearch(responseId: string): Promise<{
   status: string;
   research?: CanonicalResearch;
@@ -88,7 +103,7 @@ export async function retrieveResearch(responseId: string): Promise<{
     return {
       status,
       metadata,
-      error: response.error?.message || `OpenAI response status ${status}`,
+      error: formatOpenAiResponseError(response),
     };
   }
 
