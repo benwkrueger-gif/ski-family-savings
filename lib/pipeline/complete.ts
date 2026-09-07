@@ -97,10 +97,8 @@ export async function generateAndUploadPdfs(reportId: string): Promise<CustomerR
       season: DEFAULT_SEASON,
     });
 
-    const [scan, plan] = await Promise.all([
-      generateReportPdfBuffer({ data, type: "free" }),
-      generateReportPdfBuffer({ data, type: "full" }),
-    ]);
+    const scan = await generateReportPdfBuffer({ data, type: "free" });
+    const plan = await generateReportPdfBuffer({ data, type: "full" });
 
     log.info("pdf_generated", { reportId, scan: scan.filename, plan: plan.filename });
 

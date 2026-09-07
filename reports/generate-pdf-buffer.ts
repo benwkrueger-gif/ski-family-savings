@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { htmlDocument, outputName, renderReportBody, type ReportType } from "./render-html";
 import type { ReportData } from "./schema";
+import { serverlessChromiumPackUrl } from "./chromium-pack";
 
 export type { ReportType };
 
@@ -54,11 +55,18 @@ export async function generateReportPdfBuffer(options: {
   if (isServerless()) {
     const chromium = (await import("@sparticuz/chromium")).default;
     const puppeteer = (await import("puppeteer-core")).default;
-    const browser = await puppeteer.launch({
-      args: chromium.args,
-      executablePath: await chromium.executablePath(),
-      headless: true,
-    });
+    chromium.setGraphicsMode = false;
+    let browser;
+    try {
+      browser = await puppeteer.launch({
+        args: chromium.args,
+        executablePath: await chromium.executablePath(serverlessChromiumPackUrl()),
+        headless: "shell",
+      });
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      throw new Error(`Chromium/Puppeteer startup failed: ${detail}`);
+    }
     try {
       const page = await browser.newPage();
       await page.setContent(html, { waitUntil: "load", timeout: 60_000 });
