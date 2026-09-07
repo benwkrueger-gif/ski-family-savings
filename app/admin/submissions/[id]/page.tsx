@@ -6,6 +6,7 @@ import { getDb } from "@/lib/db";
 import { pipelineLogs } from "@/lib/db/schema";
 import { getReportById } from "@/lib/pipeline/store";
 import { driveFileUrl, driveFolderUrl } from "@/lib/google/urls";
+import { gmailDraftUrl } from "@/lib/google/gmail";
 import { SubmissionActions } from "./SubmissionActions";
 
 export const dynamic = "force-dynamic";
@@ -102,7 +103,16 @@ export default async function SubmissionDetailPage({
                 "—"
               )}
             </li>
-            <li>Gmail draft: {report.gmailDraftId || "—"}</li>
+            <li>
+              Gmail draft:{" "}
+              {report.gmailDraftId ? (
+                <a className="underline" href={gmailDraftUrl(report.gmailDraftId)} target="_blank">
+                  open draft
+                </a>
+              ) : (
+                "—"
+              )}
+            </li>
             <li>Purchased: {report.purchasedAt ? String(report.purchasedAt) : "no"}</li>
             <li>Stripe session: {report.stripeCheckoutSessionId || "—"}</li>
             <li>Paid message: {report.gmailPaidMessageId || "—"}</li>

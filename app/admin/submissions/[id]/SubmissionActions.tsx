@@ -7,19 +7,27 @@ import type { CustomerReport } from "@/lib/db/schema";
 async function post(url: string) {
   const response = await fetch(url, { method: "POST" });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || "Request failed");
+  if (!response.ok) throw new Error(data.message || data.error || "Request failed");
+  return data as { ok?: boolean; message?: string; action?: string };
 }
 
 export function SubmissionActions({ report }: { report: CustomerReport }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
 
   async function run(label: string, url: string) {
     setBusy(label);
     setError(null);
+    setInfo(null);
     try {
-      await post(url);
+      const data = await post(url);
+      if (data.ok === false) {
+        setError(data.message || "Request failed");
+      } else if (data.message) {
+        setInfo(data.message);
+      }
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -29,6 +37,7 @@ export function SubmissionActions({ report }: { report: CustomerReport }) {
   }
 
   const actions = [
+    { id: "recover", label: "Check / Recover Research", url: `/api/admin/reports/${report.id}/recover` },
     { id: "research", label: "Run / retry research", url: `/api/admin/reports/${report.id}/research` },
     { id: "pdfs", label: "Regenerate PDFs", url: `/api/admin/reports/${report.id}/pdfs` },
     { id: "offer", label: "Recalculate offer mode", url: `/api/admin/reports/${report.id}/offer-mode` },
@@ -49,6 +58,7 @@ export function SubmissionActions({ report }: { report: CustomerReport }) {
           {busy === action.id ? "Working…" : action.label}
         </button>
       ))}
+      {info ? <p className="w-full text-sm text-muted">{info}</p> : null}
       {error ? <p className="w-full text-sm text-red-700">{error}</p> : null}
     </div>
   );

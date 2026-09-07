@@ -39,6 +39,16 @@ export const READY_FOR_REVIEW_STATUSES: PipelineStatus[] = [
   "PDFS_READY",
 ];
 
+export const RECOVERABLE_RESEARCH_STATUSES: PipelineStatus[] = [
+  "RESEARCH_STARTING",
+  "RESEARCHING",
+  "RESEARCH_COMPLETE",
+  "PDF_GENERATING",
+  "PDF_FAILED",
+  "PDFS_READY",
+  "DRAFT_FAILED",
+];
+
 export function isTerminalPaidStatus(status: PipelineStatus | null | undefined): boolean {
   return status === "PLAN_DELIVERED" || status === "PLAN_DELIVERING";
 }

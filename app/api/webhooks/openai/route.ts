@@ -1,13 +1,7 @@
-import { after } from "next/server";
 import OpenAI from "openai";
 import { log } from "@/lib/logger";
-import { openaiClient, retrieveResearch, metadataReportId } from "@/lib/openai/research";
-import { continueAfterResearch, storeCompletedResearch } from "@/lib/pipeline/complete";
-import {
-  getReportById,
-  getReportByOpenAiResponseId,
-  markError,
-} from "@/lib/pipeline/store";
+import { openaiClient } from "@/lib/openai/research";
+import { completeOpenAiWebhookResponse } from "@/lib/pipeline/recover";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -34,74 +28,31 @@ export async function POST(request: Request) {
 
   if (!responseId) return new Response("ok", { status: 200 });
 
-  if (type === "response.failed" || type === "response.incomplete" || type === "response.cancelled") {
-    let report = await getReportByOpenAiResponseId(responseId);
-    let detail = `OpenAI ${type}`;
-    try {
-      const retrieved = await retrieveResearch(responseId);
-      detail = retrieved.error || detail;
-      if (!report) {
-        const reportId = metadataReportId(retrieved.metadata);
-        if (reportId) report = (await getReportById(reportId)) ?? undefined;
-      }
-    } catch (error) {
-      log.error("openai_failure_retrieve_failed", {
-        openaiResponseId: responseId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-    if (report) {
-      await markError(report.id, "RESEARCH_FAILED", detail);
-      log.error("research_failed", {
-        reportId: report.id,
-        openaiResponseId: responseId,
-        type,
-        detail,
-      });
-    }
+  const shouldIngest =
+    type === "response.completed" ||
+    type === "response.failed" ||
+    type === "response.incomplete" ||
+    type === "response.cancelled";
+
+  if (!shouldIngest) {
     return new Response("ok", { status: 200 });
   }
 
-  if (type !== "response.completed") {
-    return new Response("ok", { status: 200 });
-  }
-
-  after(async () => {
-    try {
-      const retrieved = await retrieveResearch(responseId);
-      const reportId =
-        metadataReportId(retrieved.metadata) ||
-        (await getReportByOpenAiResponseId(responseId))?.id;
-      if (!reportId) {
-        log.error("openai_webhook_unmatched", { openaiResponseId: responseId });
-        return;
-      }
-      const report = await getReportById(reportId);
-      if (!report) return;
-
-      if (report.researchJson && report.openaiResponseId === responseId && report.pdfsReadyAt) {
-        log.info("openai_webhook_already_processed", { reportId, openaiResponseId: responseId });
-        return;
-      }
-
-      if (!retrieved.research) {
-        await markError(reportId, "RESEARCH_FAILED", retrieved.error || "Missing research JSON");
-        return;
-      }
-
-      await storeCompletedResearch({
-        reportId,
-        research: retrieved.research,
-        openaiResponseId: responseId,
-      });
-      await continueAfterResearch(reportId);
-    } catch (error) {
-      log.error("openai_webhook_processing_failed", {
-        openaiResponseId: responseId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
+  const result = await completeOpenAiWebhookResponse(responseId);
+  log.info("openai_webhook_processed", {
+    type,
+    openaiResponseId: responseId,
+    action: result.action,
+    reportStatus: result.reportStatus,
   });
+
+  if (result.action === "error") {
+    log.error("openai_webhook_processing_failed", {
+      openaiResponseId: responseId,
+      error: result.message,
+    });
+    return new Response(result.message, { status: 500 });
+  }
 
   return new Response("ok", { status: 200 });
 }
