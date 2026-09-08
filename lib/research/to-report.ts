@@ -220,7 +220,10 @@ export function researchToReportData(options: {
 }
 
 const LEAK_HINTS =
-  /\b(ikon|epic pass|indy(?:\s+pass)?|mountain collective|kids ski free|promo code|discount code|blackout dates?|https?:\/\/|www\.)\b/i;
+  /\b(ikon|epic pass|indy(?:\s+pass)?|mountain collective|kids ski free|promo code|discount code|blackout dates?|passport|vouchers?|sales open|proof of grade|corporate (?:pricing|program|access|savings)|https?:\/\/|www\.)\b/i;
+
+const SCAN_CALENDAR_DATE =
+  /\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:,\s+\d{4})?\b/i;
 
 export function freeScanLeakFlags(data: ReportData): string[] {
   const flags: string[] = [];
@@ -252,8 +255,23 @@ export function freeScanLeakFlags(data: ReportData): string[] {
     .filter(Boolean)
     .join("\n");
 
-  if (LEAK_HINTS.test(blobs)) {
+  if (LEAK_HINTS.test(blobs) || SCAN_CALENDAR_DATE.test(blobs)) {
     flags.push("Free Scan copy may reveal a program name, deadline, or link.");
+  }
+
+  const allowedDollarAmounts = new Set(
+    [
+      data.summary.headlineSavings,
+      data.summary.conditionalSavings,
+      scan.cta?.price,
+    ].flatMap((value) => value?.match(/\$\d+(?:,\d{3})*(?:\.\d{1,2})?/g) ?? []),
+  );
+  const dollarAmounts = blobs.match(/\$\d+(?:,\d{3})*(?:\.\d{1,2})?/g) ?? [];
+  const forbiddenDollarAmounts = [
+    ...new Set(dollarAmounts.filter((amount) => !allowedDollarAmounts.has(amount))),
+  ];
+  for (const amount of forbiddenDollarAmounts) {
+    flags.push(`Free Scan copy includes unapproved paid-detail amount ${amount}.`);
   }
 
   for (const opportunity of data.opportunities) {

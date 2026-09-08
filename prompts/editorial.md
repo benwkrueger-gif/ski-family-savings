@@ -28,7 +28,7 @@ The Scan is a personal note: greeting, what looks promising, the savings range w
 
 Do not name the product in the Scan even in shortened form. If the Plan product is "Winter Park Youth Season Pass" or "Steamboat 4-Day Ticket Pack", the Scan can say there is a useful option at that mountain. It cannot say youth season pass, 4-day ticket pack, or the official product name.
 
-Scan findings should not include dollar amounts. The savingsLine should use headlineToUse exactly.
+The Scan may repeat only the approved high-level savings strings from dollarStringsToUseExactly. It must not include product prices or any other dollar amount. The savingsLine should use headlineToUse exactly.
 
 If savings.note says the savings are counted, say that plainly. Do not hedge counted savings with "if things line up" or "you could save." If they are only possible, say that plainly. Do not present possible savings as money already in the bank.
 

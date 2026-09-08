@@ -10,7 +10,7 @@ import {
   type ReportWriting,
 } from "@/lib/copy/writing-schema";
 import { stripEmDashes } from "@/lib/copy/sanitize";
-import { shortMountainName } from "@/lib/copy/reports";
+import { buildScanCopy, shortMountainName } from "@/lib/copy/reports";
 import type { OfferMode } from "@/lib/pipeline/status";
 import {
   formatCustomerRange,
@@ -89,6 +89,11 @@ export function buildEditorialFactPacket(options: {
       fitFacts: item.opportunity.familyFit,
       howItWorks: item.opportunity.howItWorks,
       actionFacts: item.opportunity.recommendedAction,
+      pricingWarning: expiredPriceFact(
+        `${item.opportunity.countReason} ${item.opportunity.calculation} ${item.opportunity.deadline ?? ""}`,
+      )
+        ? "The saved price tier is expired. Do not present it as currently available. Tell the customer to confirm the current price, and keep its savings conditional or uncounted."
+        : null,
       scenarios: item.scenarios.map((scenario) => ({
         label: scenario.label,
         normalCost: scenario.baseline,
@@ -160,11 +165,144 @@ export class EditorialTimeoutError extends Error {
   }
 }
 
-export const EDITORIAL_RETRY_FLOOR_MS = 25_000;
 export const EDITORIAL_MAX_OUTPUT_TOKENS = 8_000;
 
 export function remainingEditorialMs(timeoutMs: number, startedAt: number, now = Date.now()): number {
   return timeoutMs - (now - startedAt);
+}
+
+export function repairCopyPunctuation(text: string): string {
+  return text
+    .replace(/,([^\s\d])/g, ", $1")
+    .replace(/\bthe family\b/gi, "your family")
+    .replace(/\b(?:your|the) household\b/gi, "your family");
+}
+
+export function calendarDateFacts(text: string): string[] {
+  return [
+    ...text.matchAll(
+      /\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:,\s+\d{4})?/gi,
+    ),
+  ].map((match) => match[0]);
+}
+
+function hasCalendarFact(text: string, fact: string): boolean {
+  const monthDay = fact.replace(/,\s+\d{4}$/, "");
+  return new RegExp(monthDay.replace(/\s+/g, "\\s+"), "i").test(text);
+}
+
+export function repairEditorialWriting(
+  writing: ReportWriting,
+  research: CanonicalResearch,
+  offerMode: OfferMode = "FULL_PLAN_FREE",
+): ReportWriting {
+  const sanitized = sanitizeWriting(writing);
+  const fallbackScan = buildScanCopy({ research, offerMode });
+  const fallbackFindings = fallbackScan.findings ?? [];
+  const repairScanField = (text: string, fallback: string) =>
+    scanPaidContentIssues(text, research).length > 0 ? fallback : text;
+  return parseReportWriting({
+    ...sanitized,
+    scan: {
+      ...sanitized.scan,
+      opening: repairScanField(
+        sanitized.scan.opening,
+        "Thanks for letting me look at your winter. I found a couple things worth checking for your home-mountain season.",
+      ),
+      findings: sanitized.scan.findings.map((finding, index) => ({
+        heading: repairScanField(
+          finding.heading,
+          fallbackFindings[index]?.heading ?? "Something worth a look",
+        ),
+        explanation: repairScanField(
+          finding.explanation,
+          fallbackFindings[index]?.explanation ?? "There's a useful option worth checking.",
+        ),
+      })),
+      myTake: repairScanField(
+        sanitized.scan.myTake,
+        fallbackScan.myTake ??
+          "I'd start with the verified child-access option, then confirm current home-mountain pricing.",
+      ),
+      questions: sanitized.scan.questions.filter(
+        (question) => scanPaidContentIssues(question, research).length === 0,
+      ),
+    },
+    plan: {
+      ...sanitized.plan,
+      startHere: sanitized.plan.startHere.map((step) => {
+        const source = research.paidPlan.startHere.find((item) => item.number === step.number);
+        const requiredDates = calendarDateFacts(source?.description ?? "");
+        return requiredDates.some((fact) => !hasCalendarFact(step.description, fact)) && source
+          ? { ...step, description: repairCopyPunctuation(source.description) }
+          : step;
+      }),
+      opportunities: sanitized.plan.opportunities.map((copy) => {
+        const source = research.opportunities.find((item) => item.id === copy.id);
+        const requiredDates = calendarDateFacts(source?.deadline ?? "");
+        const kept = `${copy.timingNote ?? ""} ${copy.action}`;
+        return requiredDates.some((fact) => !hasCalendarFact(kept, fact)) && source?.deadline
+          ? { ...copy, timingNote: repairCopyPunctuation(source.deadline) }
+          : copy;
+      }),
+    },
+  });
+}
+
+export function scanDollarIssues(options: {
+  scanText: string;
+  approvedSavings: string[];
+  allowPlanPrice?: boolean;
+}): string[] {
+  const allowed = new Set(
+    options.approvedSavings.flatMap(
+      (value) => value.match(/\$\d+(?:,\d{3})*(?:\.\d{1,2})?/g) ?? [],
+    ),
+  );
+  if (options.allowPlanPrice) allowed.add("$49");
+  const used = options.scanText.match(/\$\d+(?:,\d{3})*(?:\.\d{1,2})?/g) ?? [];
+  const forbidden = [...new Set(used.filter((amount) => !allowed.has(amount)))];
+  return forbidden.map((amount) => `Scan copy includes unapproved paid-detail amount ${amount}`);
+}
+
+const SCAN_PAID_MECHANICS =
+  /\b(passport|vouchers?|blackout|register(?:ed| by)?|sales open|purchase|proof of (?:grade|age)|fifth grade (?:offer|benefit|option|program)|qualif(?:y|ies|ied)|corporate (?:pricing|program|access|savings)|employers?|human resources|\bHR\b|book(?:ed|ing)? .{0,20}(?:ahead|advance)|adult .{0,20}valid access)\b/i;
+
+export function scanPaidContentIssues(
+  text: string,
+  research: CanonicalResearch,
+): string[] {
+  const issues: string[] = [];
+  if (calendarDateFacts(text).length > 0) issues.push("Scan copy includes a deadline");
+  if (/\bhttps?:\/\//i.test(text) || /@/.test(text)) issues.push("Scan copy includes a link or email");
+  if (SCAN_PAID_MECHANICS.test(text)) issues.push("Scan copy includes paid program mechanics");
+  const lower = text.toLowerCase();
+  for (const item of research.opportunities) {
+    if (lower.includes(item.name.toLowerCase())) {
+      issues.push(`Scan copy includes paid program name "${item.name}"`);
+    }
+  }
+  return [...new Set(issues)];
+}
+
+export function expiredPriceFact(
+  text: string,
+  now = new Date(),
+): string | null {
+  const match = text.match(
+    /(?:valid(?:\s+only)?\s+through|purchase\s+by)\s+(September|October|November|December|January|February|March|April|May|June|July|August)\s+(\d{1,2})(?:,?\s+(\d{4}))?/i,
+  );
+  if (!match) return null;
+  const year = Number(match[3] ?? now.getUTCFullYear());
+  const expires = new Date(`${match[1]} ${match[2]}, ${year} 23:59:59 UTC`);
+  if (Number.isNaN(expires.getTime()) || now.getTime() <= expires.getTime()) return null;
+  return `${match[1]} ${match[2]}, ${year}`;
+}
+
+function acknowledgesExpiredPrice(text: string): boolean {
+  return /\b(expired|past|no longer current|current .{0,30}(?:price|prices|pricing|rate|rates)|today'?s .{0,30}(?:price|prices|pricing|rate|rates)|confirm .{0,30}(?:price|prices|pricing|rate|rates)|call .{0,40}(?:price|prices|pricing|rate|rates)|not counted)\b/i.test(
+    text,
+  );
 }
 
 function dropTeaserSentences(text: string): string {
@@ -205,7 +343,11 @@ export function reuseSavedWriting(options: {
 }): ReportWriting | null {
   if (options.stored == null) return null;
   try {
-    const parsed = sanitizeWriting(parseReportWriting(options.stored));
+    const parsed = repairEditorialWriting(
+      parseReportWriting(options.stored),
+      options.research,
+      options.offerMode,
+    );
     const adapted = adaptWritingForOfferMode(parsed, options.offerMode);
     const issues = editorialQualityIssues({
       writing: adapted,
@@ -221,7 +363,7 @@ export function reuseSavedWriting(options: {
 function sanitizeWriting(writing: ReportWriting): ReportWriting {
   const walk = (value: unknown): unknown => {
     if (typeof value === "string") {
-      return stripEmDashes(value)
+      return repairCopyPunctuation(stripEmDashes(value))
         .replace(/[\u2018\u2019]/g, "'")
         .replace(/[\u201C\u201D]/g, '"')
         .replace(/\s{2,}/g, " ")
@@ -263,6 +405,7 @@ export function editorialQualityIssues(options: {
 
   const scanText = collectWritingText(options.writing.scan);
   const scanLower = scanText.toLowerCase();
+  issues.push(...scanPaidContentIssues(scanText, options.research));
   for (const item of options.research.opportunities) {
     if (scanText.includes(item.name)) {
       issues.push(`Scan copy includes paid program name "${item.name}"`);
@@ -276,9 +419,6 @@ export function editorialQualityIssues(options: {
     if (rest.length > 6 && scanLower.includes(rest.toLowerCase())) {
       issues.push(`Scan copy includes shortened program name "${rest}"`);
     }
-  }
-  if (/,([^\s\d])/.test(blob)) {
-    issues.push("missing space after a comma");
   }
   const firstName = options.research.family.firstName;
   if (new RegExp(`\\b(hi|hey|howdy)\\s+${firstName}\\b`, "i").test(options.writing.email.opening)) {
@@ -295,13 +435,19 @@ export function editorialQualityIssues(options: {
   ) {
     issues.push("Scan copy includes paid program mechanics");
   }
-  const findingsText = collectWritingText(options.writing.scan.findings);
-  if (/\$\d/.test(findingsText) || /\$\d/.test(options.writing.scan.myTake)) {
-    issues.push("Scan findings or My take include a dollar amount");
-  }
   const display = summarizeDisplaySavings(options.research);
   const headline =
     display.firmLow > 0 ? display.headlineSavings : (display.conditionalSavings ?? display.headlineSavings);
+  issues.push(
+    ...scanDollarIssues({
+      scanText,
+      approvedSavings: [
+        display.headlineSavings,
+        display.conditionalSavings ?? "",
+      ],
+      allowPlanPrice: options.offerMode === "SCAN_UPSELL",
+    }),
+  );
   const compact = (value: string) => value.replace(/\s*to\s*/gi, "-").replace(/[^\d-]/g, "");
   if (headline && headline !== "$0" && !compact(options.writing.scan.savingsLine).includes(compact(headline))) {
     issues.push(`Scan savingsLine must use ${headline}`);
@@ -323,21 +469,28 @@ export function editorialQualityIssues(options: {
   }
   for (const item of display.opportunities) {
     const copy = options.writing.plan.opportunities.find((entry) => entry.id === item.opportunity.id);
-    const deadline = item.opportunity.deadline ?? "";
-    const monthDay = deadline.match(
-      /\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}\b/i,
-    );
-    if (copy && monthDay) {
+    const deadlineFacts = calendarDateFacts(item.opportunity.deadline ?? "");
+    if (copy && deadlineFacts.length > 0) {
       const checkedAt = new Date(`${item.opportunity.sourceCheckedAt}T12:00:00`);
       const sourceCheckedDay = Number.isNaN(checkedAt.getTime())
         ? ""
         : checkedAt.toLocaleDateString("en-US", { month: "long", day: "numeric" });
-      const isSourceCheckedDate = sourceCheckedDay.toLowerCase() === monthDay[0].toLowerCase();
-      if (item.tier === "WATCH" || isSourceCheckedDate) continue;
       const kept = `${copy.timingNote ?? ""} ${copy.action ?? ""}`;
-      if (!new RegExp(monthDay[0].replace(/\s+/g, "\\s+"), "i").test(kept)) {
-        issues.push(`${item.opportunity.id} must keep the deadline ${monthDay[0]}`);
+      for (const fact of deadlineFacts) {
+        const isSourceCheckedDate = sourceCheckedDay.toLowerCase() === fact.replace(/,\s+\d{4}$/, "").toLowerCase();
+        if (item.tier === "WATCH" || isSourceCheckedDate) continue;
+        if (!hasCalendarFact(kept, fact)) {
+          issues.push(`${item.opportunity.id} must keep mandatory deadline "${fact}"`);
+        }
       }
+    }
+    const expired = expiredPriceFact(
+      `${item.opportunity.countReason} ${item.opportunity.calculation} ${item.opportunity.deadline ?? ""}`,
+    );
+    if (copy && expired && !acknowledgesExpiredPrice(collectWritingText(copy))) {
+      issues.push(
+        `${item.opportunity.id} must say the ${expired} price is expired or requires current-price confirmation`,
+      );
     }
     const assumptionBlob = `${item.assumptions.join(" ")} ${item.facts.join(" ")}`;
     if (!/not an official/i.test(assumptionBlob)) continue;
@@ -347,6 +500,12 @@ export function editorialQualityIssues(options: {
   }
   for (const step of options.writing.plan.startHere) {
     if (/[,;:]\s*$/.test(step.description)) issues.push(`start-here step ${step.number} looks truncated`);
+    const source = options.research.paidPlan.startHere.find((item) => item.number === step.number);
+    for (const fact of calendarDateFacts(source?.description ?? "")) {
+      if (!hasCalendarFact(step.description, fact)) {
+        issues.push(`start-here step ${step.number} must keep mandatory date "${fact}"`);
+      }
+    }
   }
 
   const preview = researchToReportData({
@@ -386,18 +545,15 @@ export async function writeReportCopy(options: {
   const model = env.openaiEditorialModel();
   const timeoutMs = options.timeoutMs ?? env.openaiEditorialTimeoutMs();
   const startedAt = Date.now();
-  let lastIssues: string[] = [];
-
-  for (let attempt = 1; attempt <= 2; attempt += 1) {
-    const remaining = remainingEditorialMs(timeoutMs, startedAt);
-    if (remaining <= 0 || (attempt > 1 && remaining < EDITORIAL_RETRY_FLOOR_MS)) {
-      throw new EditorialTimeoutError(
-        `Editorial timed out after ${Date.now() - startedAt}ms (budget ${timeoutMs}ms)`,
-      );
-    }
-    let response;
-    try {
-      response = await openai.responses.create(
+  const remaining = remainingEditorialMs(timeoutMs, startedAt);
+  if (remaining <= 0) {
+    throw new EditorialTimeoutError(
+      `Editorial timed out after ${Date.now() - startedAt}ms (budget ${timeoutMs}ms)`,
+    );
+  }
+  let response;
+  try {
+    response = await openai.responses.create(
         {
           model,
           store: false,
@@ -416,9 +572,6 @@ export async function writeReportCopy(options: {
                     "Write the customer-facing Scan, Plan, and email copy from these locked facts.",
                     "Do not add programs, prices, dates, or eligibility that are not in the packet.",
                     "Do not use web search. Rewrite only the locked fact packet.",
-                    lastIssues.length
-                      ? `Fix these issues from the previous draft:\n- ${lastIssues.join("\n- ")}`
-                      : "",
                     JSON.stringify(packet),
                   ]
                     .filter(Boolean)
@@ -429,32 +582,30 @@ export async function writeReportCopy(options: {
           ],
         },
         { timeout: remaining, maxRetries: 0 },
+    );
+  } catch (error) {
+    if (isEditorialTimeout(error)) {
+      throw new EditorialTimeoutError(
+        `Editorial OpenAI call timed out after ${Date.now() - startedAt}ms (budget ${timeoutMs}ms)`,
       );
-    } catch (error) {
-      if (isEditorialTimeout(error)) {
-        throw new EditorialTimeoutError(
-          `Editorial OpenAI call timed out after ${Date.now() - startedAt}ms (budget ${timeoutMs}ms)`,
-        );
-      }
-      throw error;
     }
-
-    const text = response.output_text?.trim();
-    if (!text) throw new Error("Editorial model returned no output");
-    const writing = sanitizeWriting(parseReportWriting(JSON.parse(text)));
-    const issues = editorialQualityIssues({
-      writing,
-      research: options.research,
-      offerMode: options.offerMode,
-    });
-    if (issues.length === 0) return writing;
-    lastIssues = issues;
-    if (attempt === 2) {
-      const error = new Error(`Editorial writing failed quality checks: ${issues.join("; ")}`);
-      (error as Error & { writing?: ReportWriting }).writing = writing;
-      throw error;
-    }
+    throw error;
   }
 
-  throw new Error("Editorial writing failed");
+  const text = response.output_text?.trim();
+  if (!text) throw new Error("Editorial model returned no output");
+  const writing = repairEditorialWriting(
+    parseReportWriting(JSON.parse(text)),
+    options.research,
+    options.offerMode,
+  );
+  const issues = editorialQualityIssues({
+    writing,
+    research: options.research,
+    offerMode: options.offerMode,
+  });
+  if (issues.length === 0) return writing;
+  const error = new Error(`Editorial writing failed quality checks: ${issues.join("; ")}`);
+  (error as Error & { writing?: ReportWriting }).writing = writing;
+  throw error;
 }
