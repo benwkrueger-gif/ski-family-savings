@@ -56,6 +56,18 @@ function isFullyDelivered(report: CustomerReport): boolean {
   return artifactStatus(report).deliveryReady || hasPurchased(report.status as PipelineStatus);
 }
 
+async function startNextIfIdle(exceptId?: string): Promise<void> {
+  const { startNextWaitingResearch } = await import("@/lib/pipeline/research");
+  try {
+    await startNextWaitingResearch(exceptId);
+  } catch (error) {
+    log.error("research_start_next_failed", {
+      exceptId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
 export async function recoverExistingResearch(
   reportId: string,
   options?: { incomingResponseId?: string },
@@ -139,16 +151,16 @@ export async function recoverExistingResearch(
       };
     }
 
-    if (FAILED_STATUSES.has(retrieved.status) || !retrieved.research) {
+    if (!retrieved.research) {
       const detail = retrieved.error || `OpenAI response status ${retrieved.status}`;
-      if (report.openaiResponseId === responseId) {
+      if (FAILED_STATUSES.has(retrieved.status) && report.openaiResponseId === responseId) {
         await markError(report.id, "RESEARCH_FAILED", detail);
       }
       return {
         ok: false,
         action: "failed",
         openaiStatus: retrieved.status,
-        reportStatus: "RESEARCH_FAILED",
+        reportStatus: FAILED_STATUSES.has(retrieved.status) ? "RESEARCH_FAILED" : report.status,
         message: detail,
       };
     }
@@ -184,16 +196,18 @@ export async function recoverExistingResearch(
     const needsDraft = artifacts.draft !== "current";
 
     if (!needsPdfs && !needsDraft) {
-      return {
+      const stored = {
         ok: true,
-        action: alreadyStored ? "already_complete" : "ingested",
-        openaiStatus: "completed",
+        action: alreadyStored ? ("already_complete" as const) : ("ingested" as const),
+        openaiStatus: retrieved.status,
         reportStatus: current.status,
         message: alreadyStored
           ? "Research was already stored for this response"
           : "Stored existing OpenAI research",
         report: current,
       };
+      await startNextIfIdle(current.id);
+      return stored;
     }
 
     if (needsPdfs) {
@@ -205,14 +219,16 @@ export async function recoverExistingResearch(
       }
     }
 
-    return {
+    const finished = {
       ok: true,
-      action: "ingested",
-      openaiStatus: "completed",
+      action: "ingested" as const,
+      openaiStatus: retrieved.status,
       reportStatus: current.status,
       message: "Recovered existing research, generated PDFs, and upserted the Gmail draft",
       report: current,
     };
+    await startNextIfIdle(current.id);
+    return finished;
   } catch (error) {
     if (error instanceof JobInProgressError) {
       const current = await getReportById(reportId);
@@ -242,6 +258,7 @@ export async function recoverStuckResearchJobs(): Promise<RecoverResult[]> {
   for (const report of reports) {
     results.push(await recoverExistingResearch(report.id));
   }
+  await startNextIfIdle();
   return results;
 }
 

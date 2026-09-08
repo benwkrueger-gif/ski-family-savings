@@ -52,6 +52,7 @@ export const RECOVERABLE_RESEARCH_STATUSES: PipelineStatus[] = [
   "PDF_FAILED",
   "PDFS_READY",
   "DRAFT_FAILED",
+  "RESEARCH_FAILED",
 ];
 
 export function isTerminalPaidStatus(status: PipelineStatus | null | undefined): boolean {

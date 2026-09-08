@@ -5,7 +5,12 @@ import { addPipelineLog } from "@/lib/db/settings";
 import { customerReports, webhookEvents, type CustomerReport } from "@/lib/db/schema";
 import type { FamilyProfile } from "@/lib/family/profile";
 import { JOB_STALE_MS, jobConflict } from "@/lib/pipeline/artifacts";
-import { RECOVERABLE_RESEARCH_STATUSES, type OfferMode, type PipelineStatus } from "@/lib/pipeline/status";
+import {
+  RECOVERABLE_RESEARCH_STATUSES,
+  RESEARCHING_STATUSES,
+  type OfferMode,
+  type PipelineStatus,
+} from "@/lib/pipeline/status";
 
 export async function getReportById(id: string): Promise<CustomerReport | undefined> {
   const db = getDb();
@@ -180,6 +185,30 @@ export async function setStatus(id: string, status: PipelineStatus, message?: st
   const updated = await updateReport(id, { status, lastError: null });
   if (message) await addPipelineLog(id, status, message);
   return updated;
+}
+
+export async function listActiveResearchReports(): Promise<CustomerReport[]> {
+  const db = getDb();
+  return db
+    .select()
+    .from(customerReports)
+    .where(inArray(customerReports.status, RESEARCHING_STATUSES))
+    .orderBy(desc(customerReports.researchStartedAt), desc(customerReports.updatedAt));
+}
+
+export async function listWaitingResearchReports(): Promise<CustomerReport[]> {
+  const db = getDb();
+  return db
+    .select()
+    .from(customerReports)
+    .where(
+      and(
+        eq(customerReports.status, "RECEIVED"),
+        eq(customerReports.autoResearch, true),
+        isNull(customerReports.researchJson),
+      ),
+    )
+    .orderBy(customerReports.receivedAt, customerReports.createdAt);
 }
 
 export async function listRecoverableResearchReports(): Promise<CustomerReport[]> {

@@ -74,6 +74,37 @@ export function fieldsFromWebhook(payload: TallyWebhookPayload): NormalizedTally
   }));
 }
 
+function compactFieldValue(field: NormalizedTallyField): unknown {
+  if (!field.options?.length) return field.value ?? null;
+  const ids = Array.isArray(field.value) ? field.value : field.value != null ? [field.value] : [];
+  const texts = ids
+    .map((id) => field.options?.find((option) => option.id === id || option.text === id)?.text ?? id)
+    .filter((value) => value != null && value !== "");
+  if (texts.length === 0) return field.value ?? null;
+  return texts.length === 1 ? texts[0] : texts;
+}
+
+export function compactTallyAnswersForResearch(
+  rawTallyJson: unknown,
+): Array<{ label: string; type?: string; value: unknown }> {
+  const payload = rawTallyJson as TallyWebhookPayload & {
+    questions?: TallyApiQuestion[];
+    submission?: TallyApiSubmission;
+  };
+  const fields = payload?.data?.fields
+    ? fieldsFromWebhook(payload)
+    : payload?.questions && payload?.submission
+      ? fieldsFromApi(payload.questions, payload.submission)
+      : [];
+  return fields
+    .filter((field) => field.label || field.value != null)
+    .map((field) => ({
+      label: field.label,
+      type: field.type,
+      value: compactFieldValue(field),
+    }));
+}
+
 export function fieldsFromApi(
   questions: TallyApiQuestion[],
   submission: TallyApiSubmission,

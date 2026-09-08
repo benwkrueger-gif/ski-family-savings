@@ -15,8 +15,8 @@ export async function POST(
 
   const { id } = await context.params;
   try {
-    await startResearch(id);
-    return NextResponse.json({ ok: true });
+    const result = await startResearch(id);
+    return NextResponse.json({ ok: true, ...result });
   } catch (error) {
     log.error("admin_research_failed", {
       reportId: id,
