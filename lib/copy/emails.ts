@@ -239,7 +239,7 @@ export function buildPaidPlanEmail(input: PaidEmailInput): DraftEmail {
   if (recommendation) {
     parts.push({
       type: "text",
-      text: `I'd start with ${recommendation}.`,
+      text: `My first recommendation: ${recommendation}.`,
     });
   }
   parts.push(

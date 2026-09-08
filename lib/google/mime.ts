@@ -21,6 +21,7 @@ export function buildRawEmail(options: {
   text: string;
   html?: string;
   attachments?: Attachment[];
+  messageId?: string;
 }): string {
   const mixedBoundary = `sfs_mixed_${Date.now().toString(16)}_${Math.random().toString(16).slice(2)}`;
   const altBoundary = `sfs_alt_${Date.now().toString(16)}_${Math.random().toString(16).slice(2)}`;
@@ -29,8 +30,9 @@ export function buildRawEmail(options: {
     `To: ${options.to}`,
     `Subject: ${encodeSubject(options.subject)}`,
     "MIME-Version: 1.0",
-    `Content-Type: multipart/mixed; boundary="${mixedBoundary}"`,
   ];
+  if (options.messageId) headers.push(`Message-ID: ${options.messageId}`);
+  headers.push(`Content-Type: multipart/mixed; boundary="${mixedBoundary}"`);
 
   const parts = options.html
     ? [

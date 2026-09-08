@@ -36,10 +36,9 @@ export async function POST(request: Request) {
   });
   if (!claimed) {
     log.info("stripe_webhook_duplicate_event", { eventId: event.id, type: event.type });
-    return new Response("ok", { status: 200 });
   }
 
-  log.info("stripe_payment_received", { eventId: event.id, type: event.type });
+  log.info("stripe_payment_received", { eventId: event.id, type: event.type, duplicate: !claimed });
 
   try {
     if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
@@ -53,8 +52,12 @@ export async function POST(request: Request) {
       if (reportId && full.payment_status === "paid") {
         const report = await getReportById(reportId);
         if (report) {
+          const keepStatus =
+            report.status === "PLAN_DELIVERED" ||
+            report.status === "PLAN_DELIVERING" ||
+            report.status === "PLAN_DELIVERY_FAILED";
           await updateReport(report.id, {
-            status: report.status === "PLAN_DELIVERED" ? report.status : "PURCHASED",
+            status: keepStatus ? report.status : "PURCHASED",
             stripeCheckoutSessionId: full.id,
             stripePaymentStatus: full.payment_status,
             stripePaidAt: new Date(),

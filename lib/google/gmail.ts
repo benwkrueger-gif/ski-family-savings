@@ -53,12 +53,18 @@ export async function upsertGmailDraft(options: {
   return created.data.id;
 }
 
+export function paidRfc822MessageId(reportId: string, sessionId: string): string {
+  const session = sessionId.replace(/[^a-zA-Z0-9-]/g, "").slice(-16) || "session";
+  return `<paid.${reportId}.${session}@skifamilysavings.com>`;
+}
+
 export async function sendGmailMessage(options: {
   to: string;
   subject: string;
   body: string;
   html?: string;
   attachments: GmailAttachment[];
+  messageId?: string;
 }): Promise<string> {
   const gmail = await gmailClient();
   const raw = buildRawEmail({
@@ -68,6 +74,7 @@ export async function sendGmailMessage(options: {
     text: options.body,
     html: options.html,
     attachments: options.attachments,
+    messageId: options.messageId,
   });
   const sent = await gmail.users.messages.send({
     userId: "me",
@@ -75,6 +82,23 @@ export async function sendGmailMessage(options: {
   });
   if (!sent.data.id) throw new Error("Gmail did not return a message id");
   return sent.data.id;
+}
+
+export async function findSentPaidMessage(options: {
+  to: string;
+  rfc822MessageId: string;
+}): Promise<string | null | "search-failed"> {
+  try {
+    const gmail = await gmailClient();
+    const listed = await gmail.users.messages.list({
+      userId: "me",
+      q: `in:sent to:${options.to} rfc822msgid:${options.rfc822MessageId.replace(/^<|>$/g, "")}`,
+      maxResults: 1,
+    });
+    return listed.data.messages?.[0]?.id ?? null;
+  } catch {
+    return "search-failed";
+  }
 }
 
 export function gmailDraftUrl(draftId: string): string {

@@ -4,7 +4,7 @@ import { getDb } from "@/lib/db";
 import { stripeFulfillments } from "@/lib/db/schema";
 import { addPipelineLog } from "@/lib/db/settings";
 import { downloadDriveFile } from "@/lib/google/drive";
-import { sendGmailMessage } from "@/lib/google/gmail";
+import { sendGmailMessage, findSentPaidMessage, paidRfc822MessageId } from "@/lib/google/gmail";
 import { assertSameCustomer, emailsMatch } from "@/lib/identity";
 import { log } from "@/lib/logger";
 import { parseResearch } from "@/lib/research/schema";
@@ -15,7 +15,33 @@ import { getReportById, markError, updateReport } from "./store";
 import { sessionLooksPaid, type StripeSessionLike } from "@/lib/stripe/session";
 
 export type { StripeSessionLike };
-export { sessionLooksPaid };
+
+export type PaidSendDecision =
+  | { action: "skip"; reason: string }
+  | { action: "recover"; messageId: string }
+  | { action: "send" };
+
+export function decidePaidSend(input: {
+  paid: boolean;
+  alreadyFulfilled: boolean;
+  gmailPaidMessageId?: string | null;
+  status?: string | null;
+  recoveredMessageId?: string | null | "search-failed";
+}): PaidSendDecision {
+  if (!input.paid) return { action: "skip", reason: "session is not paid" };
+  if (input.alreadyFulfilled) return { action: "skip", reason: "already fulfilled" };
+  if (input.gmailPaidMessageId) return { action: "recover", messageId: input.gmailPaidMessageId };
+  if (input.status === "PLAN_DELIVERED") return { action: "skip", reason: "already delivered" };
+  if (input.status === "PLAN_DELIVERING" || input.status === "PLAN_DELIVERY_FAILED") {
+    if (typeof input.recoveredMessageId === "string" && input.recoveredMessageId !== "search-failed") {
+      return { action: "recover", messageId: input.recoveredMessageId };
+    }
+    if (input.recoveredMessageId === "search-failed") {
+      return { action: "skip", reason: "delivery uncertain; not resending" };
+    }
+  }
+  return { action: "send" };
+}
 
 export async function alreadyFulfilledSession(sessionId: string): Promise<boolean> {
   const db = getDb();
@@ -106,8 +132,33 @@ export async function fulfillPaidPlan(options: {
     return { delivered: false, reason: mismatch, reportId: report.id };
   }
 
-  if (report.gmailPaidMessageId || report.status === "PLAN_DELIVERED") {
-    log.info("paid_report_already_sent", { reportId: report.id, stripeSessionId: session.id });
+  const rfc822Id = paidRfc822MessageId(report.id, session.id);
+  let recovered: string | null | "search-failed" = null;
+  if (
+    !report.gmailPaidMessageId &&
+    (report.status === "PLAN_DELIVERING" || report.status === "PLAN_DELIVERY_FAILED")
+  ) {
+    recovered = await findSentPaidMessage({ to: report.email, rfc822MessageId: rfc822Id });
+  }
+  const decision = decidePaidSend({
+    paid: true,
+    alreadyFulfilled: false,
+    gmailPaidMessageId: report.gmailPaidMessageId,
+    status: report.status,
+    recoveredMessageId: recovered,
+  });
+  if (decision.action === "skip") {
+    log.info("paid_report_already_sent", { reportId: report.id, stripeSessionId: session.id, reason: decision.reason });
+    return { delivered: false, reason: decision.reason, reportId: report.id };
+  }
+  if (decision.action === "recover") {
+    await markPaidDelivered({
+      reportId: report.id,
+      sessionId: session.id,
+      stripeEventId: options.stripeEventId,
+      messageId: decision.messageId,
+      paymentStatus: session.payment_status ?? "paid",
+    });
     return { delivered: false, reason: "already delivered", reportId: report.id };
   }
 
@@ -135,21 +186,16 @@ export async function fulfillPaidPlan(options: {
       body: email.body,
       html: email.html,
       attachments: [{ filename: report.planFilename, contentType: "application/pdf", bytes }],
+      messageId: rfc822Id,
     });
-
-    await updateReport(report.id, {
-      status: "PLAN_DELIVERED",
-      gmailPaidMessageId: messageId,
-      planDeliveredAt: new Date(),
-      lastError: null,
-    });
-    await recordFulfillment({
-      stripeEventId: options.stripeEventId,
-      stripeSessionId: session.id,
+    await updateReport(report.id, { gmailPaidMessageId: messageId });
+    await markPaidDelivered({
       reportId: report.id,
-      status: "delivered",
+      sessionId: session.id,
+      stripeEventId: options.stripeEventId,
+      messageId,
+      paymentStatus: session.payment_status ?? "paid",
     });
-    await addPipelineLog(report.id, "PLAN_DELIVERED", `Paid Savings Plan emailed (${messageId})`);
     log.info("paid_report_sent", { reportId: report.id, stripeSessionId: session.id, gmailMessageId: messageId });
     return { delivered: true, reason: "sent", reportId: report.id };
   } catch (error) {
@@ -165,6 +211,28 @@ export async function fulfillPaidPlan(options: {
   }
 }
 
+async function markPaidDelivered(options: {
+  reportId: string;
+  sessionId: string;
+  stripeEventId: string;
+  messageId: string;
+  paymentStatus: string;
+}) {
+  await updateReport(options.reportId, {
+    status: "PLAN_DELIVERED",
+    gmailPaidMessageId: options.messageId,
+    planDeliveredAt: new Date(),
+    lastError: null,
+  });
+  await recordFulfillment({
+    stripeEventId: options.stripeEventId,
+    stripeSessionId: options.sessionId,
+    reportId: options.reportId,
+    status: "delivered",
+  });
+  await addPipelineLog(options.reportId, "PLAN_DELIVERED", `Paid Savings Plan emailed (${options.messageId})`);
+}
+
 export async function retryPaidDelivery(reportId: string): Promise<CustomerReport> {
   const report = await getReportById(reportId);
   if (!report) throw new Error("Report not found");
@@ -178,7 +246,12 @@ export async function retryPaidDelivery(reportId: string): Promise<CustomerRepor
       customer_email: report.email,
     },
   });
-  if (!result.delivered && result.reason !== "already fulfilled" && result.reason !== "already delivered") {
+  if (
+    !result.delivered &&
+    result.reason !== "already fulfilled" &&
+    result.reason !== "already delivered" &&
+    result.reason !== "delivery uncertain; not resending"
+  ) {
     throw new Error(result.reason);
   }
   const updated = await getReportById(reportId);

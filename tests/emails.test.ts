@@ -198,7 +198,8 @@ test("paid plan email is short, first person, and has no checkout CTA", () => {
   });
   assert.equal(email.subject, "Your full Ski Savings Plan is ready");
   assert.match(email.body, /Hey Ada,/);
-  assert.match(email.body, /I'd start with Get the Winter Park youth pass/);
+  assert.match(email.body, /My first recommendation: Get the Winter Park youth pass/);
+  assert.doesNotMatch(email.body, /I'd start with Get the Winter Park youth pass/);
   assert.match(email.body, /worth the \$49/);
   assert.doesNotMatch(email.body, /buy\.stripe|Get the full Savings Plan for \$49/i);
   assert.doesNotMatch(email.html, /href=/i);
@@ -212,5 +213,6 @@ test("paid plan email omits an unsafe or missing recommendation", () => {
     startHereRecommendation: "Buy the $119 lesson at https://example.com",
   });
   assert.doesNotMatch(email.body, /I'd start with/);
+  assert.doesNotMatch(email.body, /My first recommendation/);
   assert.doesNotMatch(email.body, /\$119|example\.com/);
 });
