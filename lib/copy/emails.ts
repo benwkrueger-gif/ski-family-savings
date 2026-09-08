@@ -1,6 +1,10 @@
 import type { OfferMode } from "@/lib/pipeline/status";
 import { stripEmDashes } from "@/lib/copy/sanitize";
 
+export const SCAN_UPSELL_SUBJECT = "Your ski savings scan is ready";
+export const FREE_PLAN_SUBJECT = "Your ski savings plan is ready";
+export const CHECKOUT_LINK_LABEL = "Get the full Savings Plan for $49";
+
 export type DraftEmailInput = {
   firstName: string;
   offerMode: OfferMode;
@@ -10,24 +14,29 @@ export type DraftEmailInput = {
   enthusiasmLevel?: "HIGH" | "MEDIUM" | "LOW" | "NONE" | string | null;
   checkoutUrl?: string | null;
   coreSavingsLow: number;
+  mountains?: string[];
+  findings?: string[];
+  planPageCount?: number | null;
 };
 
 export type PaidEmailInput = {
   firstName: string;
 };
 
-function observationLine(value?: string | null): string {
-  const text = stripEmDashes(value ?? "").trim();
-  if (!text || /\bthe family\b/i.test(text)) return "";
-  return text.endsWith(".") ? text : `${text}.`;
+export type DraftEmail = {
+  subject: string;
+  body: string;
+  html: string;
+};
+
+type EmailPart = { type: "text"; text: string } | { type: "link"; label: string; href: string };
+
+export function scanUpsellSubject(): string {
+  return SCAN_UPSELL_SUBJECT;
 }
 
-export function scanUpsellSubject(firstName: string): string {
-  return stripEmDashes(`${firstName}, I found some ski savings for your family`);
-}
-
-export function freePlanSubject(firstName: string): string {
-  return stripEmDashes(`${firstName}, here's what I found for your family`);
+export function freePlanSubject(): string {
+  return FREE_PLAN_SUBJECT;
 }
 
 export function paidPlanSubject(): string {
@@ -38,76 +47,173 @@ export function initialDraftAttachmentKind(offerMode: OfferMode): "scan" | "plan
   return offerMode === "SCAN_UPSELL" ? "scan" : "plan";
 }
 
-export function buildInitialDraftEmail(input: DraftEmailInput): { subject: string; body: string } {
+export function escapeEmailHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+export function visibleEmailHtml(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<a\b[^>]*>/gi, "")
+    .replace(/<\/a>/gi, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function looksLikePaidDetail(text: string): boolean {
+  return (
+    /\$\d/.test(text) ||
+    /\bhttps?:\/\//i.test(text) ||
+    /\b[\w.-]+\.(com|org|net)\b/i.test(text) ||
+    /\b(register by|blackout dates?|eligib|deadline|RFID|voucher|passport)\b/i.test(text) ||
+    /\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}\b/i.test(
+      text,
+    )
+  );
+}
+
+function joinPhrase(items: string[]): string {
+  if (items.length === 0) return "";
+  if (items.length === 1) return items[0]!;
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(", ")}, and ${items.at(-1)}`;
+}
+
+function mountainsPhrase(mountains: string[] | undefined): string {
+  const names = (mountains ?? [])
+    .map((item) => stripEmDashes(item).trim())
+    .filter(Boolean)
+    .slice(0, 3);
+  return joinPhrase(names);
+}
+
+export function highLevelFindingsPhrase(findings: string[] | undefined): string | null {
+  const cleaned = (findings ?? [])
+    .map((item) => stripEmDashes(item).trim().replace(/\.+$/, ""))
+    .filter((item) => item.length >= 4 && item.length <= 90 && !looksLikePaidDetail(item))
+    .slice(0, 2);
+  if (cleaned.length === 0) return null;
+  const [first, second] = cleaned;
+  if (!second) return first!.charAt(0).toLowerCase() + first!.slice(1);
+  return `${first!.charAt(0).toLowerCase() + first!.slice(1)} and ${second.charAt(0).toLowerCase()}${second.slice(1)}`;
+}
+
+function planPhrase(planPageCount?: number | null): string {
+  if (typeof planPageCount === "number" && Number.isInteger(planPageCount) && planPageCount > 0) {
+    return `the full ${planPageCount}-page Savings Plan`;
+  }
+  return "the full Savings Plan";
+}
+
+function renderPlain(parts: EmailPart[]): string {
+  return stripEmDashes(
+    parts
+      .map((part) => (part.type === "link" ? `${part.label}\n${part.href}` : part.text))
+      .join("\n\n")
+      .replace(/\n{3,}/g, "\n\n"),
+  );
+}
+
+function renderHtml(parts: EmailPart[]): string {
+  const inner = parts
+    .map((part) => {
+      if (part.type === "link") {
+        return `<p><a href="${escapeEmailHtml(part.href)}">${escapeEmailHtml(part.label)}</a></p>`;
+      }
+      return part.text
+        .split("\n\n")
+        .map((paragraph) => `<p>${escapeEmailHtml(paragraph).replace(/\n/g, "<br>")}</p>`)
+        .join("");
+    })
+    .join("");
+  return `<!DOCTYPE html><html><body>${inner}</body></html>`;
+}
+
+function fromParts(subject: string, parts: EmailPart[]): DraftEmail {
+  return {
+    subject: stripEmDashes(subject),
+    body: renderPlain(parts),
+    html: renderHtml(parts),
+  };
+}
+
+export function buildInitialDraftEmail(input: DraftEmailInput): DraftEmail {
   const firstName = input.firstName || "there";
-  const observation = observationLine(input.personalizedObservation);
+  const mountains = mountainsPhrase(input.mountains);
+  const around = mountains ? ` around ${mountains}` : "";
 
   if (input.offerMode === "SCAN_UPSELL") {
-    const lines = [
-      `Hey ${firstName},`,
-      "",
-      input.emailOpening || "Super glad you filled this out. I had fun looking through this one.",
-      observation ? "" : null,
-      observation || null,
-      "",
-      `I found some pretty good stuff for you. It looks like there's roughly ${input.savingsRange} worth a look based on the ski plans you sent me.`,
-      "",
-      "I attached the quick Savings Scan here.",
-      "",
-      "I also already put together the full Savings Plan with exactly what I found, who qualifies, deadlines, and direct links.",
-      "",
-      "If you want it, it's $49 here:",
-      "",
-      input.checkoutUrl ?? "",
-      "",
-      "And genuinely, if you get it and don't think it was worth the $49, just reply and tell me. I'll refund it. No hoops or weirdness.",
-      "",
-      "Hope this helps!",
-      "",
-      "Ben",
-    ].filter((line) => line !== null);
-
-    return {
-      subject: scanUpsellSubject(firstName),
-      body: stripEmDashes(lines.join("\n").replace(/\n{3,}/g, "\n\n")),
-    };
+    const findings = highLevelFindingsPhrase(input.findings);
+    const fallbackFindings = mountains ? `a couple of useful options around ${mountains}` : "a couple of useful options";
+    const parts: EmailPart[] = [
+      { type: "text", text: `Hey ${firstName},` },
+      {
+        type: "text",
+        text: `I've put together a quick scan of your options${around} to help you save on this season's skiing.`,
+      },
+      {
+        type: "text",
+        text: `Looks like you can capture solid savings starting with ${findings ?? fallbackFindings}.`,
+      },
+    ];
+    if (input.coreSavingsLow > 0 && input.savingsRange.trim()) {
+      parts.push({
+        type: "text",
+        text: `I found some pretty good stuff for you. It looks like there's roughly ${input.savingsRange} worth a look.`,
+      });
+    }
+    parts.push(
+      { type: "text", text: "I attached the free Savings Scan here." },
+      {
+        type: "text",
+        text: `I also put together ${planPhrase(input.planPageCount)} with the exact programs, who qualifies, deadlines, fine print, blackouts, direct links, etc.`,
+      },
+    );
+    if (input.checkoutUrl) {
+      parts.push({ type: "link", label: CHECKOUT_LINK_LABEL, href: input.checkoutUrl });
+    }
+    parts.push(
+      {
+        type: "text",
+        text: "And genuinely, if you get it and don't think it was worth $49 bucks, just reply and tell me. I'll refund it and you keep the Plan. No hoops or nonsense.",
+      },
+      { type: "text", text: "Ben" },
+    );
+    return fromParts(scanUpsellSubject(), parts);
   }
 
-  const someSavings = input.coreSavingsLow > 0;
-  const lines = someSavings
-    ? [
-        `Hey ${firstName},`,
-        "",
-        input.emailOpening || "Thanks for sending this over. I looked through your ski plans and found a few useful things.",
-        observation ? "" : null,
-        observation || null,
-        "",
-        "Nothing huge jumped out, but there are still a couple places you may be able to shave some money off the season. I went ahead and attached the full Savings Plan with everything I found, including the details and links.",
-        "",
-        "The nice thing is your current setup already looks pretty efficient.",
-        "",
-        "Hope this helps!",
-        "",
-        "Ben",
-      ]
-    : [
-        `Hey ${firstName},`,
-        "",
-        input.emailOpening || "Thanks for sending this over. I looked through your ski plans and attached everything I found.",
-        observation ? "" : null,
-        observation || null,
-        "",
-        "I couldn't lock in a sure number yet, but there are a couple of things worth checking. I attached the full Savings Plan with everything I found, including the specific programs, links, and details.",
-        "",
-        "Hope this helps, and thanks for letting me take a look.",
-        "",
-        "Ben",
-      ];
-
-  return {
-    subject: freePlanSubject(firstName),
-    body: stripEmDashes(lines.filter((line) => line !== null).join("\n").replace(/\n{3,}/g, "\n\n")),
-  };
+  const parts: EmailPart[] = [
+    { type: "text", text: `Hey ${firstName},` },
+    {
+      type: "text",
+      text: `I've put together a look at your options${around} for this season.`,
+    },
+  ];
+  if (input.coreSavingsLow > 0 && input.savingsRange.trim()) {
+    parts.push({
+      type: "text",
+      text: `It looks like there's roughly ${input.savingsRange} worth a look.`,
+    });
+  }
+  parts.push(
+    {
+      type: "text",
+      text: "I attached the complete Savings Plan. If you have questions, just reply.",
+    },
+    { type: "text", text: "Ben" },
+  );
+  return fromParts(freePlanSubject(), parts);
 }
 
 export function buildPaidPlanEmail(input: PaidEmailInput): { subject: string; body: string } {
@@ -134,26 +240,51 @@ export function buildPaidPlanEmail(input: PaidEmailInput): { subject: string; bo
   };
 }
 
+function htmlHasCheckoutHref(html: string, checkoutUrl: string): boolean {
+  const escaped = escapeEmailHtml(checkoutUrl);
+  return html.includes(`href="${escaped}"`) || html.includes(`href="${checkoutUrl}"`);
+}
+
 export function assertDraftCopySafe(options: {
   offerMode: OfferMode;
   body: string;
+  html?: string;
   checkoutUrl?: string | null;
 }): string[] {
   const issues: string[] = [];
   const body = options.body.toLowerCase();
+  const html = options.html ?? "";
+  const visibleHtml = html ? visibleEmailHtml(html) : "";
 
   if (options.offerMode === "SCAN_UPSELL") {
     if (options.checkoutUrl && !options.body.includes(options.checkoutUrl)) {
       issues.push("SCAN_UPSELL email is missing the checkout URL");
     }
+    if (options.checkoutUrl && html && !htmlHasCheckoutHref(html, options.checkoutUrl)) {
+      issues.push("SCAN_UPSELL HTML is missing the checkout link");
+    }
+    if (html && /buy\.stripe\.com|checkout\.stripe\.com/i.test(visibleHtml)) {
+      issues.push("visible HTML contains a raw Stripe URL");
+    }
+    const withoutAllowed = options.body
+      .replace(options.checkoutUrl ?? "", "")
+      .replace(/\$49/g, "")
+      .replace(/roughly\s+[^.]+worth a look/i, "");
+    if (/\$(?!\s)\d/.test(withoutAllowed) || /\bhttps?:\/\//i.test(withoutAllowed)) {
+      issues.push("SCAN_UPSELL email includes paid program details");
+    }
   }
 
   if (options.offerMode === "FULL_PLAN_FREE") {
-    if (/\$49/.test(options.body) || /stripe|checkout|buy\.stripe/i.test(options.body)) {
+    const combined = `${options.body}\n${html}`;
+    if (/\$49/.test(combined) || /stripe|checkout|buy\.stripe/i.test(combined)) {
       issues.push("FULL_PLAN_FREE email contains purchase language");
     }
-    if (/wasn't enough to sell|not enough to charge|couldn't find enough/i.test(options.body)) {
+    if (/wasn't enough to sell|not enough to charge|couldn't find enough/i.test(combined)) {
       issues.push("FULL_PLAN_FREE email frames the result around not selling");
+    }
+    if (/get the full savings plan/i.test(combined)) {
+      issues.push("FULL_PLAN_FREE email includes upsell language");
     }
   }
 
@@ -161,8 +292,12 @@ export function assertDraftCopySafe(options: {
     issues.push("email uses corporate we/our-team language");
   }
 
-  if (options.body.includes("\u2014")) {
+  if (options.body.includes("\u2014") || html.includes("\u2014")) {
     issues.push("email contains an em dash");
+  }
+
+  if (/\b(report id|internal id|uuid)\b/i.test(`${options.body}\n${visibleHtml}`)) {
+    issues.push("email includes internal report information");
   }
 
   return issues;

@@ -13,8 +13,10 @@ import { freeScanLeakFlags, researchToReportData } from "@/lib/research/to-repor
 import { summarizeDisplaySavings } from "@/lib/research/display-savings";
 import { buildSavingsPlanCheckoutUrl } from "@/lib/stripe/checkout";
 import { generateReportPdfBuffer } from "@/reports/generate-pdf-buffer";
-import { ensureCustomerFolder, upsertDrivePdf } from "@/lib/google/drive";
+import { downloadDriveFile, ensureCustomerFolder, upsertDrivePdf } from "@/lib/google/drive";
+import { familyMountains } from "@/lib/copy/reports";
 import { upsertGmailDraft } from "@/lib/google/gmail";
+import { countPdfPages } from "@/lib/google/pdf-pages";
 import { assertDraftCopySafe, buildInitialDraftEmail, initialDraftAttachmentKind } from "@/lib/copy/emails";
 import { assertSameCustomer } from "@/lib/identity";
 import { addPipelineLog } from "@/lib/db/settings";
@@ -401,28 +403,39 @@ export async function createInitialGmailDraft(
       offerMode,
     });
 
+    let planPageCount: number | null = null;
+    if (offerMode === "SCAN_UPSELL" && report.drivePlanFileId) {
+      try {
+        const planBytes = await downloadDriveFile(report.drivePlanFileId);
+        planPageCount = countPdfPages(planBytes);
+      } catch {
+        planPageCount = null;
+      }
+    }
+
     const email = buildInitialDraftEmail({
       firstName: report.firstName || research.family.firstName,
       offerMode,
-      savingsRange:
-        display.firmLow > 0
-          ? display.headlineSavings
-          : (display.conditionalSavings ?? display.headlineSavings),
-      personalizedObservation: writing?.email.observation ?? research.emailContext.personalizedObservation,
-      emailOpening: writing?.email.opening,
-      enthusiasmLevel: research.emailContext.enthusiasmLevel,
+      savingsRange: display.firmLow > 0 ? display.headlineSavings : "",
       checkoutUrl,
       coreSavingsLow: display.firmLow,
+      mountains: familyMountains(research),
+      findings: writing?.scan.findings.map((finding) => finding.heading) ?? [],
+      planPageCount,
     });
 
-    const copyIssues = assertDraftCopySafe({ offerMode, body: email.body, checkoutUrl });
+    const copyIssues = assertDraftCopySafe({
+      offerMode,
+      body: email.body,
+      html: email.html,
+      checkoutUrl,
+    });
     if (copyIssues.length > 0) {
       await markError(reportId, "DRAFT_FAILED", copyIssues.join("; "));
       throw new Error(copyIssues.join("; "));
     }
 
     try {
-      const { downloadDriveFile } = await import("@/lib/google/drive");
       const kind = initialDraftAttachmentKind(offerMode);
       const attachmentId = kind === "scan" ? report.driveScanFileId : report.drivePlanFileId;
       const filename = kind === "scan" ? report.scanFilename : report.planFilename;
@@ -434,6 +447,7 @@ export async function createInitialGmailDraft(
         to: report.email,
         subject: email.subject,
         body: email.body,
+        html: email.html,
         attachments: [{ filename, contentType: "application/pdf", bytes }],
       });
 

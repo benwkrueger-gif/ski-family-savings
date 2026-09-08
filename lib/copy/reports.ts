@@ -46,7 +46,7 @@ function kidsPhrase(research: CanonicalResearch): string {
   return `${kids.length} kids`;
 }
 
-function familyMountains(research: CanonicalResearch): string[] {
+export function familyMountains(research: CanonicalResearch): string[] {
   const names = research.family.destinations
     .map((item) => shortMountainName(item))
     .filter((item): item is string => Boolean(item));
@@ -61,7 +61,7 @@ function familyMountains(research: CanonicalResearch): string[] {
   return out;
 }
 
-function joinList(items: string[]): string {
+export function joinList(items: string[]): string {
   if (items.length === 0) return "";
   if (items.length === 1) return items[0];
   if (items.length === 2) return `${items[0]} and ${items[1]}`;

@@ -19,28 +19,47 @@ export function buildRawEmail(options: {
   to: string;
   subject: string;
   text: string;
+  html?: string;
   attachments?: Attachment[];
 }): string {
-  const boundary = `sfs_${Date.now().toString(16)}_${Math.random().toString(16).slice(2)}`;
+  const mixedBoundary = `sfs_mixed_${Date.now().toString(16)}_${Math.random().toString(16).slice(2)}`;
+  const altBoundary = `sfs_alt_${Date.now().toString(16)}_${Math.random().toString(16).slice(2)}`;
   const headers = [
     `From: ${options.from}`,
     `To: ${options.to}`,
     `Subject: ${encodeSubject(options.subject)}`,
     "MIME-Version: 1.0",
-    `Content-Type: multipart/mixed; boundary="${boundary}"`,
+    `Content-Type: multipart/mixed; boundary="${mixedBoundary}"`,
   ];
 
-  const parts = [
-    `--${boundary}`,
-    'Content-Type: text/plain; charset="UTF-8"',
-    "Content-Transfer-Encoding: quoted-printable",
-    "",
-    toQuotedPrintable(options.text),
-  ];
+  const parts = options.html
+    ? [
+        `--${mixedBoundary}`,
+        `Content-Type: multipart/alternative; boundary="${altBoundary}"`,
+        "",
+        `--${altBoundary}`,
+        'Content-Type: text/plain; charset="UTF-8"',
+        "Content-Transfer-Encoding: quoted-printable",
+        "",
+        toQuotedPrintable(options.text),
+        `--${altBoundary}`,
+        'Content-Type: text/html; charset="UTF-8"',
+        "Content-Transfer-Encoding: quoted-printable",
+        "",
+        toQuotedPrintable(options.html),
+        `--${altBoundary}--`,
+      ]
+    : [
+        `--${mixedBoundary}`,
+        'Content-Type: text/plain; charset="UTF-8"',
+        "Content-Transfer-Encoding: quoted-printable",
+        "",
+        toQuotedPrintable(options.text),
+      ];
 
   for (const attachment of options.attachments ?? []) {
     parts.push(
-      `--${boundary}`,
+      `--${mixedBoundary}`,
       `Content-Type: ${attachment.contentType}; name="${attachment.filename}"`,
       "Content-Transfer-Encoding: base64",
       `Content-Disposition: attachment; filename="${attachment.filename}"`,
@@ -49,7 +68,7 @@ export function buildRawEmail(options: {
     );
   }
 
-  parts.push(`--${boundary}--`, "");
+  parts.push(`--${mixedBoundary}--`, "");
   return base64Url(`${headers.join("\r\n")}\r\n\r\n${parts.join("\r\n")}`);
 }
 

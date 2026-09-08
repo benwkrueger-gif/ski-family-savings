@@ -19,6 +19,7 @@ export async function upsertGmailDraft(options: {
   to: string;
   subject: string;
   body: string;
+  html?: string;
   attachments: GmailAttachment[];
 }): Promise<string> {
   const gmail = await gmailClient();
@@ -27,6 +28,7 @@ export async function upsertGmailDraft(options: {
     to: options.to,
     subject: options.subject,
     text: options.body,
+    html: options.html,
     attachments: options.attachments,
   });
 

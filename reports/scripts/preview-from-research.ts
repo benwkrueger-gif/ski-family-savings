@@ -68,6 +68,7 @@ async function main() {
   const emailIssues = assertDraftCopySafe({
     offerMode: display.offer.offerMode,
     body: email.body,
+    html: email.html,
     checkoutUrl: display.offer.offerMode === "SCAN_UPSELL" ? "https://buy.stripe.com/test_preview" : null,
   });
   if (emailIssues.length > 0) {
