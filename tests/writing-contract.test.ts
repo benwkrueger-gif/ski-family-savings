@@ -141,3 +141,12 @@ test("SCAN_UPSELL repairs leaked Scan amounts without another model call", () =>
   assert.doesNotMatch(JSON.stringify(finalized.scan), /\$99|October 10|example\.com\/secret/);
   assert.equal(finalized.plan.opportunities[0]?.id, "child-season-equipment-lease");
 });
+
+test("SCAN_UPSELL repairs half-price and early-booking mechanics without a rewrite", () => {
+  const writing = sparseWriting();
+  writing.scan.findings[0]!.explanation =
+    "Jay Peak is offering a weekday private lesson at half the usual price if booked early enough.";
+  const finalized = finalizeEditorialWriting(writing, research, "SCAN_UPSELL");
+  assert.doesNotMatch(JSON.stringify(finalized.scan), /half the usual price|booked early/i);
+  assert.equal(finalized.plan.opportunities[0]?.id, "child-season-equipment-lease");
+});

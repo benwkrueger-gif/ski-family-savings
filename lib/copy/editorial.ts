@@ -328,7 +328,7 @@ export function scanDollarIssues(options: {
 }
 
 const SCAN_PAID_MECHANICS =
-  /\b(passport|vouchers?|blackout|register(?:ed| by)?|sales open|purchase|proof of (?:grade|age)|fifth grade (?:offer|benefit|option|program)|qualif(?:y|ies|ied)|corporate (?:pricing|program|access|savings)|employers?|human resources|\bHR\b|book(?:ed|ing)? .{0,20}(?:ahead|advance)|adult .{0,20}valid access)\b/i;
+  /\b(passport|vouchers?|blackout|register(?:ed| by)?|sales open|purchase|proof of (?:grade|age)|fifth grade (?:offer|benefit|option|program)|qualif(?:y|ies|ied)|corporate (?:pricing|program|access|savings)|employers?|human resources|\bHR\b|book(?:ed|ing)? .{0,20}(?:ahead|advance|early)|half(?:[- ]price| the (?:usual |regular )?price)|(?:\d+\s*(?:%|percent))|promo(?:\s+code)?|adult .{0,20}valid access|unrestricted .{0,24}access)\b/i;
 
 const SCAN_BRAND_LEAKS =
   /\b(ikon|epic pass|indy(?:\s+pass)?|mountain collective|kids ski free|promo code|discount code)\b/i;
