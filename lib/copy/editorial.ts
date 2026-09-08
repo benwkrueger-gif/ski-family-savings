@@ -10,7 +10,12 @@ import {
   type ReportWriting,
 } from "@/lib/copy/writing-schema";
 import { stripEmDashes } from "@/lib/copy/sanitize";
-import { buildScanCopy, shortMountainName } from "@/lib/copy/reports";
+import { buildScanCopy, fallbackFindingCopy, highlightOpportunities, shortMountainName } from "@/lib/copy/reports";
+import {
+  approvedHeadlineSavingsLine,
+  approvedScanSavingsStrings,
+  extractDollarAmounts,
+} from "@/lib/copy/scan-amounts";
 import type { OfferMode } from "@/lib/pipeline/status";
 import {
   formatCustomerRange,
@@ -125,7 +130,6 @@ export function buildEditorialFactPacket(options: {
         category: item.opportunity.category,
         displayTier: item.tier,
         countKind: item.kind,
-        savingsRange: formatCustomerRange(item.opportunity.netSavingsLow, item.opportunity.netSavingsHigh),
         scanHint:
           item.kind === "conditional"
             ? "Only if this season's home-mountain pass is not already taken care of."
@@ -151,10 +155,13 @@ export function buildEditorialFactPacket(options: {
         : "Set closing to null. The template adds the $49 CTA.",
     editorialCoverageRule:
       "Write opportunity prose only when it adds useful conversational context. Optional, Watch, already-known, or unresolved opportunities may be omitted from plan.opportunities; deterministic code renders their facts, unknowns, math, source, deadline, and next action.",
+    scanAmountRule:
+      "Do not put any dollar amounts, prices, percents, or numeric savings in Scan fields. Deterministic code inserts the approved savingsLine. Use dollar strings only in Plan fields.",
     dollarStringsToUseExactly: {
       counted: formatCustomerRange(display.firmLow, display.firmHigh),
       possible: display.conditionalSavings ?? null,
       headlineToUse: headline,
+      scanMustOmitDollars: true,
     },
   };
 }
@@ -193,59 +200,99 @@ function hasCalendarFact(text: string, fact: string): boolean {
   return new RegExp(monthDay.replace(/\s+/g, "\\s+"), "i").test(text);
 }
 
+export function deterministicScanWriting(
+  research: CanonicalResearch,
+  offerMode: OfferMode,
+): ReportWriting["scan"] {
+  const fallbackScan = buildScanCopy({ research, offerMode });
+  const findings = (fallbackScan.findings ?? []).map((finding) => ({
+    heading: finding.heading,
+    explanation: finding.explanation,
+  }));
+  return {
+    greeting: `Howdy ${research.family.firstName}!`,
+    opening:
+      "Thanks for letting me look at your winter. I found a couple things worth checking for the season.",
+    savingsLine: approvedHeadlineSavingsLine(summarizeDisplaySavings(research)),
+    findings:
+      findings.length > 0
+        ? findings
+        : [
+            {
+              heading: "A useful season option",
+              explanation: "There's a useful option for the season you described.",
+            },
+          ],
+    myTake:
+      fallbackScan.myTake ??
+      "I'd start with the clearest current-season option, then decide what else is actually on the calendar.",
+    questions: [],
+    closing: offerMode === "FULL_PLAN_FREE" ? "Hope this helps." : null,
+  };
+}
+
+export function isScanQualityIssue(issue: string): boolean {
+  return /Scan copy|Free Scan|savingsLine|counted savings are hedged/i.test(issue);
+}
+
+export function finalizeEditorialWriting(
+  writing: ReportWriting,
+  research: CanonicalResearch,
+  offerMode: OfferMode,
+): ReportWriting {
+  const repaired = adaptWritingForOfferMode(
+    repairEditorialWriting(writing, research, offerMode),
+    offerMode,
+  );
+  let issues = editorialQualityIssues({ writing: repaired, research, offerMode });
+  if (issues.length === 0) return repaired;
+  if (issues.every(isScanQualityIssue)) {
+    const fallback = parseReportWriting({
+      ...repaired,
+      scan: deterministicScanWriting(research, offerMode),
+    });
+    issues = editorialQualityIssues({ writing: fallback, research, offerMode });
+    if (issues.length === 0) return fallback;
+  }
+  const error = new Error(`Editorial writing failed quality checks: ${issues.join("; ")}`);
+  (error as Error & { writing?: ReportWriting }).writing = repaired;
+  throw error;
+}
+
 export function repairEditorialWriting(
   writing: ReportWriting,
   research: CanonicalResearch,
   offerMode: OfferMode = "FULL_PLAN_FREE",
 ): ReportWriting {
   const sanitized = sanitizeWriting(writing);
-  const fallbackScan = buildScanCopy({ research, offerMode });
-  const fallbackFindings = fallbackScan.findings ?? [];
-  const fullPlanFreeScan =
-    offerMode === "FULL_PLAN_FREE"
-      ? {
-          greeting: `Howdy ${research.family.firstName}!`,
-          opening:
-            "Thanks for letting me look at your winter. I found a couple things worth checking for the season.",
-          savingsLine: fallbackScan.savingsLine ?? "I found a few things worth checking.",
-          findings: fallbackFindings.map((finding) => ({
-            heading: finding.heading,
-            explanation: finding.explanation,
-          })),
-          myTake:
-            fallbackScan.myTake ??
-            "I'd confirm the biggest unknowns before buying anything else for the season.",
-          questions: [],
-          closing: fallbackScan.closing ?? "Hope this helps.",
-        }
-      : null;
+  const display = summarizeDisplaySavings(research);
+  const fallbackScan = deterministicScanWriting(research, offerMode);
+  const highlighted = highlightOpportunities(display);
+  const fullPlanFreeScan = offerMode === "FULL_PLAN_FREE" ? fallbackScan : null;
   const repairScanField = (text: string, fallback: string) =>
-    scanPaidContentIssues(text, research).length > 0 ? fallback : text;
+    scanProseIssues(text, research, display, offerMode).length > 0 ? fallback : text;
   return parseReportWriting({
     ...sanitized,
     scan: fullPlanFreeScan ?? {
       ...sanitized.scan,
-      opening: repairScanField(
-        sanitized.scan.opening,
-        "Thanks for letting me look at your winter. I found a couple things worth checking for your home-mountain season.",
-      ),
-      findings: sanitized.scan.findings.map((finding, index) => ({
-        heading: repairScanField(
-          finding.heading,
-          fallbackFindings[index]?.heading ?? "Something worth a look",
-        ),
-        explanation: repairScanField(
-          finding.explanation,
-          fallbackFindings[index]?.explanation ?? "There's a useful option worth checking.",
-        ),
-      })),
-      myTake: repairScanField(
-        sanitized.scan.myTake,
-        fallbackScan.myTake ??
-          "I'd start with the verified child-access option, then confirm current home-mountain pricing.",
-      ),
+      opening: repairScanField(sanitized.scan.opening, fallbackScan.opening),
+      savingsLine: fallbackScan.savingsLine,
+      findings: sanitized.scan.findings.map((finding, index) => {
+        const item = highlighted[index];
+        const fallback = item
+          ? fallbackFindingCopy(item, offerMode)
+          : fallbackScan.findings[index] ?? {
+              heading: "A useful season option",
+              explanation: "There's a useful option for the season you described.",
+            };
+        return {
+          heading: repairScanField(finding.heading, fallback.heading),
+          explanation: repairScanField(finding.explanation, fallback.explanation),
+        };
+      }),
+      myTake: repairScanField(sanitized.scan.myTake, fallbackScan.myTake),
       questions: sanitized.scan.questions.filter(
-        (question) => scanPaidContentIssues(question, research).length === 0,
+        (question) => scanProseIssues(question, research, display, offerMode).length === 0,
       ),
     },
     plan: {
@@ -274,19 +321,17 @@ export function scanDollarIssues(options: {
   approvedSavings: string[];
   allowPlanPrice?: boolean;
 }): string[] {
-  const allowed = new Set(
-    options.approvedSavings.flatMap(
-      (value) => value.match(/\$\d+(?:,\d{3})*(?:\.\d{1,2})?/g) ?? [],
-    ),
-  );
+  const allowed = new Set(options.approvedSavings.flatMap(extractDollarAmounts));
   if (options.allowPlanPrice) allowed.add("$49");
-  const used = options.scanText.match(/\$\d+(?:,\d{3})*(?:\.\d{1,2})?/g) ?? [];
-  const forbidden = [...new Set(used.filter((amount) => !allowed.has(amount)))];
+  const forbidden = [...new Set(extractDollarAmounts(options.scanText).filter((amount) => !allowed.has(amount)))];
   return forbidden.map((amount) => `Scan copy includes unapproved paid-detail amount ${amount}`);
 }
 
 const SCAN_PAID_MECHANICS =
   /\b(passport|vouchers?|blackout|register(?:ed| by)?|sales open|purchase|proof of (?:grade|age)|fifth grade (?:offer|benefit|option|program)|qualif(?:y|ies|ied)|corporate (?:pricing|program|access|savings)|employers?|human resources|\bHR\b|book(?:ed|ing)? .{0,20}(?:ahead|advance)|adult .{0,20}valid access)\b/i;
+
+const SCAN_BRAND_LEAKS =
+  /\b(ikon|epic pass|indy(?:\s+pass)?|mountain collective|kids ski free|promo code|discount code)\b/i;
 
 export function scanPaidContentIssues(
   text: string,
@@ -295,7 +340,9 @@ export function scanPaidContentIssues(
   const issues: string[] = [];
   if (calendarDateFacts(text).length > 0) issues.push("Scan copy includes a deadline");
   if (/\bhttps?:\/\//i.test(text) || /@/.test(text)) issues.push("Scan copy includes a link or email");
-  if (SCAN_PAID_MECHANICS.test(text)) issues.push("Scan copy includes paid program mechanics");
+  if (SCAN_PAID_MECHANICS.test(text) || SCAN_BRAND_LEAKS.test(text)) {
+    issues.push("Scan copy includes paid program mechanics");
+  }
   const lower = text.toLowerCase();
   for (const item of research.opportunities) {
     if (lower.includes(item.name.toLowerCase())) {
@@ -303,6 +350,22 @@ export function scanPaidContentIssues(
     }
   }
   return [...new Set(issues)];
+}
+
+export function scanProseIssues(
+  text: string,
+  research: CanonicalResearch,
+  display: DisplaySavingsSummary,
+  offerMode: OfferMode,
+): string[] {
+  return [
+    ...scanPaidContentIssues(text, research),
+    ...scanDollarIssues({
+      scanText: text,
+      approvedSavings: approvedScanSavingsStrings(display, offerMode),
+      allowPlanPrice: offerMode === "SCAN_UPSELL",
+    }),
+  ];
 }
 
 export function expiredPriceFact(
@@ -363,18 +426,11 @@ export function reuseSavedWriting(options: {
 }): ReportWriting | null {
   if (options.stored == null) return null;
   try {
-    const parsed = repairEditorialWriting(
+    return finalizeEditorialWriting(
       parseReportWriting(options.stored),
       options.research,
       options.offerMode,
     );
-    const adapted = adaptWritingForOfferMode(parsed, options.offerMode);
-    const issues = editorialQualityIssues({
-      writing: adapted,
-      research: options.research,
-      offerMode: options.offerMode,
-    });
-    return issues.length === 0 ? adapted : null;
   } catch {
     return null;
   }
@@ -458,10 +514,7 @@ export function editorialQualityIssues(options: {
   issues.push(
     ...scanDollarIssues({
       scanText,
-      approvedSavings: [
-        display.headlineSavings,
-        display.conditionalSavings ?? "",
-      ],
+      approvedSavings: approvedScanSavingsStrings(display, options.offerMode),
       allowPlanPrice: options.offerMode === "SCAN_UPSELL",
     }),
   );
@@ -611,18 +664,9 @@ export async function writeReportCopy(options: {
 
   const text = response.output_text?.trim();
   if (!text) throw new Error("Editorial model returned no output");
-  const writing = repairEditorialWriting(
+  return finalizeEditorialWriting(
     parseReportWriting(JSON.parse(text)),
     options.research,
     options.offerMode,
   );
-  const issues = editorialQualityIssues({
-    writing,
-    research: options.research,
-    offerMode: options.offerMode,
-  });
-  if (issues.length === 0) return writing;
-  const error = new Error(`Editorial writing failed quality checks: ${issues.join("; ")}`);
-  (error as Error & { writing?: ReportWriting }).writing = writing;
-  throw error;
 }

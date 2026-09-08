@@ -1,0 +1,231 @@
+{
+  "family": {
+    "firstName": "Casey",
+    "lastName": null,
+    "homeZip": "05001",
+    "adults": 1,
+    "children": [
+      { "age": 8, "grade": "3rd grade" },
+      { "age": 5, "grade": "Kindergarten" }
+    ],
+    "skiProfile": "One home mountain plus a few other resorts.",
+    "annualDays": "8-15 days",
+    "destinations": ["Home Notch", "North Peak", "Additional resorts not yet selected"]
+  },
+  "summary": {
+    "coreSavingsLow": 149.5,
+    "coreSavingsHigh": 214.5,
+    "optionalSavingsLow": 286,
+    "optionalSavingsHigh": 286,
+    "jackpotCount": 0,
+    "strongCount": 3,
+    "usefulCount": 0,
+    "watchCount": 2,
+    "confidence": "MEDIUM",
+    "rationale": "One verified weekday lesson is counted. Extra-resort access stays optional.",
+    "humanReviewFlags": [
+      "Confirm both children can share one private lesson based on ability and discipline."
+    ],
+    "offerModeRecommendation": "SCAN_UPSELL",
+    "offerModeReason": "One firm countable opportunity worth roughly $150 to $215.",
+    "headlineSavings": "$150 to $215 core savings, plus $286 in optional scenarios",
+    "headline": "A time-sensitive lesson booking is the strongest current-season opportunity",
+    "subhead": "Pass-related options could add savings if they match the final plans."
+  },
+  "opportunities": [
+    {
+      "id": "north-peak-weekday-lesson-2026-27",
+      "name": "North Peak Early Lesson Half-Price private-lesson offer",
+      "category": "Lessons",
+      "tier": "STRONG",
+      "familyMembersAffected": ["8 year old", "5 year old"],
+      "eligibility": "All ages. Book August 10 through September 21, 2026 for an eligible Monday through Thursday session.",
+      "familyFit": "Both children qualify by age, and weekday skiing was reported.",
+      "baselineCost": 444,
+      "opportunityCost": 294.5,
+      "netSavingsLow": 149.5,
+      "netSavingsHigh": 214.5,
+      "calculation": "Afternoon shared private regular $299 plus $145 equals $444. Promo is $149.50 plus $145, saving $149.50.",
+      "deadline": "2026-09-21",
+      "restrictions": "Shared format needs compatible ability and the same discipline.",
+      "blackoutDates": "Holiday weeks are excluded.",
+      "stackability": "Does not stack with other lesson promos.",
+      "alreadyKnownByFamily": false,
+      "verificationStatus": "VERIFIED",
+      "countedInHeadline": true,
+      "countReason": "The family requested lesson savings and weekday skiing was reported. One shared afternoon lesson is counted.",
+      "sourceUrl": "https://example.com/north-peak/lesson-offer",
+      "sourceTitle": "North Peak early lesson offer",
+      "sourceCheckedAt": "2026-09-08",
+      "notes": "This is the counted save.",
+      "location": "North Peak, Vermont",
+      "whyItMatters": "Research leftover. Do not put this sentence in the Scan.",
+      "howItWorks": "Book the weekday private lesson with the published promo before the deadline.",
+      "recommendedAction": "Book one shared weekday private lesson before September 21, 2026."
+    },
+    {
+      "id": "indy-home-addon-2026-27",
+      "name": "2026/27 Indy Base Add-On Pass through Home Notch",
+      "category": "Multi-resort passes",
+      "tier": "STRONG",
+      "familyMembersAffected": ["adult", "8 year old", "5 year old"],
+      "eligibility": "Each skier must own a 2026/27 full and unrestricted partner-resort pass.",
+      "familyFit": "Useful only if extra destinations are actually planned.",
+      "baselineCost": 897,
+      "opportunityCost": 717,
+      "netSavingsLow": 180,
+      "netSavingsHigh": 180,
+      "calculation": "Standard family pricing $897 versus add-on pricing $717. Direct savings are $180.",
+      "deadline": null,
+      "restrictions": "Saves money only if the family was already going to buy this pass.",
+      "blackoutDates": null,
+      "stackability": "Optional. Do not add this to the lesson save.",
+      "alreadyKnownByFamily": false,
+      "verificationStatus": "VERIFIED",
+      "countedInHeadline": false,
+      "countReason": "This saves money only if they were already going to purchase the extra-resort pass. Destinations are unresolved.",
+      "sourceUrl": "https://example.com/indy-shop",
+      "sourceTitle": "Independent resort add-on shop",
+      "sourceCheckedAt": "2026-09-08",
+      "notes": "Optional scenario amount only.",
+      "location": "North Peak and other partner resorts",
+      "whyItMatters": "Research leftover. Optional $180.",
+      "howItWorks": "Buy the add-on instead of the standard family version.",
+      "recommendedAction": "Only buy this if the extra resorts are actually on the calendar."
+    },
+    {
+      "id": "home-notch-daycation-2026-27",
+      "name": "Home Notch Winter Daycation Pass Upgrade",
+      "category": "Off-mountain activities",
+      "tier": "STRONG",
+      "familyMembersAffected": ["adult", "8 year old", "5 year old"],
+      "eligibility": "Resident season pass required.",
+      "familyFit": "Optional because no off-slope usage was stated.",
+      "baselineCost": 357.22,
+      "opportunityCost": 251.22,
+      "netSavingsLow": 106,
+      "netSavingsHigh": 106,
+      "calculation": "Resident passes $357.22 versus passholder upgrades $251.22, saving $106.",
+      "deadline": null,
+      "restrictions": "Optional off-slope scenario.",
+      "blackoutDates": null,
+      "stackability": "Do not add this to the lesson save.",
+      "alreadyKnownByFamily": false,
+      "verificationStatus": "VERIFIED",
+      "countedInHeadline": false,
+      "countReason": "No off-slope plan was stated, so this stays optional.",
+      "sourceUrl": "https://example.com/home-notch/daycation",
+      "sourceTitle": "Home Notch daycation passes",
+      "sourceCheckedAt": "2026-09-08",
+      "notes": "Optional.",
+      "location": "Home Notch, Vermont",
+      "whyItMatters": "Research leftover.",
+      "howItWorks": "Buy the passholder upgrade instead of resident daycation passes.",
+      "recommendedAction": "Skip this unless off-slope days are actually planned."
+    },
+    {
+      "id": "home-notch-camp-discount-2026-27",
+      "name": "Home Notch passholder camp discount",
+      "category": "Kids ski programs",
+      "tier": "WATCH",
+      "familyMembersAffected": ["8 year old", "5 year old"],
+      "eligibility": "Passholders listed as eligible.",
+      "familyFit": "Possible, but camp days were not planned.",
+      "baselineCost": 530,
+      "opportunityCost": 397.5,
+      "netSavingsLow": 132.5,
+      "netSavingsHigh": 132.5,
+      "calculation": "Illustrative 25% off two camps. Not counted because 2026/27 camp prices are not posted.",
+      "deadline": null,
+      "restrictions": "Detailed camp page still shows last season's table.",
+      "blackoutDates": null,
+      "stackability": "Not counted.",
+      "alreadyKnownByFamily": false,
+      "verificationStatus": "NEEDS_CHECK",
+      "countedInHeadline": false,
+      "countReason": "The detailed camp page has not published a clearly labeled 2026/27 rate table.",
+      "sourceUrl": "https://example.com/home-notch/camps",
+      "sourceTitle": "Home Notch camps",
+      "sourceCheckedAt": "2026-09-08",
+      "notes": "Watch only.",
+      "location": "Home Notch, Vermont",
+      "whyItMatters": "Research leftover. Do not count.",
+      "howItWorks": "Show a qualifying pass if camp days happen.",
+      "recommendedAction": "Wait for the current camp price table."
+    }
+  ],
+  "scenarioGroups": [
+    {
+      "id": "lesson",
+      "label": "Weekday lesson",
+      "kind": "region",
+      "savingsLow": 149.5,
+      "savingsHigh": 214.5,
+      "note": "Counted lesson booking."
+    },
+    {
+      "id": "extra-resorts",
+      "label": "Extra resorts",
+      "kind": "optional",
+      "savingsLow": 180,
+      "savingsHigh": 180,
+      "note": "Only if they were already buying that pass."
+    }
+  ],
+  "existingKnownSavings": [],
+  "watchlist": [
+    {
+      "title": "Current camp prices",
+      "whatWeAreWatching": "Whether this season's kids-camp table is posted.",
+      "whyItCouldMatter": "The discount cannot be counted until current prices exist.",
+      "expectedTiming": "When the current table is published",
+      "trigger": "A labeled 2026/27 camp price table appears",
+      "sourceTitle": "Home Notch camps",
+      "sourceUrl": "https://example.com/home-notch/camps"
+    }
+  ],
+  "freeScan": {
+    "headline": "unused research leftover",
+    "summaryText": "unused research leftover",
+    "primaryOpportunityArea": "Lessons",
+    "opportunityAreas": [],
+    "biggestPotentialWin": null,
+    "biggestPotentialWinLabel": null,
+    "unknownsIntro": null,
+    "importantUnknowns": ["whether both children can share one lesson"],
+    "ctaHeadline": "unused",
+    "ctaBody": "unused",
+    "methodologyTitle": "unused",
+    "methodologyText": "unused"
+  },
+  "paidPlan": {
+    "overview": "Start with the weekday lesson, then decide on extra-resort access.",
+    "startHere": [
+      {
+        "number": 1,
+        "title": "Book the weekday lesson",
+        "description": "Book one shared weekday private lesson before September 21, 2026 if both children can share it.",
+        "sourceTitle": "North Peak early lesson offer",
+        "sourceUrl": "https://example.com/north-peak/lesson-offer"
+      }
+    ],
+    "optionalScenarios": [
+      {
+        "title": "Extra-resort add-on",
+        "note": "Only if they were already buying that pass. Do not add the $180 to the lesson number.",
+        "savingsLow": 180,
+        "savingsHigh": 180
+      }
+    ],
+    "alreadyDoingRight": [],
+    "bottomLine": "Book the lesson first.",
+    "closingLine": "Then decide on extra mountains.",
+    "referralLine": null,
+    "thankYouHeadline": "Hope this helps, Casey.",
+    "thankYouBody": "Reply if the lesson setup changes."
+  },
+  "emailContext": {
+    "personalizedObservation": "Weekday lesson window with two young kids.",
+    "enthusiasmLevel": "MEDIUM"
+  }
+}

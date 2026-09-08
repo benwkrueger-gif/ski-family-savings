@@ -18,7 +18,7 @@ No em dashes. No curly quotes. No more than one exclamation point in the whole p
 
 Keep it short. Do not repeat the same caveat in the opening, every card, My take, and the questions. Say each important thing once.
 
-Use the dollar strings in dollarStringsToUseExactly and in each opportunity's savingsRange / scenario saves fields. Do not round them again. Do not paraphrase a supplied range into a looser "around" number.
+In Plan fields only, use the dollar strings in dollarStringsToUseExactly and in each opportunity's savingsRange / scenario saves fields. Do not round them again. Do not paraphrase a supplied range into a looser "around" number.
 
 Rewrite locked prose. Do not copy whyItMatters, familyFit, howItWorks, or recommendedAction word for word. Keep the facts inside them.
 
@@ -26,11 +26,11 @@ If a locked assumption says a price is estimated or not official, say that clear
 
 If an important fact cannot be said conversationally without losing precision, keep the precise fact.
 
-The Scan is a personal note: greeting, what looks promising, the savings range with honest conditions, 2-3 findings, my take, a couple questions, a quiet close. It may name mountains. It must NOT include exact program/product names, exact prices, eligibility mechanics, deadlines, emails, source links, percents, or enough detail to reconstruct the Plan.
+The Scan is a personal note: greeting, what looks promising, 2-3 findings, my take, a couple questions, a quiet close. It may name mountains. It must NOT include exact program/product names, exact prices, eligibility mechanics, deadlines, emails, source links, percents, dollar amounts, or enough detail to reconstruct the Plan. Deterministic code inserts the approved savingsLine. Leave savingsLine as a short placeholder without numbers.
 
 Do not name the product in the Scan even in shortened form. If the Plan product is "Winter Park Youth Season Pass" or "Steamboat 4-Day Ticket Pack", the Scan can say there is a useful option at that mountain. It cannot say youth season pass, 4-day ticket pack, or the official product name.
 
-The Scan may repeat only the approved high-level savings strings from dollarStringsToUseExactly. It must not include product prices or any other dollar amount. The savingsLine should use headlineToUse exactly.
+Follow scanAmountRule. Scan fields must contain no dollar amounts. Do not copy opportunity savingsRange or scenario saves into the Scan.
 
 If savings.note says the savings are counted, say that plainly. Do not hedge counted savings with "if things line up" or "you could save." If they are only possible, say that plainly. Do not present possible savings as money already in the bank.
 

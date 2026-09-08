@@ -4,6 +4,7 @@ import path from "node:path";
 import { test } from "node:test";
 import {
   editorialQualityIssues,
+  finalizeEditorialWriting,
   repairEditorialWriting,
 } from "../lib/copy/editorial.ts";
 import { parseReportWriting } from "../lib/copy/writing-schema.ts";
@@ -130,4 +131,13 @@ test("SCAN_UPSELL still rejects exact paid details in free Scan", () => {
   });
   assert.ok(issues.some((issue) => /unapproved paid-detail amount \$99/i.test(issue)));
   assert.ok(issues.some((issue) => /deadline|URL|link/i.test(issue)));
+});
+
+test("SCAN_UPSELL repairs leaked Scan amounts without another model call", () => {
+  const writing = sparseWriting();
+  writing.scan.findings[0]!.explanation =
+    "Buy the $99 lease before October 10, 2026 using https://example.com/secret.";
+  const finalized = finalizeEditorialWriting(writing, research, "SCAN_UPSELL");
+  assert.doesNotMatch(JSON.stringify(finalized.scan), /\$99|October 10|example\.com\/secret/);
+  assert.equal(finalized.plan.opportunities[0]?.id, "child-season-equipment-lease");
 });

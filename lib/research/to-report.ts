@@ -302,12 +302,14 @@ export function freeScanLeakFlags(data: ReportData): string[] {
     flags.push("Free Scan copy may reveal a program name, deadline, or link.");
   }
 
+  const approvedHeadline =
+    data.summary.headlineKind === "firm"
+      ? data.summary.headlineSavings
+      : (data.summary.conditionalSavings ?? data.summary.headlineSavings);
   const allowedDollarAmounts = new Set(
-    [
-      data.summary.headlineSavings,
-      data.summary.conditionalSavings,
-      scan.cta?.price,
-    ].flatMap((value) => value?.match(/\$\d+(?:,\d{3})*(?:\.\d{1,2})?/g) ?? []),
+    [approvedHeadline, scan.cta?.price].flatMap(
+      (value) => value?.match(/\$\d+(?:,\d{3})*(?:\.\d{1,2})?/g) ?? [],
+    ),
   );
   const dollarAmounts = blobs.match(/\$\d+(?:,\d{3})*(?:\.\d{1,2})?/g) ?? [];
   const forbiddenDollarAmounts = [
