@@ -5,7 +5,7 @@ export const TIERS = {
     label: "Jackpot",
     labelCaps: "JACKPOT",
     barClass: "bg-accent",
-    detail: "Likely savings of $250+ each",
+    detail: "$250+ from one decision",
   },
   strong: {
     key: "strong" as const,
@@ -13,7 +13,7 @@ export const TIERS = {
     label: "Strong",
     labelCaps: "STRONG",
     barClass: "bg-accent-blue",
-    detail: "Likely savings of $50–$250",
+    detail: "$50-$249",
   },
   useful: {
     key: "useful" as const,
@@ -21,7 +21,7 @@ export const TIERS = {
     label: "Useful",
     labelCaps: "USEFUL",
     barClass: "bg-[#6a6c69]",
-    detail: "Smaller or more situational savings",
+    detail: "Under $50",
   },
   watch: {
     key: "watch" as const,
@@ -29,7 +29,7 @@ export const TIERS = {
     label: "Watch",
     labelCaps: "WATCH",
     barClass: "bg-border",
-    detail: "Not counted yet — worth keeping an eye on",
+    detail: "Useful later, not counted yet",
   },
 };
 

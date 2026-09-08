@@ -1,15 +1,20 @@
 type ReportBrandHeaderProps = {
   generatedDate?: string;
-  reportId?: string;
+  preparedFor?: string;
   inverted?: boolean;
 };
 
 export function ReportBrandHeader({
   generatedDate,
-  reportId,
+  preparedFor,
   inverted = false,
 }: ReportBrandHeaderProps) {
-  const meta = [generatedDate, reportId].filter(Boolean).join(" · ");
+  const meta = [
+    preparedFor ? `Prepared for ${preparedFor}` : null,
+    generatedDate,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <div

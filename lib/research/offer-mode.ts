@@ -68,15 +68,3 @@ export function decideOfferMode(input: OfferInputs): OfferDecision {
     countableOpportunityCount,
   };
 }
-
-export function decideOfferModeFromResearch(
-  research: CanonicalResearch,
-  compellingMin = COMPELLING_SAVINGS_MIN,
-): OfferDecision {
-  return decideOfferMode({
-    coreSavingsLow: research.summary.coreSavingsLow,
-    confidence: research.summary.confidence,
-    countableOpportunityCount: countableOpportunities(research),
-    compellingMin,
-  });
-}

@@ -38,8 +38,8 @@ export async function generateReport(options: {
 
   const title =
     options.type === "free"
-      ? `${data.family.firstName} — Free Ski Family Savings Scan`
-      : `${data.family.firstName} — Ski Family Savings Plan`;
+      ? `${data.family.firstName} - Free Ski Family Savings Scan`
+      : `${data.family.firstName} - Ski Family Savings Plan`;
 
   const htmlPath = path.join(outDir, `${name}.html`);
   const pdfPath = path.join(outDir, `${name}.pdf`);

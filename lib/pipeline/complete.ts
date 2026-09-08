@@ -1,9 +1,11 @@
 import { DEFAULT_SEASON } from "@/config/compelling-savings";
 import { env } from "@/lib/env";
 import { log } from "@/lib/logger";
-import { decideOfferModeFromResearch } from "@/lib/research/offer-mode";
+import { writeReportCopy } from "@/lib/copy/editorial";
+import type { ReportWriting } from "@/lib/copy/writing-schema";
 import { parseResearch, type CanonicalResearch } from "@/lib/research/schema";
 import { freeScanLeakFlags, researchToReportData } from "@/lib/research/to-report";
+import { summarizeDisplaySavings } from "@/lib/research/display-savings";
 import { buildSavingsPlanCheckoutUrl } from "@/lib/stripe/checkout";
 import { generateReportPdfBuffer } from "@/reports/generate-pdf-buffer";
 import { ensureCustomerFolder, upsertDrivePdf } from "@/lib/google/drive";
@@ -16,12 +18,33 @@ import { getReportById, markError, updateReport } from "./store";
 import type { OfferMode } from "./status";
 import { hasPurchased } from "./status";
 
+async function syncOfferDecision(reportId: string) {
+  const report = await requireReport(reportId);
+  const research = parseStoredResearch(report);
+  const display = summarizeDisplaySavings(research);
+  const decision = display.offer;
+  const checkoutUrl = decision.offerMode === "SCAN_UPSELL" ? buildCheckout(report) : null;
+  const updated = await updateReport(report.id, {
+    offerMode: decision.offerMode,
+    offerModeReason: decision.reason,
+    stripeCheckoutUrl: checkoutUrl,
+    stripeClientReferenceId: report.id,
+  });
+  return {
+    report: updated,
+    research,
+    display,
+    offerMode: decision.offerMode,
+    checkoutUrl,
+  };
+}
+
 export async function storeCompletedResearch(options: {
   reportId: string;
   research: CanonicalResearch;
   openaiResponseId: string;
 }): Promise<CustomerReport> {
-  const decision = decideOfferModeFromResearch(options.research);
+  const decision = summarizeDisplaySavings(options.research).offer;
   const checkoutUrl =
     decision.offerMode === "SCAN_UPSELL"
       ? await checkoutUrlFor(options.reportId)
@@ -52,7 +75,8 @@ export async function storeCompletedResearch(options: {
   log.info("research_completed", {
     reportId: options.reportId,
     offerMode: decision.offerMode,
-    coreSavingsLow: options.research.summary.coreSavingsLow,
+    firmCoreSavingsLow: decision.coreSavingsLow,
+    headlineCoreSavingsLow: options.research.summary.coreSavingsLow,
     confidence: options.research.summary.confidence,
   });
   log.info("offer_mode_selected", {
@@ -64,24 +88,17 @@ export async function storeCompletedResearch(options: {
 }
 
 export async function recalculateOfferMode(reportId: string): Promise<CustomerReport> {
-  const report = await requireReport(reportId);
-  const research = parseStoredResearch(report);
-  const decision = decideOfferModeFromResearch(research);
-  const checkoutUrl =
-    decision.offerMode === "SCAN_UPSELL" ? buildCheckout(report) : null;
-  return updateReport(reportId, {
-    offerMode: decision.offerMode,
-    offerModeReason: decision.reason,
-    stripeCheckoutUrl: checkoutUrl,
-    stripeClientReferenceId: reportId,
-  });
+  const synced = await syncOfferDecision(reportId);
+  return synced.report;
 }
 
-export async function generateAndUploadPdfs(reportId: string): Promise<CustomerReport> {
-  const report = await requireReport(reportId);
-  const research = parseStoredResearch(report);
-  const offerMode = (report.offerMode as OfferMode | null) ?? "FULL_PLAN_FREE";
-  const checkoutUrl = offerMode === "SCAN_UPSELL" ? buildCheckout(report) : null;
+export async function generateAndUploadPdfs(
+  reportId: string,
+  writingOverride?: ReportWriting,
+): Promise<CustomerReport> {
+  const synced = await syncOfferDecision(reportId);
+  const { report, research, offerMode, checkoutUrl } = synced;
+  const writing = writingOverride ?? (await writeReportCopy({ research, offerMode }));
 
   await updateReport(reportId, {
     status: "PDF_GENERATING",
@@ -95,6 +112,7 @@ export async function generateAndUploadPdfs(reportId: string): Promise<CustomerR
       offerMode,
       checkoutUrl,
       season: DEFAULT_SEASON,
+      writing,
     });
 
     const scan = await generateReportPdfBuffer({ data, type: "free" });
@@ -146,8 +164,12 @@ export async function generateAndUploadPdfs(reportId: string): Promise<CustomerR
   }
 }
 
-export async function createInitialGmailDraft(reportId: string): Promise<CustomerReport> {
-  const report = await requireReport(reportId);
+export async function createInitialGmailDraft(
+  reportId: string,
+  writingOverride?: ReportWriting,
+): Promise<CustomerReport> {
+  const synced = await syncOfferDecision(reportId);
+  const { report, research, offerMode, checkoutUrl, display } = synced;
   if (hasPurchased(report.status as never) && report.gmailPaidMessageId) {
     await addPipelineLog(reportId, report.status, "Skipped draft recreate because the paid plan was already delivered");
     return report;
@@ -164,8 +186,6 @@ export async function createInitialGmailDraft(reportId: string): Promise<Custome
     throw new Error(identity.mismatches.join("; ") || "Missing customer email");
   }
 
-  const research = parseStoredResearch(report);
-  const offerMode = (report.offerMode as OfferMode | null) ?? "FULL_PLAN_FREE";
   if (offerMode === "SCAN_UPSELL" && !report.driveScanFileId) {
     throw new Error("Savings Scan PDF is missing");
   }
@@ -173,17 +193,20 @@ export async function createInitialGmailDraft(reportId: string): Promise<Custome
     throw new Error("Savings Plan PDF is missing");
   }
 
-  const checkoutUrl = offerMode === "SCAN_UPSELL" ? buildCheckout(report) : null;
+  const writing = writingOverride ?? (await writeReportCopy({ research, offerMode }));
+
   const email = buildInitialDraftEmail({
     firstName: report.firstName || research.family.firstName,
     offerMode,
     savingsRange:
-      research.summary.headlineSavings ||
-      `$${Math.round(research.summary.coreSavingsLow)}-$${Math.round(research.summary.coreSavingsHigh)}`,
-    personalizedObservation: research.emailContext.personalizedObservation,
+      display.firmLow > 0
+        ? display.headlineSavings
+        : (display.conditionalSavings ?? display.headlineSavings),
+    personalizedObservation: writing?.email.observation ?? research.emailContext.personalizedObservation,
+    emailOpening: writing?.email.opening,
     enthusiasmLevel: research.emailContext.enthusiasmLevel,
     checkoutUrl,
-    coreSavingsLow: research.summary.coreSavingsLow,
+    coreSavingsLow: display.firmLow,
   });
 
   const copyIssues = assertDraftCopySafe({ offerMode, body: email.body, checkoutUrl });
@@ -225,8 +248,10 @@ export async function createInitialGmailDraft(reportId: string): Promise<Custome
 }
 
 export async function continueAfterResearch(reportId: string): Promise<void> {
-  await generateAndUploadPdfs(reportId);
-  await createInitialGmailDraft(reportId);
+  const { research, offerMode } = await syncOfferDecision(reportId);
+  const writing = await writeReportCopy({ research, offerMode });
+  await generateAndUploadPdfs(reportId, writing);
+  await createInitialGmailDraft(reportId, writing);
 }
 
 function freeScanFlags(

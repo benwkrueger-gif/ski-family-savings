@@ -18,7 +18,9 @@ export function formatFamilyLine(family: Family): string {
   }
 
   if (family.homeZip) parts.push(family.homeZip);
-  if (family.annualDays) parts.push(`${family.annualDays} days`);
+  if (family.annualDays) {
+    parts.push(/day/i.test(family.annualDays) ? family.annualDays : `${family.annualDays} days`);
+  }
   if (family.skiProfile) parts.push(family.skiProfile);
 
   return parts.join(" · ");

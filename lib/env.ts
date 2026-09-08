@@ -35,6 +35,7 @@ export const env = {
   openaiApiKey: () => required("OPENAI_API_KEY"),
   openaiWebhookSecret: () => required("OPENAI_WEBHOOK_SECRET"),
   openaiResearchModel: () => optional("OPENAI_RESEARCH_MODEL") ?? "gpt-5.6-sol",
+  openaiEditorialModel: () => optional("OPENAI_EDITORIAL_MODEL") ?? "gpt-4.1-mini",
 
   googleClientId: () => required("GOOGLE_CLIENT_ID"),
   googleClientSecret: () => required("GOOGLE_CLIENT_SECRET"),

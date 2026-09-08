@@ -6,6 +6,7 @@ export type DraftEmailInput = {
   offerMode: OfferMode;
   savingsRange: string;
   personalizedObservation?: string | null;
+  emailOpening?: string | null;
   enthusiasmLevel?: "HIGH" | "MEDIUM" | "LOW" | "NONE" | string | null;
   checkoutUrl?: string | null;
   coreSavingsLow: number;
@@ -17,7 +18,7 @@ export type PaidEmailInput = {
 
 function observationLine(value?: string | null): string {
   const text = stripEmDashes(value ?? "").trim();
-  if (!text) return "";
+  if (!text || /\bthe family\b/i.test(text)) return "";
   return text.endsWith(".") ? text : `${text}.`;
 }
 
@@ -41,15 +42,15 @@ export function buildInitialDraftEmail(input: DraftEmailInput): { subject: strin
     const lines = [
       `Hey ${firstName},`,
       "",
-      "Super glad you filled this out. I had fun digging into this one.",
+      input.emailOpening || "Super glad you filled this out. I had fun looking through this one.",
       observation ? "" : null,
       observation || null,
       "",
-      `I found some pretty good stuff for you. It looks like there's roughly ${input.savingsRange} in potential savings based on the ski plans you sent me.`,
+      `I found some pretty good stuff for you. It looks like there's roughly ${input.savingsRange} worth a look based on the ski plans you sent me.`,
       "",
       "I attached the quick Savings Scan here.",
       "",
-      "I also already dug through all the details and put together the full personalized Savings Plan with exactly what I found, who qualifies, deadlines and direct links.",
+      "I also already put together the full Savings Plan with exactly what I found, who qualifies, deadlines, and direct links.",
       "",
       "If you want it, it's $49 here:",
       "",
@@ -73,13 +74,13 @@ export function buildInitialDraftEmail(input: DraftEmailInput): { subject: strin
     ? [
         `Hey ${firstName},`,
         "",
-        "Thanks for sending this over! I dug into your family's plans and found a few useful things.",
+        input.emailOpening || "Thanks for sending this over. I looked through your ski plans and found a few useful things.",
         observation ? "" : null,
         observation || null,
         "",
-        "Nothing that looks like a giant jackpot, but there are still a couple places you may be able to shave some money off the season. I went ahead and attached the full Savings Plan with everything I found, including the details and links.",
+        "Nothing huge jumped out, but there are still a couple places you may be able to shave some money off the season. I went ahead and attached the full Savings Plan with everything I found, including the details and links.",
         "",
-        "The upside is that your current setup already looks pretty efficient, so it doesn't look like you're accidentally leaving a ton of money on the table.",
+        "The nice thing is your current setup already looks pretty efficient.",
         "",
         "Hope this helps!",
         "",
@@ -88,15 +89,13 @@ export function buildInitialDraftEmail(input: DraftEmailInput): { subject: strin
     : [
         `Hey ${firstName},`,
         "",
-        "Thanks for sending this over! I dug into your family's ski plans and attached everything I found.",
+        input.emailOpening || "Thanks for sending this over. I looked through your ski plans and attached everything I found.",
         observation ? "" : null,
         observation || null,
         "",
-        "There aren't massive hidden savings jumping out in your situation, but honestly that's useful confirmation too. It looks like you're already making some pretty solid choices and aren't unnecessarily overpaying in a bunch of places.",
+        "I couldn't lock in a sure number yet, but there are a couple of things worth checking. I attached the full Savings Plan with everything I found, including the specific programs, links, and details.",
         "",
-        "I went ahead and attached the full Savings Plan with everything I found, including the specific programs, links and details, so you have the whole thing.",
-        "",
-        "Hope it's helpful, and thanks for letting me take a crack at it!",
+        "Hope this helps, and thanks for letting me take a look.",
         "",
         "Ben",
       ];
@@ -115,7 +114,7 @@ export function buildPaidPlanEmail(input: PaidEmailInput): { subject: string; bo
       [
         `Hey ${firstName},`,
         "",
-        "Thanks! Here's the full Savings Plan I put together for your family.",
+        "Thanks! Here's the full Savings Plan I put together.",
         "",
         "It's attached.",
         "",

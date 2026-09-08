@@ -1,0 +1,217 @@
+{
+  "family": {
+    "firstName": "Maya",
+    "lastName": null,
+    "homeZip": "80482",
+    "adults": 1,
+    "children": [{ "age": 12, "grade": "7th" }],
+    "skiProfile": "Colorado home mountain plus one maybe weekend",
+    "annualDays": "16-30",
+    "destinations": ["Winter Park", "Steamboat, considering"]
+  },
+  "summary": {
+    "coreSavingsLow": 280,
+    "coreSavingsHigh": 350,
+    "optionalSavingsLow": 120,
+    "optionalSavingsHigh": 180,
+    "jackpotCount": 1,
+    "strongCount": 0,
+    "usefulCount": 0,
+    "watchCount": 1,
+    "confidence": "HIGH",
+    "rationale": "One verified youth product at the home mountain. Steamboat is optional because it is only considering.",
+    "humanReviewFlags": [],
+    "offerModeRecommendation": "SCAN_UPSELL",
+    "offerModeReason": "Firm youth-program savings clear the threshold.",
+    "headlineSavings": "$280-$350",
+    "headline": "Maya, there is a real save at Winter Park.",
+    "subhead": "The extra mountain is only if you actually go."
+  },
+  "opportunities": [
+    {
+      "id": "winter-park-youth-pass-2627",
+      "name": "Winter Park Youth Season Pass",
+      "category": "home-mountain kids access",
+      "tier": "JACKPOT",
+      "familyMembersAffected": ["12 year old"],
+      "eligibility": "Ages 12 and under for the published youth season pass.",
+      "familyFit": "Your 12-year-old is in the youth window and Winter Park is the home mountain.",
+      "baselineCost": 429,
+      "opportunityCost": 149,
+      "netSavingsLow": 280,
+      "netSavingsHigh": 350,
+      "calculation": "Adult-priced season access 429 minus youth season pass 149 equals 280. High end uses a higher walk-up comparison.",
+      "deadline": "October 12, 2026",
+      "restrictions": "Youth pass is not valid for night-only products. Photo ID may be required at pickup.",
+      "blackoutDates": null,
+      "stackability": "Does not stack with a second Winter Park adult season pass on the same child.",
+      "alreadyKnownByFamily": false,
+      "verificationStatus": "VERIFIED",
+      "countedInHeadline": true,
+      "countReason": "Official current-season youth product, home mountain, purchase not unresolved.",
+      "sourceUrl": "https://www.winterparkresort.com/plan-your-trip/tickets-and-passes",
+      "sourceTitle": "Winter Park tickets and passes",
+      "sourceCheckedAt": "2026-09-07",
+      "notes": "This is the counted save. Do not add the Steamboat option on top of it.",
+      "location": "Winter Park, Colorado",
+      "whyItMatters": "This research sentence should never appear in a customer PDF. The 12-year-old is still in the youth window at the home mountain.",
+      "howItWorks": "Buy the official youth season pass instead of adult-priced season access.",
+      "recommendedAction": "Buy the Winter Park Youth Season Pass before October 12, 2026 from the official tickets page."
+    },
+    {
+      "id": "steamboat-optional-days-2627",
+      "name": "Steamboat 4-Day Ticket Pack",
+      "category": "destination tickets",
+      "tier": "STRONG",
+      "familyMembersAffected": ["adult", "12 year old"],
+      "eligibility": "Advance 4-day pack for the listed ages.",
+      "familyFit": "Steamboat was listed as considering, not a definite trip.",
+      "baselineCost": 720,
+      "opportunityCost": 540,
+      "netSavingsLow": 180,
+      "netSavingsHigh": 180,
+      "calculation": "Two window tickets for four days versus the 4-day pack. Mutually exclusive with buying four separate window tickets. Do not add this to the Winter Park save.",
+      "deadline": "Buy before the trip, not at the window.",
+      "restrictions": "Only counts if the Steamboat weekend actually happens.",
+      "blackoutDates": null,
+      "stackability": "Alternative to window tickets. Not additive with Winter Park savings.",
+      "alreadyKnownByFamily": false,
+      "verificationStatus": "HIGH_CONFIDENCE",
+      "countedInHeadline": false,
+      "countReason": "Optional because Steamboat is considering.",
+      "sourceUrl": "https://www.steamboat.com/plan-your-trip/tickets-and-passes",
+      "sourceTitle": "Steamboat tickets and passes",
+      "sourceCheckedAt": "2026-09-07",
+      "notes": "Optional scenario only.",
+      "location": "Steamboat, Colorado",
+      "whyItMatters": "Research leftover. Only if they actually go.",
+      "howItWorks": "Buy the 4-day pack in advance.",
+      "recommendedAction": "If the Steamboat weekend is on, buy the 4-day pack before you go."
+    },
+    {
+      "id": "winter-park-retail-watch-2627",
+      "name": "Winter Park passholder retail",
+      "category": "Gear",
+      "tier": "WATCH",
+      "familyMembersAffected": ["adult"],
+      "eligibility": "Passholders get a published retail percent off eligible shops.",
+      "familyFit": "No specific gear purchase was named.",
+      "baselineCost": null,
+      "opportunityCost": null,
+      "netSavingsLow": 0,
+      "netSavingsHigh": 60,
+      "calculation": "No named purchase, so counted savings are 0.",
+      "deadline": null,
+      "restrictions": "Only eligible retail.",
+      "blackoutDates": null,
+      "stackability": "Not counted.",
+      "alreadyKnownByFamily": false,
+      "verificationStatus": "NEEDS_CHECK",
+      "countedInHeadline": false,
+      "countReason": "Unverified and no named purchase.",
+      "sourceUrl": "https://www.winterparkresort.com",
+      "sourceTitle": "Winter Park Resort",
+      "sourceCheckedAt": "2026-09-07",
+      "notes": "Watch only.",
+      "location": "Winter Park, Colorado",
+      "whyItMatters": "Research leftover. Do not treat this as firm savings.",
+      "howItWorks": "Show a pass at eligible shops.",
+      "recommendedAction": "Only if you are already buying gear."
+    }
+  ],
+  "scenarioGroups": [
+    {
+      "id": "home",
+      "label": "Winter Park",
+      "kind": "region",
+      "savingsLow": 280,
+      "savingsHigh": 350,
+      "note": "Home mountain youth product."
+    },
+    {
+      "id": "steamboat",
+      "label": "Steamboat",
+      "kind": "optional",
+      "savingsLow": 180,
+      "savingsHigh": 180,
+      "note": "Only if the considering weekend happens."
+    }
+  ],
+  "existingKnownSavings": [
+    {
+      "title": "Adult Winter Park season pass already owned",
+      "note": "You already have your own Winter Park season pass, so I left that out of the found number.",
+      "sourceTitle": "Winter Park tickets and passes",
+      "sourceUrl": "https://www.winterparkresort.com/plan-your-trip/tickets-and-passes"
+    }
+  ],
+  "watchlist": [
+    {
+      "title": "Seasonal rental if the 12-year-old is still growing",
+      "whatWeAreWatching": "Whether a seasonal rental beats repeating shop visits.",
+      "whyItCouldMatter": "Only if they do not already own fitting gear.",
+      "expectedTiming": "Before the first weekend",
+      "trigger": "You mention they still need rental gear",
+      "sourceTitle": "Winter Park rentals",
+      "sourceUrl": "https://www.winterparkresort.com"
+    }
+  ],
+  "freeScan": {
+    "headline": "unused research leftover",
+    "summaryText": "unused research leftover",
+    "primaryOpportunityArea": "Kids access",
+    "opportunityAreas": [],
+    "biggestPotentialWin": null,
+    "biggestPotentialWinLabel": null,
+    "unknownsIntro": null,
+    "importantUnknowns": ["whether the Steamboat weekend is actually happening"],
+    "ctaHeadline": "unused",
+    "ctaBody": "unused",
+    "methodologyTitle": "unused",
+    "methodologyText": "unused"
+  },
+  "paidPlan": {
+    "overview": "Start with the Winter Park youth pass, then decide on Steamboat.",
+    "startHere": [
+      {
+        "number": 1,
+        "title": "Buy the Winter Park youth season pass",
+        "description": "Get the 12-year-old on the official youth season pass before October 12, 2026.",
+        "sourceTitle": "Winter Park tickets and passes",
+        "sourceUrl": "https://www.winterparkresort.com/plan-your-trip/tickets-and-passes"
+      },
+      {
+        "number": 2,
+        "title": "Decide if Steamboat is actually happening",
+        "description": "If it is, buy the 4-day pack in advance. If it is not, skip it.",
+        "sourceTitle": "Steamboat tickets and passes",
+        "sourceUrl": "https://www.steamboat.com/plan-your-trip/tickets-and-passes"
+      }
+    ],
+    "optionalScenarios": [
+      {
+        "title": "Steamboat weekend",
+        "note": "Only if you actually go. Do not add this to the Winter Park number.",
+        "savingsLow": 180,
+        "savingsHigh": 180
+      }
+    ],
+    "alreadyDoingRight": [
+      {
+        "title": "Adult Winter Park season pass already owned",
+        "note": "You already have your own Winter Park season pass, so I left that out of the found number.",
+        "sourceTitle": "Winter Park tickets and passes",
+        "sourceUrl": "https://www.winterparkresort.com/plan-your-trip/tickets-and-passes"
+      }
+    ],
+    "bottomLine": "Do the youth pass first.",
+    "closingLine": "Then decide on Steamboat.",
+    "referralLine": null,
+    "thankYouHeadline": "Hope this helps, Maya.",
+    "thankYouBody": "If the Steamboat weekend firms up, reply and I can look again."
+  },
+  "emailContext": {
+    "personalizedObservation": "Winter Park as home with a 12-year-old, plus a maybe weekend at Steamboat, made this a clear one.",
+    "enthusiasmLevel": "HIGH"
+  }
+}

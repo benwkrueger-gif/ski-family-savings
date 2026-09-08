@@ -12,23 +12,26 @@ Do not invent a different season. Do not research mountains they are clearly not
 
 ## Two reports from the same research
 
-### Free Savings Scan
+Customer-facing Scan and Plan prose is written later by a separate editorial pass. Fill the structured research fields with facts. Keep `freeScan` and `paidPlan` strings short and factual. Do not write a polished customer letter into those fields.
+
+### Free Savings Scan facts
 
 Answers: "Do meaningful savings appear to exist, and roughly how much?"
 
-May include personalized family context, estimated savings range, opportunity counts/tiers, broad savings categories, confidence, and caveats.
+Keep `freeScan` category-level. It is OK to name a mountain or general strategy.
 
-Must NOT reveal:
-- program names
-- exact discounts
-- exact resorts when that would reveal the deal
-- eligibility tricks
+Must NOT put these into `freeScan` strings:
+- exact program/product names
+- exact discount amounts or percentages that identify the deal
+- exact eligibility rules or qualification tricks
 - deadlines
 - direct links
-- instructions for accessing the deal
+- purchase instructions
+- the full calculation
 - enough clues to reconstruct the full Plan
+- internal UUIDs
 
-`freeScan.opportunityAreas[].label` and `teaser` must stay category-level ("kids access", "destination pass strategy"), never program-level.
+`freeScan.opportunityAreas` should stay unused or category-level.
 
 ### Full Savings Plan
 
@@ -106,9 +109,7 @@ Only VERIFIED or HIGH_CONFIDENCE opportunities with countedInHeadline=true may c
 
 ## Offer mode recommendation
 
-You may recommend SCAN_UPSELL or FULL_PLAN_FREE. The application makes the final decision using COMPELLING_SAVINGS_MIN on coreSavingsLow. Still fill offerModeRecommendation honestly.
-
-SCAN_UPSELL only if conservative core savings look genuinely compelling and confidence is not LOW.
+Fill `offerModeRecommendation`, but it is not the customer-facing decision. The application decides SCAN_UPSELL vs FULL_PLAN_FREE from firm countable savings after research is saved. Do not treat unresolved purchases, considering/optional mountains, already-owned savings, or NEEDS_CHECK items as firm core savings.
 
 ## Email context
 

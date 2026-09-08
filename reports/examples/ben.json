@@ -1,8 +1,8 @@
 {
   "report": {
-    "generatedDate": "September 3, 2026",
+    "generatedDate": "September 7, 2026",
     "reportId": "SFS-0001",
-    "season": "2026–27"
+    "season": "2026/27"
   },
   "family": {
     "firstName": "Ben",
@@ -13,272 +13,163 @@
       { "age": 8, "grade": "3rd grade" },
       { "age": 12, "grade": "7th grade" }
     ],
-    "skiProfile": "Mix of local + destination skiing",
-    "annualDays": "16–30",
-    "destinations": [
-      "Sugarbush",
-      "Bolton Valley",
-      "Smugglers' Notch",
-      "Breckenridge",
-      "France"
-    ]
+    "skiProfile": "Mix of local and destination skiing",
+    "annualDays": "16-30",
+    "destinations": ["Sugarbush", "Bolton Valley", "Smugglers' Notch", "Breckenridge", "France"]
   },
   "summary": {
-    "headlineSavings": "$1,100–$1,900+",
-    "headline": "Ben, I found meaningful ski savings worth pursuing.",
-    "subhead": "I dug through your family's ski plans, ages, grades, passes and destinations looking for savings that actually matter.",
-    "confidence": "High",
+    "headlineSavings": "$1,100-$1,900",
+    "headline": "I found roughly $1,100-$1,900 that looks worth a look.",
     "jackpotCount": 2,
     "strongCount": 3,
     "usefulCount": 2,
-    "watchCount": 2
+    "watchCount": 2,
+    "headlineKind": "firm"
+  },
+  "planVoice": {
+    "opening": "Howdy Ben. Here's where I'd start with the season you described.",
+    "myTake": "If I were in your shoes, I'd price the France week first, then decide if Breckenridge is actually happening.",
+    "bottomLine": "Start with France and Breckenridge. The local stuff is smaller."
   },
   "freeScan": {
-    "primaryOpportunityArea": "Destination skiing + pass strategy",
-    "secondaryOpportunityAreas": ["Kids access", "Local ski-day strategy"],
-    "opportunityAreas": [
+    "greeting": "Howdy Ben!",
+    "opening": "Howdy Ben!\n\nThanks for letting me look at your winter. You've got an 8-year-old and a 12-year-old, a season around Sugarbush, Bolton Valley, and Smugglers' Notch, plus a couple trips that aren't local.\n\nHere's what I'd pay attention to.",
+    "savingsLine": "I found roughly $1,100-$1,900 that looks worth a look.",
+    "findings": [
       {
-        "label": "Destination skiing + pass strategy",
-        "teaser": "Your biggest opportunity appears to be hiding in how your existing pass access interacts with your March destination trip — and a second trip that isn't on that pass at all."
+        "heading": "The France week is the one I'd settle first",
+        "tier": "jackpot",
+        "explanation": "If that trip is still on, there is a much cheaper way to buy the week than treating it like a Colorado window ticket. I'll keep the exact details in the full Plan."
       },
       {
-        "label": "Kids access",
-        "teaser": "One of your kids is in a window where youth pricing and school-year programs start to matter a lot. Easy to miss if it isn't advertised as kids-ski-free."
+        "heading": "Breckenridge only if you actually go",
+        "tier": "jackpot",
+        "explanation": "Your current Vermont setup does not cover that mountain. If the trip happens, buy the right product in advance. If it doesn't, skip it."
       },
       {
-        "label": "Local ski-day strategy",
-        "teaser": "At 16–30 days, a couple of your Vermont mountains stop making sense as window-ticket mountains. The math flips once you stop treating every local day like a one-off."
+        "heading": "Something worth a look at Bolton Valley",
+        "tier": "strong",
+        "explanation": "At your day count, a couple of the close mountains stop making sense as one-off tickets."
       }
     ],
-    "biggestPotentialWin": "$800+",
-    "biggestPotentialWinLabel": "Biggest potential win",
-    "summaryText": "Most of the money is sitting in destination skiing, not in clipping 10% off a Tuesday ticket at home.",
-    "unknownsIntro": "To tighten this estimate, I'd want to confirm:",
+    "myTake": "If I were in your shoes, I'd lock the France week first, then decide if Breckenridge is actually on the calendar.",
+    "unknownsHeading": "A couple things to check",
     "importantUnknowns": [
-      "the exact Ikon product each family member holds",
-      "roughly how many days you'll ski Smuggs and Bolton"
+      "whether the Breckenridge trip is definite",
+      "which local days are actually happening at Bolton and Smuggs"
     ],
+    "preparedFor": "Ben",
     "cta": {
-      "headline": "Want to see exactly where the savings are?",
-      "body": "The Savings Plan includes the exact programs, eligibility rules, deadlines, links and what I'd actually do.",
-      "bullets": [
-        "exact programs",
-        "why your family qualifies",
-        "savings math",
-        "deadlines + restrictions",
-        "direct source links",
-        "what I'd actually do"
-      ],
+      "headline": "Want the full details?",
+      "body": "I already put together the complete Savings Plan with the exact programs, who qualifies, deadlines, and links. If you'd like it, it's $49.\n\nIf you get it and don't feel it was worth $49, tell me. I'll refund you. You can keep the Plan.",
+      "bullets": [],
       "price": "$49",
-      "url": "https://buy.stripe.com/6oU3cxdef5WtdcE8Ij9k400",
-      "buttonLabel": "Unlock my Savings Plan →"
+      "url": "https://buy.stripe.com/test_example",
+      "buttonLabel": "Get the Savings Plan"
     }
   },
-  "savingsMap": [
-    {
-      "label": "Local Vermont",
-      "potential": "$280–$520",
-      "note": "Bolton + Smuggs day strategy. Does not stack with every destination save.",
-      "kind": "region"
-    },
-    {
-      "label": "Breckenridge / Colorado",
-      "potential": "$400–$650",
-      "note": "This trip is off your current pass. Window tickets here are a trap.",
-      "kind": "region"
-    },
-    {
-      "label": "France",
-      "potential": "$850–$1,100",
-      "note": "Family skipass pricing vs. buying everyone like they're adults from Colorado.",
-      "kind": "region"
-    },
-    {
-      "label": "Watch",
-      "potential": "2 programs",
-      "note": "Not in the headline number. Worth a calendar reminder, not a purchase today.",
-      "kind": "watch"
-    }
-  ],
+  "savingsMap": [],
   "opportunities": [
     {
       "id": "opp-001",
       "tier": "jackpot",
-      "title": "France family skipass pricing — stop buying Alps tickets like they're Breckenridge",
+      "title": "France family skipass pricing",
       "location": "France",
-      "potentialSavings": "$850–$1,100",
-      "confidence": "High",
-      "whyItMatters": "Two kids on US-style window logic for a week in the Alps is how a fun trip turns into a financial own-goal. French resorts still price children and family packs like they actually want families to show up.",
-      "howItWorks": "Most major French ski areas sell a family skipass (typically 2 adults + 2 children) and a steep youth rate that has nothing in common with a $200 Colorado walk-up. You buy the pack from the resort or its official skipass site — not a US reseller — for the specific dates of your trip.",
-      "whyYouQualify": "Two adults, two kids (8 and 12), and a France destination already on your list. Youth pricing covers both children at the resorts in play. No Vermont residency required. This one is about who is in the family, not where you live.",
-      "recommendedAction": "Before you book lodging, pick the resort and buy the official family/youth skipass for your dates. Do not price this trip using US adult ticket numbers.",
-      "deadline": "Buy once dates are firm — family packs are usually date-specific and not something you want to do at the window in a jet-lagged fog.",
-      "restrictions": [
-        "Kids must be within the resort's published youth age band (your 8- and 12-year-old both clear the usual 5–17 window, but confirm the exact ages at your resort).",
-        "Family packs usually require the same dates and the same domain.",
-        "Insurance, photos, and hands-free cards can add a little. I did not count those as savings or as gotchas worth panic."
+      "potentialSavings": "$850-$1,100",
+      "countKind": "firm",
+      "found": "If the Alps week is still on, buy the official family or youth product for those dates. US-style window math is the expensive way to do that trip.",
+      "saveNote": "$850-$1,100 if you buy the official family product instead of four adult-priced tickets.",
+      "action": "Pick the resort, then buy the official family or youth skipass for your dates before lodging gets so locked that you stop caring about lift math.",
+      "catchNote": "Kids need to be in that resort's published youth ages. Your 8- and 12-year-old are usually fine. Confirm the exact band.",
+      "deadline": "Buy once dates are firm. These packs are usually date-specific.",
+      "restrictions": [],
+      "facts": [],
+      "assumptions": [],
+      "scenarios": [
+        {
+          "label": "This option",
+          "kind": "confirmed",
+          "baseline": "$2,160",
+          "optimized": "$1,080",
+          "savings": "$1,080"
+        }
       ],
-      "math": {
-        "normalCost": "$2,160",
-        "optimizedCost": "$1,080",
-        "estimatedSavings": "$850–$1,100"
-      },
       "source": {
         "name": "Les 3 Vallées official skipass",
         "url": "https://www.les3vallees.com/en/skipass"
-      }
+      },
+      "sources": []
     },
     {
       "id": "opp-002",
       "tier": "jackpot",
-      "title": "Breckenridge is not on Ikon. Don't pay window prices to find that out.",
+      "title": "Breckenridge advance tickets",
       "location": "Breckenridge",
-      "potentialSavings": "$400–$650",
-      "confidence": "High",
-      "whyItMatters": "Sugarbush being an Ikon mountain does nothing for you in Summit County. If this trip happens on window tickets, you will light real money on fire in the name of convenience.",
-      "howItWorks": "Epic Day Pass (or the smallest Epic product that covers your Breck days) is the grown-up version of this trip. You buy it in advance from Epic, then skip the window. The earlier you buy, the less it costs. This is not a secret. It is also not what most families do when they already 'have a pass.'",
-      "whyYouQualify": "Breckenridge is on your destination list, you ski enough days to make a short Epic product cheaper than three or four full-price tickets, and Ikon does not cover this mountain.",
-      "recommendedAction": "Count the Breck days. Buy the matching Epic Day Pass now, not in Colorado. If the trip is still a maybe, wait — this save only counts if you actually go.",
-      "deadline": "Epic Day Pass pricing steps up in tiers through fall. The cheap version is the early one.",
-      "restrictions": [
-        "Blackout dates and mountain restrictions depend on the exact Epic product. Read the calendar before you buy.",
-        "This does not stack with Ikon. I did not pretend it does.",
-        "If the Breck trip gets dropped, this opportunity disappears with it."
+      "potentialSavings": "$400-$650",
+      "countKind": "optional",
+      "kindLabel": "Only if you actually go",
+      "found": "Your Vermont pass setup does not cover Summit County. If this trip happens, buy the matching advance product. If it gets dropped, this save disappears with it.",
+      "saveNote": "$400-$650 only if the Breckenridge trip actually happens.",
+      "action": "Count the days. Buy the matching advance product before you go, or drop the trip from the savings story.",
+      "catchNote": "Read the calendar on the exact product before you buy. This does not stack with your Vermont pass.",
+      "deadline": "Earlier purchase windows are cheaper.",
+      "restrictions": [],
+      "facts": [],
+      "assumptions": [],
+      "scenarios": [
+        {
+          "label": "This option",
+          "kind": "assumption",
+          "baseline": "$1,720",
+          "optimized": "$1,140",
+          "savings": "$580"
+        }
       ],
-      "math": {
-        "normalCost": "$1,720",
-        "optimizedCost": "$1,140",
-        "estimatedSavings": "$400–$650"
-      },
       "source": {
         "name": "Epic Day Pass",
         "url": "https://www.epicpass.com/passes/epic-day-pass"
-      }
+      },
+      "sources": []
     },
     {
       "id": "opp-003",
       "tier": "strong",
-      "title": "Bolton Valley stops being a window-ticket mountain at your day count",
+      "title": "Bolton Valley season product",
       "location": "Bolton Valley",
-      "potentialSavings": "$180–$250",
-      "confidence": "High",
-      "whyItMatters": "Bolton is close, friendly, and dangerously easy to overpay for one day at a time. At 16–30 family days, some of those days are going to land here. Window math assumes they won't.",
-      "howItWorks": "Bolton's season pass and multi-day products undercut repeated window tickets once you stop treating the mountain like a backup plan. You do not need everyone on a pass. You need the people who will actually ski it on one.",
-      "whyYouQualify": "Bolton is a listed home mountain, you live in 05404 (that's not a long drive), and your season volume is in the range where a pass or pack beats improvising.",
-      "recommendedAction": "Decide who actually skis Bolton. Put those people on a Bolton product. Leave the others off. Do not buy four of everything.",
-      "deadline": "Preseason pass pricing is the whole point. After that you're just buying a slightly cheaper window ticket.",
-      "restrictions": [
-        "Only counts if you will actually ski Bolton more than a couple of times.",
-        "Do not double-count this against a day that was already going on Ikon at Sugarbush."
+      "potentialSavings": "$180-$250",
+      "countKind": "firm",
+      "found": "Bolton is close and easy to overpay for one day at a time. At 16-30 days, some of those days are going to land here.",
+      "saveNote": "$180-$250 if the people who actually ski Bolton are on a season or multi-day product.",
+      "action": "Decide who actually skis Bolton. Put those people on a Bolton product while preseason pricing still exists.",
+      "catchNote": "Only counts if you will actually ski Bolton more than a couple of times. Do not buy four of everything.",
+      "deadline": "Preseason pass pricing is the whole point.",
+      "restrictions": [],
+      "facts": [],
+      "assumptions": [],
+      "scenarios": [
+        {
+          "label": "This option",
+          "kind": "confirmed",
+          "baseline": "$540",
+          "optimized": "$310",
+          "savings": "$230"
+        }
       ],
-      "math": {
-        "normalCost": "$540",
-        "optimizedCost": "$310",
-        "estimatedSavings": "$180–$250"
-      },
       "source": {
-        "name": "Bolton Valley tickets & passes",
+        "name": "Bolton Valley tickets and passes",
         "url": "https://www.boltonvalley.com"
-      }
-    },
-    {
-      "id": "opp-004",
-      "tier": "strong",
-      "title": "Smuggs family products — you listed it, so stop paying like tourists",
-      "location": "Smugglers' Notch",
-      "potentialSavings": "$120–$200",
-      "confidence": "Medium-high",
-      "whyItMatters": "Smuggs is built for families and then quietly prices day tickets like it isn't. If it's on your mountain list, there is almost always a better product than four walk-up tickets and a shrug.",
-      "howItWorks": "Look at their family packages, stay-and-ski deals, and youth pricing before you Google 'Smuggs tickets' the night before. The family-shaped products are the ones that move the number.",
-      "whyYouQualify": "Two school-age kids, Smugglers' Notch on the destination list, and a season that already includes mixed Vermont days.",
-      "recommendedAction": "If Smuggs is more than a one-off, buy the family-shaped product. If it's a one-off, this is not a jackpot — skip it without guilt.",
-      "deadline": "Package rates are better when lodging and lift are booked together, not as two separate panic purchases.",
-      "restrictions": [
-        "Lodging packages only help if you were going to stay over anyway.",
-        "I did not count kids-camp upsells as 'savings.'"
-      ],
-      "math": {
-        "normalCost": "$640",
-        "optimizedCost": "$470",
-        "estimatedSavings": "$120–$200"
       },
-      "source": {
-        "name": "Smugglers' Notch official site",
-        "url": "https://www.smuggs.com"
-      }
-    },
-    {
-      "id": "opp-005",
-      "tier": "strong",
-      "title": "Youth pricing for the 12-year-old is not the same as 'the kid pass you already know'",
-      "location": "Sugarbush / Ikon",
-      "potentialSavings": "$80–$150",
-      "confidence": "Medium",
-      "whyItMatters": "A 7th grader is in the awkward zone: too old for the cute free programs, young enough that youth products still matter. Families often leave them on the adult-ish option out of inertia.",
-      "howItWorks": "Confirm the Ikon/Sugarbush youth product for a 12-year-old and whether the 8-year-old is on the correct child product. Wrong product here doesn't look dramatic. It just leaks money all season.",
-      "whyYouQualify": "You have a 12-year-old and a 8-year-old, Sugarbush is a home mountain, and Ikon is already part of the picture.",
-      "recommendedAction": "Pull up the exact product each person holds. If the 12-year-old is on anything adult-flavored, fix it before the season starts.",
-      "restrictions": [
-        "Depends on the exact Ikon product in the house — that's one of the unknowns.",
-        "Not counted as a jackpot because it might already be correct."
-      ],
-      "math": {
-        "normalCost": "$429",
-        "optimizedCost": "$299",
-        "estimatedSavings": "$80–$150"
-      },
-      "source": {
-        "name": "Ikon Pass",
-        "url": "https://www.ikonpass.com"
-      },
-      "sources": [
-        { "name": "Sugarbush tickets & passes", "url": "https://www.sugarbush.com" }
-      ]
-    },
-    {
-      "id": "opp-006",
-      "tier": "useful",
-      "title": "Lesson packages beat buying one private lesson as an apology",
-      "location": "Vermont",
-      "potentialSavings": "$40–$90",
-      "confidence": "Medium",
-      "whyItMatters": "If a kid is getting a lesson this year, buying it as a one-off is the most expensive way to do a nice thing.",
-      "howItWorks": "Most of your mountains sell multi-lesson packs or first-timer bundles that undercut the single-lesson rate. Only useful if lessons are actually happening.",
-      "whyYouQualify": "School-age kids and a mix of mountains that all sell lesson products. No lesson plans? Ignore this one.",
-      "recommendedAction": "If anyone is taking a lesson, buy a pack at the mountain they'll actually use. Don't collect lesson vouchers like frequent-flyer miles.",
-      "source": {
-        "name": "Sugarbush Ski & Ride School",
-        "url": "https://www.sugarbush.com"
-      },
-      "sources": [
-        { "name": "Smugglers' Notch lessons", "url": "https://www.smuggs.com" },
-        { "name": "Bolton Valley lessons", "url": "https://www.boltonvalley.com" }
-      ]
-    },
-    {
-      "id": "opp-007",
-      "tier": "useful",
-      "title": "Rentals: one seasonal setup vs. four window pickups",
-      "location": "Local Vermont",
-      "potentialSavings": "$30–$70",
-      "confidence": "Medium",
-      "whyItMatters": "Window rentals are priced for people who forgot their skis. Seasonal rentals are priced for people who live here. You live here.",
-      "howItWorks": "A seasonal rental for the kid who's still growing usually beats repeating demo-shop visits, especially if Bolton/Smuggs/Sugarbush days add up.",
-      "whyYouQualify": "Local-ish family, two kids, 16–30 days. If everybody owns gear that fits, this one is already handled.",
-      "recommendedAction": "If the 8-year-old is still in rental gear, go seasonal. If not, skip it. I'm not going to invent a save.",
-      "source": {
-        "name": "Ski Rack seasonal rentals",
-        "url": "https://www.skirack.com"
-      }
+      "sources": []
     }
   ],
   "strategy": {
-    "headline": "What I'd do",
+    "headline": "Here's where I'd start",
+    "intro": "Three things, in this order.",
     "steps": [
       {
         "number": 1,
-        "title": "Price the France trip on a family skipass, not on US adult tickets",
-        "description": "This is the biggest number on the page. Pick the resort, then buy the official family/youth pack for your dates before lodging gets so locked that you stop caring about lift math.",
+        "title": "Price the France week on the official family product",
+        "description": "This is the biggest number on the page. Pick the resort, then buy the official family or youth pack for your dates.",
         "source": {
           "name": "Les 3 Vallées official skipass",
           "url": "https://www.les3vallees.com/en/skipass"
@@ -286,8 +177,8 @@
       },
       {
         "number": 2,
-        "title": "Buy an Epic Day Pass for Breckenridge — or drop the trip from the savings story",
-        "description": "Ikon will not help you in Summit County. If you're going, buy Epic early. If you're not going, this $400–$650 disappears, and that's fine.",
+        "title": "Decide if Breckenridge is actually happening",
+        "description": "If you are going, buy the advance product. If you are not, this $400-$650 disappears, and that's fine.",
         "source": {
           "name": "Epic Day Pass",
           "url": "https://www.epicpass.com/passes/epic-day-pass"
@@ -295,81 +186,47 @@
       },
       {
         "number": 3,
-        "title": "Stop window-ticketing Bolton",
+        "title": "Stop buying Bolton one day at a time",
         "description": "Decide who actually skis it and put them on a Bolton product while preseason pricing still exists.",
         "source": {
-          "name": "Bolton Valley tickets & passes",
+          "name": "Bolton Valley tickets and passes",
           "url": "https://www.boltonvalley.com"
-        }
-      },
-      {
-        "number": 4,
-        "title": "Confirm the Ikon product on every body in the house",
-        "description": "Especially the 12-year-old. Wrong product here is quiet and expensive.",
-        "source": {
-          "name": "Ikon Pass",
-          "url": "https://www.ikonpass.com"
         }
       }
     ]
   },
   "knownSavings": [
     {
-      "title": "Ikon access for Sugarbush",
-      "note": "You already told me this is in the mix, so I verified it and then left it out of the discovery total. I'm not going to high-five myself for a pass you already bought.",
+      "title": "Sugarbush access you already have",
+      "note": "You already told me this is in the mix, so I left it out of the found number.",
       "source": {
-        "name": "Ikon Pass",
-        "url": "https://www.ikonpass.com"
+        "name": "Sugarbush tickets and passes",
+        "url": "https://www.sugarbush.com"
       }
     }
   ],
   "watch": [
     {
       "title": "Vermont 5th Grade Ski Passport",
-      "whatWeAreWatching": "The statewide 5th-grade passport that unlocks a pile of Vermont mountains for a ridiculous price.",
-      "whyItCouldMatter": "Your 8-year-old is in 3rd grade. This isn't a save this season. It is absolutely a save the year they hit 5th.",
-      "expectedTiming": "Two seasons out — watch for the 2028–29 registration window.",
-      "trigger": "Kid enters 5th grade and Ski Vermont opens registration.",
+      "whatWeAreWatching": "Your 8-year-old is in 3rd grade. This is not a save this season. It is a save the year they hit 5th.",
       "source": {
         "name": "Ski Vermont 5th Grade Passport",
         "url": "https://skivermont.com"
       }
-    },
-    {
-      "title": "Ikon spring renewal / price step-ups",
-      "whatWeAreWatching": "Ikon's spring and early-summer price locks, plus any family or youth product changes.",
-      "whyItCouldMatter": "If Ikon stays your Sugarbush answer, buying it in the first window is the difference between a smart pass and an expensive habit.",
-      "expectedTiming": "Spring 2027, usually with a deadline that arrives earlier than people remember.",
-      "trigger": "Ikon publishes 2027–28 pricing or your current product changes.",
-      "source": {
-        "name": "Ikon Pass",
-        "url": "https://www.ikonpass.com"
-      }
     }
   ],
-  "monitoring": {
-    "enabled": false
-  },
-  "methodology": {
-    "noFakeWins": true,
-    "title": "No fake wins",
-    "text": "I don't count programs you already knew about as discoveries, I don't double-count overlapping savings, and I leave uncertain upside out of the headline number."
-  },
+  "watchIntro": "Not counted yet. Worth a calendar reminder, not a purchase today.",
   "sources": [
     { "label": "Les 3 Vallées official skipass", "url": "https://www.les3vallees.com/en/skipass" },
     { "label": "Epic Day Pass", "url": "https://www.epicpass.com/passes/epic-day-pass" },
     { "label": "Bolton Valley", "url": "https://www.boltonvalley.com" },
-    { "label": "Smugglers' Notch", "url": "https://www.smuggs.com" },
-    { "label": "Ikon Pass", "url": "https://www.ikonpass.com" },
     { "label": "Sugarbush", "url": "https://www.sugarbush.com" },
-    { "label": "Ski Vermont", "url": "https://skivermont.com" },
-    { "label": "Ski Rack", "url": "https://www.skirack.com" }
+    { "label": "Ski Vermont", "url": "https://skivermont.com" }
   ],
-  "closingLine": "That's it. Go ski.",
-  "referralLine": "Know another ski family getting murdered by lift-ticket prices? Send them to SkiFamilySavings.com.",
+  "closingLine": "Start with France and Breckenridge. The local stuff is smaller.",
   "thankYou": {
     "enabled": true,
-    "headline": "Thanks for testing this out.",
-    "body": "You're one of the first families I'm actually building this for. If something's confusing, missing, or just feels off — tell me. That's the whole point of this round."
+    "headline": "Hope this helps, Ben.",
+    "body": "If something looks off or you want me to look at another mountain, just reply."
   }
 }

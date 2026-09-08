@@ -44,6 +44,18 @@ test("FULL_PLAN_FREE draft has no Stripe link or $49 language", () => {
   );
 });
 
+test("FULL_PLAN_FREE with no firm savings stays honest and still attaches the Plan", () => {
+  const email = buildInitialDraftEmail({
+    firstName: "Ada",
+    offerMode: "FULL_PLAN_FREE",
+    savingsRange: "$413-$1,056",
+    coreSavingsLow: 0,
+  });
+  assert.match(email.body, /couldn't lock in a sure number/);
+  assert.match(email.body, /full Savings Plan/);
+  assert.doesNotMatch(email.body, /\$49/);
+});
+
 test("paid plan email is short, first person, and has no em dashes", () => {
   const email = buildPaidPlanEmail({ firstName: "Ada" });
   assert.match(email.subject, /Savings Plan/);

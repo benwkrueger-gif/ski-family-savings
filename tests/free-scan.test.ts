@@ -134,4 +134,53 @@ test("FULL_PLAN_FREE omits the $49 CTA from the Scan payload", () => {
     offerMode: "FULL_PLAN_FREE",
   });
   assert.equal(data.freeScan?.cta, undefined);
+  assert.match(String(data.freeScan?.closing), /Hope this helps/);
+  assert.doesNotMatch(JSON.stringify(data.freeScan), /keep the exact details in the (full )?Plan/i);
+  assert.doesNotMatch(JSON.stringify(data.freeScan), /\$49/);
+});
+
+test("SCAN_UPSELL Scan keeps the Plan teaser and refund offer", () => {
+  const data = researchToReportData({
+    research: sampleResearch(),
+    reportId: "rid",
+    offerMode: "SCAN_UPSELL",
+    checkoutUrl: "https://buy.stripe.com/test_abc",
+  });
+  assert.match(String(data.freeScan?.findings[0]?.explanation), /I'll keep the exact details in the full Plan/);
+  assert.match(String(data.freeScan?.cta?.body), /I'll refund you/);
+  assert.equal(data.freeScan?.cta?.price, "$49");
+});
+
+test("research leftover prose is not dumped into customer opportunity cards", () => {
+  const data = researchToReportData({
+    research: sampleResearch(),
+    reportId: "rid",
+    offerMode: "SCAN_UPSELL",
+  });
+  assert.equal(data.opportunities[0]?.found, undefined);
+  assert.doesNotMatch(JSON.stringify(data.opportunities[0]), /Kids tickets add up/);
+  assert.equal(data.opportunities[0]?.title, "Secret Youth Passport");
+  assert.equal(data.opportunities[0]?.deadline, "October 15");
+  assert.equal(data.opportunities[0]?.source?.url, "https://example.com/passport");
+});
+
+test("Scan copy uses founder voice, tiers, and no internal UUID", () => {
+  const reportId = "bd9a4d4d-7934-453f-b3f5-3783c5c773b6";
+  const data = researchToReportData({
+    research: sampleResearch(),
+    reportId,
+    offerMode: "SCAN_UPSELL",
+    checkoutUrl: "https://buy.stripe.com/test_abc",
+  });
+  assert.equal(data.summary.jackpotCount, 1);
+  assert.equal(data.summary.strongCount, 0);
+  assert.equal(data.freeScan?.findings.length, 1);
+  assert.equal(data.freeScan?.findings[0]?.tier, "jackpot");
+  assert.match(String(data.freeScan?.opening), /Howdy Ada/);
+  assert.match(String(data.freeScan?.myTake), /If I were in your shoes/);
+  assert.match(String(data.freeScan?.cta?.body), /I'll refund you/);
+  assert.equal(data.freeScan?.cta?.url, "https://buy.stripe.com/test_abc");
+  assert.doesNotMatch(JSON.stringify(data.freeScan), new RegExp(reportId));
+  assert.doesNotMatch(JSON.stringify(data.freeScan), /\u2014/);
+  assert.equal(freeScanLeakFlags({ ...data, report: { ...data.report, reportId } }).length, 0);
 });

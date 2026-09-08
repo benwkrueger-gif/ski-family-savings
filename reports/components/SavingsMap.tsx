@@ -8,7 +8,7 @@ export function SavingsMap({ items }: SavingsMapProps) {
   if (!items.length) return null;
 
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-3 gap-3">
       {items.map((item) => {
         const watch = item.kind === "watch";
         return (
@@ -18,11 +18,11 @@ export function SavingsMap({ items }: SavingsMapProps) {
               watch ? "bg-subtle" : "bg-background"
             }`}
           >
-            <div className={watch ? "bg-subtle px-5 py-5" : "bg-dark px-5 py-5"}>
+            <div className={watch ? "bg-subtle px-4 py-3.5" : "bg-dark px-4 py-3.5"}>
               <p className={`eyebrow ${watch ? "" : "text-white/80"}`}>{item.label}</p>
               {item.potential ? (
                 <p
-                  className={`mt-2 font-display text-4xl font-bold leading-none tracking-[-0.04em] ${
+                  className={`mt-1.5 font-display text-[1.85rem] font-bold leading-none tracking-[-0.04em] ${
                     watch ? "text-dark" : "text-accent"
                   }`}
                 >
@@ -31,7 +31,7 @@ export function SavingsMap({ items }: SavingsMapProps) {
               ) : null}
             </div>
             {item.note ? (
-              <p className="px-5 py-3 text-[13px] leading-relaxed text-muted">{item.note}</p>
+              <p className="px-4 py-2.5 text-[12px] leading-snug text-muted">{item.note}</p>
             ) : null}
           </article>
         );

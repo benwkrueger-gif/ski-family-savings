@@ -172,9 +172,4 @@ export function parseResearch(input: unknown): CanonicalResearch {
   return CanonicalResearchSchema.parse(input);
 }
 
-export function formatSavingsRange(low: number, high: number): string {
-  const round = (value: number) => Math.round(value);
-  if (low <= 0 && high <= 0) return "$0";
-  if (round(low) === round(high)) return `$${round(low).toLocaleString("en-US")}`;
-  return `$${round(low).toLocaleString("en-US")}–$${round(high).toLocaleString("en-US")}`;
-}
+export { formatMoneyRange as formatSavingsRange } from "./money";

@@ -4,6 +4,7 @@ import { pathToFileURL } from "node:url";
 import { pdf } from "pdf-to-img";
 import { PROJECT_ROOT, type ReportType } from "./render-report";
 import type { ReportData } from "../schema";
+import { writingVoiceIssues } from "../../lib/copy/banned";
 
 async function loadPdfjs() {
   const pdfjsEntry = path.join(
@@ -96,10 +97,38 @@ export function runChecks(
         : `${type}: empty pages: ${emptyPages.map((page) => page.index).join(", ")}`,
   });
 
+  const reportId = data.report.reportId;
+  if (reportId && /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(reportId)) {
+    checks.push({
+      ok: !extracted.allText.includes(reportId),
+      message: extracted.allText.includes(reportId)
+        ? `${type}: internal report UUID leaked into PDF text`
+        : `${type}: no internal report UUID in PDF text`,
+    });
+  }
+
+  const voice = writingVoiceIssues(extracted.allText);
+  checks.push({
+    ok: voice.length === 0,
+    message:
+      voice.length === 0
+        ? `${type}: no robotic third-person or research-audit language`
+        : `${type}: voice flags: ${voice.join(", ")}`,
+  });
+
+  if (!data.freeScan?.cta) {
+    checks.push({
+      ok: !/\$49/.test(extracted.allText),
+      message: /\$49/.test(extracted.allText)
+        ? `${type}: $49 language present without an upsell CTA`
+        : `${type}: no $49 language`,
+    });
+  }
+
   if (type === "free") {
     checks.push({
-      ok: extracted.pageCount === 1,
-      message: `free: expected 1 page, got ${extracted.pageCount}`,
+      ok: extracted.pageCount >= 1 && extracted.pageCount <= 3,
+      message: `free: expected 1-3 pages, got ${extracted.pageCount}`,
     });
     const ctaUrl = data.freeScan?.cta?.url;
     if (ctaUrl) {

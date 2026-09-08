@@ -35,6 +35,8 @@ export const SummarySchema = z.object({
   strongCount: z.number().int().nonnegative().default(0),
   usefulCount: z.number().int().nonnegative().default(0),
   watchCount: z.number().int().nonnegative().default(0),
+  headlineKind: z.enum(["firm", "conditional"]).optional(),
+  conditionalSavings: z.string().optional(),
 });
 
 export const FreeScanCtaSchema = z.object({
@@ -51,7 +53,25 @@ export const OpportunityAreaSchema = z.object({
   teaser: z.string(),
 });
 
+export const ScanFindingSchema = z.object({
+  heading: z.string(),
+  tier: z.enum(["jackpot", "strong", "useful", "watch"]),
+  explanation: z.string(),
+  whyThisFamily: z.string().optional(),
+  condition: z.string().optional(),
+  savings: z.string().optional(),
+});
+
 export const FreeScanSchema = z.object({
+  greeting: z.string().optional(),
+  opening: z.string().optional(),
+  savingsLine: z.string().optional(),
+  savingsCondition: z.string().optional(),
+  findings: z.array(ScanFindingSchema).default([]),
+  myTake: z.string().optional(),
+  unknownsHeading: z.string().optional(),
+  closing: z.string().optional(),
+  preparedFor: z.string().optional(),
   primaryOpportunityArea: z.string().optional(),
   secondaryOpportunityAreas: z.array(z.string()).default([]),
   opportunityAreas: z.array(OpportunityAreaSchema).default([]),
@@ -60,6 +80,8 @@ export const FreeScanSchema = z.object({
   summaryText: z.string().optional(),
   importantUnknowns: z.array(z.string()).default([]),
   unknownsIntro: z.string().optional(),
+  methodologyTitle: z.string().optional(),
+  methodologyText: z.string().optional(),
   cta: FreeScanCtaSchema.optional(),
 });
 
@@ -67,6 +89,24 @@ export const OpportunityMathSchema = z.object({
   normalCost: z.string().optional(),
   optimizedCost: z.string().optional(),
   estimatedSavings: z.string().optional(),
+});
+
+export const ScenarioProductSchema = z.object({
+  name: z.string(),
+  price: z.string(),
+  estimated: z.boolean().optional(),
+});
+
+export const OpportunityScenarioSchema = z.object({
+  label: z.string(),
+  kind: z.enum(["confirmed", "assumption", "alternative"]),
+  assumption: z.string().optional(),
+  baseline: z.string().optional(),
+  optimized: z.string().optional(),
+  savings: z.string().optional(),
+  mathNote: z.string().optional(),
+  buy: z.array(ScenarioProductSchema).default([]),
+  comparedWith: z.array(ScenarioProductSchema).default([]),
 });
 
 export const SourceSchema = z.object({
@@ -82,12 +122,23 @@ export const OpportunitySchema = z.object({
   location: z.string().optional(),
   potentialSavings: z.string().optional(),
   confidence: z.string().optional(),
+  countKind: z.enum(["firm", "conditional", "optional", "watch"]).optional(),
+  kindLabel: z.string().optional(),
+  found: z.string().optional(),
+  saveNote: z.string().optional(),
   whyItMatters: z.string().optional(),
   howItWorks: z.string().optional(),
   whyYouQualify: z.string().optional(),
   recommendedAction: z.string().optional(),
+  action: z.string().optional(),
+  catchNote: z.string().optional(),
   deadline: z.string().optional(),
   restrictions: z.array(z.string()).default([]),
+  facts: z.array(z.string()).default([]),
+  assumptions: z.array(z.string()).default([]),
+  scenarios: z.array(OpportunityScenarioSchema).default([]),
+  sourceCheckedNote: z.string().optional(),
+  sourceCheckedLabel: z.string().optional(),
   math: OpportunityMathSchema.optional(),
   source: SourceSchema.optional(),
   sources: z.array(SourceSchema).default([]),
@@ -102,6 +153,7 @@ export const StrategyStepSchema = z.object({
 
 export const StrategySchema = z.object({
   headline: z.string().optional(),
+  intro: z.string().optional(),
   steps: z.array(StrategyStepSchema).default([]),
 });
 
@@ -158,16 +210,24 @@ export const TestimonialSchema = z.object({
   name: z.string().optional(),
 });
 
+export const PlanVoiceSchema = z.object({
+  opening: z.string().optional(),
+  myTake: z.string().optional(),
+  bottomLine: z.string().optional(),
+});
+
 export const ReportDataSchema = z.object({
   report: ReportMetaSchema,
   family: FamilySchema,
   summary: SummarySchema,
+  planVoice: PlanVoiceSchema.optional(),
   freeScan: FreeScanSchema.optional(),
   savingsMap: z.array(SavingsMapItemSchema).default([]),
   opportunities: z.array(OpportunitySchema).default([]),
   strategy: StrategySchema.optional(),
   knownSavings: z.array(KnownSavingSchema).default([]),
   watch: z.array(WatchItemSchema).default([]),
+  watchIntro: z.string().optional(),
   monitoring: MonitoringSchema.optional(),
   methodology: MethodologySchema.optional(),
   sources: z.array(SourceSchema).default([]),

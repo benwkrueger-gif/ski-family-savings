@@ -22,6 +22,7 @@
   background: #ffffff;
 }
 
+.report-scan,
 .report-full {
   box-sizing: border-box;
   width: 8.5in;
@@ -90,6 +91,7 @@ h4 {
     box-shadow: 0 1px 3px rgb(9 35 64 / 0.12);
   }
 
+  .report-scan,
   .report-full {
     margin: 0 auto;
   }
@@ -110,6 +112,7 @@ h4 {
   .report-sheet,
   .report-sheet-auto,
   .report-flow,
+  .report-scan,
   .report-full {
     margin: 0;
     box-shadow: none;
