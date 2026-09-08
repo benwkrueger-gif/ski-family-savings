@@ -7,7 +7,9 @@ import { downloadDriveFile } from "@/lib/google/drive";
 import { sendGmailMessage } from "@/lib/google/gmail";
 import { assertSameCustomer, emailsMatch } from "@/lib/identity";
 import { log } from "@/lib/logger";
-import { buildPaidPlanEmail } from "@/lib/copy/emails";
+import { parseResearch } from "@/lib/research/schema";
+import { parseReportWriting } from "@/lib/copy/writing-schema";
+import { buildPaidPlanEmail, safePaidRecommendation } from "@/lib/copy/emails";
 import type { CustomerReport } from "@/lib/db/schema";
 import { getReportById, markError, updateReport } from "./store";
 import { sessionLooksPaid, type StripeSessionLike } from "@/lib/stripe/session";
@@ -120,11 +122,18 @@ export async function fulfillPaidPlan(options: {
 
   try {
     const bytes = await downloadDriveFile(report.drivePlanFileId);
-    const email = buildPaidPlanEmail({ firstName: report.firstName || "there" });
+    const email = buildPaidPlanEmail({
+      firstName: report.firstName || "there",
+      startHereRecommendation: paidStartHereRecommendation(report),
+    });
+    if (/buy\.stripe|checkout|Get the full Savings Plan for \$49/i.test(`${email.body}\n${email.html}`)) {
+      throw new Error("Paid delivery email includes a purchase CTA");
+    }
     const messageId = await sendGmailMessage({
       to: report.email,
       subject: email.subject,
       body: email.body,
+      html: email.html,
       attachments: [{ filename: report.planFilename, contentType: "application/pdf", bytes }],
     });
 
@@ -175,6 +184,27 @@ export async function retryPaidDelivery(reportId: string): Promise<CustomerRepor
   const updated = await getReportById(reportId);
   if (!updated) throw new Error("Report not found");
   return updated;
+}
+
+function paidStartHereRecommendation(report: CustomerReport): string | undefined {
+  try {
+    if (report.writingJson) {
+      const writing = parseReportWriting(report.writingJson);
+      const fromWriting = safePaidRecommendation(writing.plan.startHere[0]?.title);
+      if (fromWriting) return fromWriting;
+    }
+  } catch {
+    // Fall through to research facts rather than inventing a recommendation.
+  }
+  try {
+    if (report.researchJson) {
+      const research = parseResearch(report.researchJson);
+      return safePaidRecommendation(research.paidPlan.startHere[0]?.title);
+    }
+  } catch {
+    return undefined;
+  }
+  return undefined;
 }
 
 async function recordFulfillment(options: {

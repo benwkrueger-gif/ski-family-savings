@@ -8,5 +8,5 @@ export type StripeSessionLike = {
 };
 
 export function sessionLooksPaid(session: StripeSessionLike): boolean {
-  return session.payment_status === "paid" || session.status === "complete";
+  return session.payment_status === "paid";
 }

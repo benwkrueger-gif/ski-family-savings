@@ -183,10 +183,34 @@ test("creating a draft email does not send mail", () => {
   assert.equal(highLevelFindingsPhrase(["Buy the $99 pass"]), null);
 });
 
-test("paid plan email is short, first person, and has no em dashes", () => {
-  const email = buildPaidPlanEmail({ firstName: "Ada" });
-  assert.match(email.subject, /Savings Plan/);
-  assert.match(email.body, /Start Here/);
+test("paid fulfillment reuses the saved Plan PDF and does not regenerate reports", () => {
+  const fulfillment = fs.readFileSync(path.join(process.cwd(), "lib/pipeline/fulfillment.ts"), "utf8");
+  assert.match(fulfillment, /downloadDriveFile\(report\.drivePlanFileId\)/);
+  assert.match(fulfillment, /planFilename/);
+  assert.doesNotMatch(fulfillment, /writeReportCopy|generateAndUploadPdfs|ensureCurrentWriting/);
+  assert.doesNotMatch(fulfillment, /driveScanFileId|scanFilename/);
+});
+
+test("paid plan email is short, first person, and has no checkout CTA", () => {
+  const email = buildPaidPlanEmail({
+    firstName: "Ada",
+    startHereRecommendation: "Get the Winter Park youth pass",
+  });
+  assert.equal(email.subject, "Your full Ski Savings Plan is ready");
+  assert.match(email.body, /Hey Ada,/);
+  assert.match(email.body, /I'd start with Get the Winter Park youth pass/);
+  assert.match(email.body, /worth the \$49/);
+  assert.doesNotMatch(email.body, /buy\.stripe|Get the full Savings Plan for \$49/i);
+  assert.doesNotMatch(email.html, /href=/i);
   assert.equal(email.body.includes("\u2014"), false);
   assert.doesNotMatch(email.body, /our team/i);
+});
+
+test("paid plan email omits an unsafe or missing recommendation", () => {
+  const email = buildPaidPlanEmail({
+    firstName: "Ada",
+    startHereRecommendation: "Buy the $119 lesson at https://example.com",
+  });
+  assert.doesNotMatch(email.body, /I'd start with/);
+  assert.doesNotMatch(email.body, /\$119|example\.com/);
 });

@@ -21,6 +21,7 @@ export type DraftEmailInput = {
 
 export type PaidEmailInput = {
   firstName: string;
+  startHereRecommendation?: string | null;
 };
 
 export type DraftEmail = {
@@ -40,7 +41,7 @@ export function freePlanSubject(): string {
 }
 
 export function paidPlanSubject(): string {
-  return "Your Ski Family Savings Plan ⛷️";
+  return "Your full Ski Savings Plan is ready";
 }
 
 export function initialDraftAttachmentKind(offerMode: OfferMode): "scan" | "plan" {
@@ -216,28 +217,44 @@ export function buildInitialDraftEmail(input: DraftEmailInput): DraftEmail {
   return fromParts(freePlanSubject(), parts);
 }
 
-export function buildPaidPlanEmail(input: PaidEmailInput): { subject: string; body: string } {
+export function safePaidRecommendation(value?: string | null): string | undefined {
+  const text = stripEmDashes(value ?? "").trim().replace(/\.+$/, "");
+  if (text.length < 4 || text.length > 90) return undefined;
+  if (/\$\d/.test(text) || /\bhttps?:\/\//i.test(text) || /\b[\w.-]+\.(com|org|net)\b/i.test(text)) {
+    return undefined;
+  }
+  return text;
+}
+
+export function buildPaidPlanEmail(input: PaidEmailInput): DraftEmail {
   const firstName = input.firstName || "there";
-  return {
-    subject: paidPlanSubject(),
-    body: stripEmDashes(
-      [
-        `Hey ${firstName},`,
-        "",
-        "Thanks! Here's the full Savings Plan I put together.",
-        "",
-        "It's attached.",
-        "",
-        `I'd start with the "Start Here" section. I pulled the biggest/easiest opportunities to the top so you don't have to dig through everything.`,
-        "",
-        "And same deal as I mentioned before: if you get into this and feel like it wasn't worth the $49, just reply and tell me. I'll refund it, no problem.",
-        "",
-        "Hope it saves you some money this winter!",
-        "",
-        "Ben",
-      ].join("\n"),
-    ),
-  };
+  const recommendation = safePaidRecommendation(input.startHereRecommendation);
+  const parts: EmailPart[] = [
+    { type: "text", text: `Hey ${firstName},` },
+    {
+      type: "text",
+      text: "Thanks for grabbing the full Plan. I've attached it here with the exact programs, prices, deadlines, fine print, and links for your family.",
+    },
+  ];
+  if (recommendation) {
+    parts.push({
+      type: "text",
+      text: `I'd start with ${recommendation}.`,
+    });
+  }
+  parts.push(
+    {
+      type: "text",
+      text: "If anything looks off or you want me to dig into another option, just reply. Happy to help.",
+    },
+    {
+      type: "text",
+      text: "And if you get through it and don't feel like it was worth the $49, just tell me. I'll refund you and you keep the Plan. No hoops or nonsense.",
+    },
+    { type: "text", text: "Hope you guys have a great winter!" },
+    { type: "text", text: "Ben" },
+  );
+  return fromParts(paidPlanSubject(), parts);
 }
 
 function htmlHasCheckoutHref(html: string, checkoutUrl: string): boolean {

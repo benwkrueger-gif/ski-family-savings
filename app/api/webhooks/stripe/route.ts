@@ -1,5 +1,5 @@
 import { log } from "@/lib/logger";
-import { constructStripeEvent, stripeClient } from "@/lib/stripe/client";
+import { constructStripeEvent, stripeClient, stripeEventMatchesSecretMode } from "@/lib/stripe/client";
 import { claimWebhookEvent, getReportById, updateReport } from "@/lib/pipeline/store";
 import { fulfillPaidPlan, type StripeSessionLike } from "@/lib/pipeline/fulfillment";
 import type Stripe from "stripe";
@@ -21,10 +21,18 @@ export async function POST(request: Request) {
     return new Response("Invalid signature", { status: 400 });
   }
 
+  if (!stripeEventMatchesSecretMode(event.livemode)) {
+    log.error("stripe_mode_mismatch", {
+      eventId: event.id,
+      livemode: event.livemode,
+    });
+    return new Response("Stripe mode mismatch", { status: 400 });
+  }
+
   const claimed = await claimWebhookEvent({
     provider: "stripe",
     eventId: event.id,
-    payload: { type: event.type },
+    payload: { type: event.type, livemode: event.livemode },
   });
   if (!claimed) {
     log.info("stripe_webhook_duplicate_event", { eventId: event.id, type: event.type });
@@ -42,13 +50,13 @@ export async function POST(request: Request) {
           : await stripeClient().checkout.sessions.retrieve(session.id);
 
       const reportId = full.client_reference_id ?? undefined;
-      if (reportId) {
+      if (reportId && full.payment_status === "paid") {
         const report = await getReportById(reportId);
         if (report) {
           await updateReport(report.id, {
             status: report.status === "PLAN_DELIVERED" ? report.status : "PURCHASED",
             stripeCheckoutSessionId: full.id,
-            stripePaymentStatus: full.payment_status ?? "paid",
+            stripePaymentStatus: full.payment_status,
             stripePaidAt: new Date(),
             purchasedAt: report.purchasedAt ?? new Date(),
           });

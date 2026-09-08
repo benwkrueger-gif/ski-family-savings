@@ -55,5 +55,7 @@ test("emailsMatch is case-insensitive", () => {
 
 test("unpaid sessions are not treated as paid", () => {
   assert.equal(sessionLooksPaid({ id: "cs_1", payment_status: "unpaid" }), false);
+  assert.equal(sessionLooksPaid({ id: "cs_1", payment_status: "unpaid", status: "complete" }), false);
+  assert.equal(sessionLooksPaid({ id: "cs_1", status: "complete" }), false);
   assert.equal(sessionLooksPaid({ id: "cs_1", payment_status: "paid" }), true);
 });

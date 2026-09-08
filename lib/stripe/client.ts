@@ -14,3 +14,14 @@ export function constructStripeEvent(rawBody: string, signature: string | null):
   if (!signature) throw new Error("Missing Stripe-Signature header");
   return stripeClient().webhooks.constructEvent(rawBody, signature, env.stripeWebhookSecret());
 }
+
+export function stripeSecretIsLive(secretKey = env.stripeSecretKey()): boolean {
+  return secretKey.startsWith("sk_live_");
+}
+
+export function stripeEventMatchesSecretMode(
+  livemode: boolean,
+  secretKey = env.stripeSecretKey(),
+): boolean {
+  return livemode === stripeSecretIsLive(secretKey);
+}
