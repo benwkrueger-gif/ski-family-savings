@@ -9,15 +9,16 @@ export const dynamic = "force-dynamic";
 
 export default async function SubmissionsPage() {
   const reports = await listReports();
+  const counted = reports.filter((row) => row.source !== "internal-test");
   const summary = {
-    New: reports.filter((row) => row.status === "RECEIVED").length,
-    Researching: reports.filter((row) => RESEARCHING_STATUSES.includes(row.status as never)).length,
-    "Ready for review": reports.filter((row) => artifactStatus(row).deliveryReady).length,
-    "Scan + upsell": reports.filter((row) => row.offerMode === "SCAN_UPSELL").length,
-    "Full plan free": reports.filter((row) => row.offerMode === "FULL_PLAN_FREE").length,
-    Purchased: reports.filter((row) => Boolean(row.purchasedAt) || row.status === "PURCHASED").length,
-    Delivered: reports.filter((row) => row.status === "PLAN_DELIVERED").length,
-    Errors: reports.filter((row) => ERROR_STATUSES.includes(row.status as never)).length,
+    New: counted.filter((row) => row.status === "RECEIVED").length,
+    Researching: counted.filter((row) => RESEARCHING_STATUSES.includes(row.status as never)).length,
+    "Ready for review": counted.filter((row) => artifactStatus(row).deliveryReady).length,
+    "Scan + upsell": counted.filter((row) => row.offerMode === "SCAN_UPSELL").length,
+    "Full plan free": counted.filter((row) => row.offerMode === "FULL_PLAN_FREE").length,
+    Purchased: counted.filter((row) => Boolean(row.purchasedAt) || row.status === "PURCHASED").length,
+    Delivered: counted.filter((row) => row.status === "PLAN_DELIVERED").length,
+    Errors: counted.filter((row) => ERROR_STATUSES.includes(row.status as never)).length,
   };
 
   return (
