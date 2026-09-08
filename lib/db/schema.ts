@@ -38,6 +38,14 @@ export const customerReports = pgTable(
     confidence: text("confidence"),
     humanReviewFlags: jsonb("human_review_flags").$type<string[]>(),
 
+    writingJson: jsonb("writing_json"),
+    writingFingerprint: text("writing_fingerprint"),
+    writingCompletedAt: timestamp("writing_completed_at", { withTimezone: true }),
+    pdfsFingerprint: text("pdfs_fingerprint"),
+    draftFingerprint: text("draft_fingerprint"),
+    jobKind: text("job_kind"),
+    jobStartedAt: timestamp("job_started_at", { withTimezone: true }),
+
     driveFolderId: text("drive_folder_id"),
     driveScanFileId: text("drive_scan_file_id"),
     drivePlanFileId: text("drive_plan_file_id"),

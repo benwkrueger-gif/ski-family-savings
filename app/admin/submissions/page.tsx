@@ -2,7 +2,8 @@ import { COMPELLING_SAVINGS_MIN } from "@/config/compelling-savings";
 import { listReports } from "@/lib/pipeline/store";
 import { AdminNav } from "@/app/admin/AdminNav";
 import { SubmissionsTable } from "@/app/admin/submissions/SubmissionsTable";
-import { ERROR_STATUSES, RESEARCHING_STATUSES, READY_FOR_REVIEW_STATUSES } from "@/lib/pipeline/status";
+import { ERROR_STATUSES, RESEARCHING_STATUSES } from "@/lib/pipeline/status";
+import { artifactStatus } from "@/lib/pipeline/artifacts";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,7 @@ export default async function SubmissionsPage() {
   const summary = {
     New: reports.filter((row) => row.status === "RECEIVED").length,
     Researching: reports.filter((row) => RESEARCHING_STATUSES.includes(row.status as never)).length,
-    "Ready for review": reports.filter((row) => READY_FOR_REVIEW_STATUSES.includes(row.status as never)).length,
+    "Ready for review": reports.filter((row) => artifactStatus(row).deliveryReady).length,
     "Scan + upsell": reports.filter((row) => row.offerMode === "SCAN_UPSELL").length,
     "Full plan free": reports.filter((row) => row.offerMode === "FULL_PLAN_FREE").length,
     Purchased: reports.filter((row) => Boolean(row.purchasedAt) || row.status === "PURCHASED").length,

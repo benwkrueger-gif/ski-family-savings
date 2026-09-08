@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { CustomerReport } from "@/lib/db/schema";
 import { driveFolderUrl } from "@/lib/google/urls";
+import { artifactStatus } from "@/lib/pipeline/artifacts";
 
 function money(value: number | null | undefined): string {
   if (value == null) return "—";
@@ -22,6 +23,9 @@ async function postJson(url: string, body?: unknown) {
     body: body ? JSON.stringify(body) : undefined,
   });
   const data = await response.json().catch(() => ({}));
+  if (response.status === 409 && data.action === "in_progress") {
+    throw new Error(data.message || "A job is already running for this report");
+  }
   if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
   return data;
 }
@@ -116,7 +120,9 @@ export function SubmissionsTable({ reports }: { reports: CustomerReport[] }) {
                 </td>
               </tr>
             ) : (
-              reports.map((report) => (
+              reports.map((report) => {
+                const artifacts = artifactStatus(report);
+                return (
                 <tr key={report.id} className="border-t border-border align-top">
                   <td className="px-3 py-3">
                     <input
@@ -174,7 +180,9 @@ export function SubmissionsTable({ reports }: { reports: CustomerReport[] }) {
                       "—"
                     )}
                   </td>
-                  <td className="px-3 py-3">{yesNo(report.gmailDraftId)}</td>
+                  <td className="px-3 py-3">
+                    {artifacts.draft === "current" ? "Current" : artifacts.draft === "stale" ? "Stale" : "—"}
+                  </td>
                   <td className="px-3 py-3">{yesNo(report.purchasedAt || report.stripePaymentStatus === "paid")}</td>
                   <td className="px-3 py-3">{yesNo(report.status === "PLAN_DELIVERED")}</td>
                   <td className="px-3 py-3 max-w-[160px] truncate text-red-700">{report.lastError || "—"}</td>
@@ -187,13 +195,15 @@ export function SubmissionsTable({ reports }: { reports: CustomerReport[] }) {
                         Run research
                       </button>
                       <button
-                        className="text-left underline"
+                        className="text-left underline disabled:opacity-40"
+                        disabled={artifacts.jobActive || Boolean(busy)}
                         onClick={() => run(`pdfs-${report.id}`, () => postJson(`/api/admin/reports/${report.id}/pdfs`))}
                       >
                         Regenerate PDFs
                       </button>
                       <button
-                        className="text-left underline"
+                        className="text-left underline disabled:opacity-40"
+                        disabled={artifacts.jobActive || Boolean(busy)}
                         onClick={() => run(`draft-${report.id}`, () => postJson(`/api/admin/reports/${report.id}/draft`))}
                       >
                         Recreate draft
@@ -201,7 +211,8 @@ export function SubmissionsTable({ reports }: { reports: CustomerReport[] }) {
                     </div>
                   </td>
                 </tr>
-              ))
+              );
+              })
             )}
           </tbody>
         </table>

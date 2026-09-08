@@ -34,6 +34,10 @@ export function paidPlanSubject(): string {
   return "Your Ski Family Savings Plan ⛷️";
 }
 
+export function initialDraftAttachmentKind(offerMode: OfferMode): "scan" | "plan" {
+  return offerMode === "SCAN_UPSELL" ? "scan" : "plan";
+}
+
 export function buildInitialDraftEmail(input: DraftEmailInput): { subject: string; body: string } {
   const firstName = input.firstName || "there";
   const observation = observationLine(input.personalizedObservation);

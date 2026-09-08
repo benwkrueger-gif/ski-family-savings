@@ -5,6 +5,7 @@ import { AdminNav } from "@/app/admin/AdminNav";
 import { getDb } from "@/lib/db";
 import { pipelineLogs } from "@/lib/db/schema";
 import { getReportById } from "@/lib/pipeline/store";
+import { artifactStatus, type ArtifactHealth } from "@/lib/pipeline/artifacts";
 import { driveFileUrl, driveFolderUrl } from "@/lib/google/urls";
 import { gmailDraftUrl } from "@/lib/google/gmail";
 import { SubmissionActions } from "./SubmissionActions";
@@ -27,6 +28,8 @@ export default async function SubmissionDetailPage({
     .where(eq(pipelineLogs.reportId, id))
     .orderBy(desc(pipelineLogs.createdAt));
 
+  const artifacts = artifactStatus(report);
+
   const profile = report.familyProfile as Record<string, unknown> | null;
   const research = report.researchJson as Record<string, unknown> | null;
   const summary = (research?.summary as Record<string, unknown> | undefined) ?? {};
@@ -47,10 +50,42 @@ export default async function SubmissionDetailPage({
       <p className="mt-2 text-sm">
         Status <strong>{report.status}</strong>
         {report.offerMode ? ` · ${report.offerMode}` : ""}
+        {artifacts.deliveryReady ? " · delivery ready" : " · not ready for delivery"}
       </p>
       {report.offerModeReason ? <p className="mt-2 text-sm text-muted">{report.offerModeReason}</p> : null}
+      {artifacts.jobActive ? (
+        <p className="mt-2 text-sm text-red-700">
+          A {artifacts.jobKind} job is running
+          {artifacts.jobStartedAt
+            ? ` since ${new Date(artifacts.jobStartedAt).toLocaleString()}`
+            : ""}
+          . Another click will not start a second one.
+        </p>
+      ) : null}
 
-      <SubmissionActions report={report} />
+      <Card title="Artifact versions">
+        <ul className="space-y-2 text-sm">
+          <li>Research: {labelHealth(artifacts.research)}</li>
+          <li>
+            Editorial copy: {labelHealth(artifacts.writing)}
+            {report.writingCompletedAt ? ` · ${report.writingCompletedAt.toISOString()}` : ""}
+            {report.writingFingerprint ? ` · ${report.writingFingerprint}` : ""}
+          </li>
+          <li>
+            PDFs: {labelHealth(artifacts.pdfs)}
+            {report.pdfsReadyAt ? ` · ${report.pdfsReadyAt.toISOString()}` : ""}
+          </li>
+          <li>
+            Gmail draft: {labelHealth(artifacts.draft)}
+            {report.draftReadyAt ? ` · ${report.draftReadyAt.toISOString()}` : ""}
+            {artifacts.draft === "stale"
+              ? " · an old draft is not current and must not be sent"
+              : ""}
+          </li>
+        </ul>
+      </Card>
+
+      <SubmissionActions report={report} artifacts={artifacts} />
 
       <section className="mt-8 grid gap-6 md:grid-cols-2">
         <Card title="Files and delivery">
@@ -195,6 +230,12 @@ export default async function SubmissionDetailPage({
       </Card>
     </main>
   );
+}
+
+function labelHealth(value: ArtifactHealth): string {
+  if (value === "current") return "current";
+  if (value === "stale") return "stale / not current";
+  return "missing";
 }
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {

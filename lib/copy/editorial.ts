@@ -3,7 +3,7 @@ import path from "path";
 import { zodTextFormat } from "openai/helpers/zod";
 import { env } from "@/lib/env";
 import { openaiClient } from "@/lib/openai/research";
-import { collectWritingText, isPlanDetailTeaser, writingVoiceIssues } from "@/lib/copy/banned";
+import { isPlanDetailTeaser, collectWritingText, writingVoiceIssues } from "@/lib/copy/banned";
 import {
   parseReportWriting,
   ReportWritingSchema,
@@ -152,6 +152,72 @@ export function buildEditorialFactPacket(options: {
   };
 }
 
+export class EditorialTimeoutError extends Error {
+  readonly stage = "WRITING" as const;
+  constructor(message: string) {
+    super(message);
+    this.name = "EditorialTimeoutError";
+  }
+}
+
+export const EDITORIAL_RETRY_FLOOR_MS = 25_000;
+export const EDITORIAL_MAX_OUTPUT_TOKENS = 8_000;
+
+export function remainingEditorialMs(timeoutMs: number, startedAt: number, now = Date.now()): number {
+  return timeoutMs - (now - startedAt);
+}
+
+function dropTeaserSentences(text: string): string {
+  const kept = text
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter((sentence) => sentence && !isPlanDetailTeaser(sentence));
+  return kept.join(" ").replace(/\s{2,}/g, " ").trim();
+}
+
+export function adaptWritingForOfferMode(writing: ReportWriting, offerMode: OfferMode): ReportWriting {
+  if (offerMode !== "FULL_PLAN_FREE") return writing;
+  const closingSource = writing.scan.closing ?? "";
+  const strippedClosing = dropTeaserSentences(closingSource);
+  const closing =
+    !strippedClosing || /put together|step-by-step plan|\$49|full details/i.test(strippedClosing)
+      ? "Hope this helps."
+      : strippedClosing;
+  return parseReportWriting({
+    ...writing,
+    scan: {
+      ...writing.scan,
+      opening: dropTeaserSentences(writing.scan.opening) || writing.scan.opening,
+      myTake: dropTeaserSentences(writing.scan.myTake) || writing.scan.myTake,
+      findings: writing.scan.findings.map((finding) => ({
+        ...finding,
+        explanation: dropTeaserSentences(finding.explanation) || finding.explanation,
+      })),
+      closing,
+    },
+  });
+}
+
+export function reuseSavedWriting(options: {
+  stored: unknown;
+  research: CanonicalResearch;
+  offerMode: OfferMode;
+}): ReportWriting | null {
+  if (options.stored == null) return null;
+  try {
+    const parsed = sanitizeWriting(parseReportWriting(options.stored));
+    const adapted = adaptWritingForOfferMode(parsed, options.offerMode);
+    const issues = editorialQualityIssues({
+      writing: adapted,
+      research: options.research,
+      offerMode: options.offerMode,
+    });
+    return issues.length === 0 ? adapted : null;
+  } catch {
+    return null;
+  }
+}
+
 function sanitizeWriting(writing: ReportWriting): ReportWriting {
   const walk = (value: unknown): unknown => {
     if (typeof value === "string") {
@@ -262,6 +328,12 @@ export function editorialQualityIssues(options: {
       /\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}\b/i,
     );
     if (copy && monthDay) {
+      const checkedAt = new Date(`${item.opportunity.sourceCheckedAt}T12:00:00`);
+      const sourceCheckedDay = Number.isNaN(checkedAt.getTime())
+        ? ""
+        : checkedAt.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+      const isSourceCheckedDate = sourceCheckedDay.toLowerCase() === monthDay[0].toLowerCase();
+      if (item.tier === "WATCH" || isSourceCheckedDate) continue;
       const kept = `${copy.timingNote ?? ""} ${copy.action ?? ""}`;
       if (!new RegExp(monthDay[0].replace(/\s+/g, "\\s+"), "i").test(kept)) {
         issues.push(`${item.opportunity.id} must keep the deadline ${monthDay[0]}`);
@@ -287,9 +359,22 @@ export function editorialQualityIssues(options: {
   return [...new Set(issues)];
 }
 
+function isEditorialTimeout(error: unknown): boolean {
+  if (error instanceof EditorialTimeoutError) return true;
+  const name = typeof error === "object" && error && "name" in error ? String(error.name) : "";
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    name === "APIUserAbortError" ||
+    name === "AbortError" ||
+    name === "APIConnectionTimeoutError" ||
+    /timed out|timeout/i.test(message)
+  );
+}
+
 export async function writeReportCopy(options: {
   research: CanonicalResearch;
   offerMode: OfferMode;
+  timeoutMs?: number;
 }): Promise<ReportWriting> {
   const display = summarizeDisplaySavings(options.research);
   const packet = buildEditorialFactPacket({
@@ -299,37 +384,60 @@ export async function writeReportCopy(options: {
   });
   const openai = openaiClient();
   const model = env.openaiEditorialModel();
+  const timeoutMs = options.timeoutMs ?? env.openaiEditorialTimeoutMs();
+  const startedAt = Date.now();
   let lastIssues: string[] = [];
 
   for (let attempt = 1; attempt <= 2; attempt += 1) {
-    const response = await openai.responses.create({
-      model,
-      store: false,
-      text: {
-        format: zodTextFormat(ReportWritingSchema, "ski_family_editorial"),
-      },
-      instructions: loadEditorialGuide(),
-      input: [
+    const remaining = remainingEditorialMs(timeoutMs, startedAt);
+    if (remaining <= 0 || (attempt > 1 && remaining < EDITORIAL_RETRY_FLOOR_MS)) {
+      throw new EditorialTimeoutError(
+        `Editorial timed out after ${Date.now() - startedAt}ms (budget ${timeoutMs}ms)`,
+      );
+    }
+    let response;
+    try {
+      response = await openai.responses.create(
         {
-          role: "user",
-          content: [
+          model,
+          store: false,
+          max_output_tokens: EDITORIAL_MAX_OUTPUT_TOKENS,
+          text: {
+            format: zodTextFormat(ReportWritingSchema, "ski_family_editorial"),
+          },
+          instructions: loadEditorialGuide(),
+          input: [
             {
-              type: "input_text",
-              text: [
-                "Write the customer-facing Scan, Plan, and email copy from these locked facts.",
-                "Do not add programs, prices, dates, or eligibility that are not in the packet.",
-                lastIssues.length
-                  ? `Fix these issues from the previous draft:\n- ${lastIssues.join("\n- ")}`
-                  : "",
-                JSON.stringify(packet, null, 2),
-              ]
-                .filter(Boolean)
-                .join("\n\n"),
+              role: "user",
+              content: [
+                {
+                  type: "input_text",
+                  text: [
+                    "Write the customer-facing Scan, Plan, and email copy from these locked facts.",
+                    "Do not add programs, prices, dates, or eligibility that are not in the packet.",
+                    "Do not use web search. Rewrite only the locked fact packet.",
+                    lastIssues.length
+                      ? `Fix these issues from the previous draft:\n- ${lastIssues.join("\n- ")}`
+                      : "",
+                    JSON.stringify(packet),
+                  ]
+                    .filter(Boolean)
+                    .join("\n\n"),
+                },
+              ],
             },
           ],
         },
-      ],
-    });
+        { timeout: remaining, maxRetries: 0 },
+      );
+    } catch (error) {
+      if (isEditorialTimeout(error)) {
+        throw new EditorialTimeoutError(
+          `Editorial OpenAI call timed out after ${Date.now() - startedAt}ms (budget ${timeoutMs}ms)`,
+        );
+      }
+      throw error;
+    }
 
     const text = response.output_text?.trim();
     if (!text) throw new Error("Editorial model returned no output");

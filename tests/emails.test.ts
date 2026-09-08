@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { assertDraftCopySafe, buildInitialDraftEmail, buildPaidPlanEmail } from "../lib/copy/emails.ts";
+import { assertDraftCopySafe, buildInitialDraftEmail, buildPaidPlanEmail, initialDraftAttachmentKind } from "../lib/copy/emails.ts";
 
 test("SCAN_UPSELL draft attaches scan mode copy and includes checkout URL", () => {
   const email = buildInitialDraftEmail({
@@ -54,6 +54,11 @@ test("FULL_PLAN_FREE with no firm savings stays honest and still attaches the Pl
   assert.match(email.body, /couldn't lock in a sure number/);
   assert.match(email.body, /full Savings Plan/);
   assert.doesNotMatch(email.body, /\$49/);
+  assert.equal(initialDraftAttachmentKind("FULL_PLAN_FREE"), "plan");
+  assert.equal(
+    assertDraftCopySafe({ offerMode: "FULL_PLAN_FREE", body: email.body }).length,
+    0,
+  );
 });
 
 test("paid plan email is short, first person, and has no em dashes", () => {

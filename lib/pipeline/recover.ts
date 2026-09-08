@@ -14,6 +14,7 @@ import {
 import { hasPurchased, type PipelineStatus } from "@/lib/pipeline/status";
 import type { CustomerReport } from "@/lib/db/schema";
 import { addPipelineLog } from "@/lib/db/settings";
+import { JobInProgressError, artifactStatus, jobConflict } from "@/lib/pipeline/artifacts";
 
 const OPEN_STATUSES = new Set(["queued", "in_progress"]);
 const FAILED_STATUSES = new Set(["failed", "incomplete", "cancelled"]);
@@ -52,16 +53,7 @@ export function staleOpenAiResponseReason(options: {
 }
 
 function isFullyDelivered(report: CustomerReport): boolean {
-  return Boolean(
-    report.researchJson &&
-      report.pdfsReadyAt &&
-      report.driveScanFileId &&
-      report.drivePlanFileId &&
-      report.gmailDraftId &&
-      (report.status === "GMAIL_DRAFT_READY" ||
-        report.status === "FREE_PLAN_READY" ||
-        hasPurchased(report.status as PipelineStatus)),
-  );
+  return artifactStatus(report).deliveryReady || hasPurchased(report.status as PipelineStatus);
 }
 
 export async function recoverExistingResearch(
@@ -176,8 +168,20 @@ export async function recoverExistingResearch(
       await addPipelineLog(current.id, current.status, "Ingested existing OpenAI response");
     }
 
-    const needsPdfs = !current.pdfsReadyAt || !current.driveScanFileId || !current.drivePlanFileId;
-    const needsDraft = !current.gmailDraftId;
+    if (jobConflict(current) === "active") {
+      return {
+        ok: true,
+        action: "in_progress",
+        openaiStatus: "completed",
+        reportStatus: current.status,
+        message: `A ${current.jobKind} job is already running. No new research was started.`,
+        report: current,
+      };
+    }
+
+    const artifacts = artifactStatus(current);
+    const needsPdfs = artifacts.pdfs !== "current";
+    const needsDraft = artifacts.draft !== "current";
 
     if (!needsPdfs && !needsDraft) {
       return {
@@ -210,6 +214,16 @@ export async function recoverExistingResearch(
       report: current,
     };
   } catch (error) {
+    if (error instanceof JobInProgressError) {
+      const current = await getReportById(reportId);
+      return {
+        ok: true,
+        action: "in_progress",
+        reportStatus: current?.status,
+        message: error.message,
+        report: current ?? report,
+      };
+    }
     const message = error instanceof Error ? error.message : String(error);
     log.error("research_recover_failed", { reportId, error: message });
     return {

@@ -36,6 +36,10 @@ export const env = {
   openaiWebhookSecret: () => required("OPENAI_WEBHOOK_SECRET"),
   openaiResearchModel: () => optional("OPENAI_RESEARCH_MODEL") ?? "gpt-5.6-sol",
   openaiEditorialModel: () => optional("OPENAI_EDITORIAL_MODEL") ?? "gpt-4.1-mini",
+  openaiEditorialTimeoutMs: () => {
+    const parsed = Number.parseInt(optional("OPENAI_EDITORIAL_TIMEOUT_MS") ?? "120000", 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 120_000;
+  },
 
   googleClientId: () => required("GOOGLE_CLIENT_ID"),
   googleClientSecret: () => required("GOOGLE_CLIENT_SECRET"),

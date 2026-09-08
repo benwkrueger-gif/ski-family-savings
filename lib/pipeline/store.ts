@@ -1,9 +1,10 @@
 import { randomUUID } from "crypto";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { addPipelineLog } from "@/lib/db/settings";
 import { customerReports, webhookEvents, type CustomerReport } from "@/lib/db/schema";
 import type { FamilyProfile } from "@/lib/family/profile";
+import { JOB_STALE_MS, jobConflict } from "@/lib/pipeline/artifacts";
 import { RECOVERABLE_RESEARCH_STATUSES, type OfferMode, type PipelineStatus } from "@/lib/pipeline/status";
 
 export async function getReportById(id: string): Promise<CustomerReport | undefined> {
@@ -211,6 +212,55 @@ export async function statusCounts(): Promise<Record<string, number>> {
     .from(customerReports)
     .groupBy(customerReports.status);
   return Object.fromEntries(rows.map((row) => [row.status, row.count]));
+}
+
+export async function claimGenerationJob(
+  id: string,
+  kind: string,
+  staleMs = JOB_STALE_MS,
+): Promise<{ report: CustomerReport; recoveredStale: boolean } | { conflict: "active"; report: CustomerReport }> {
+  const existing = await getReportById(id);
+  if (!existing) throw new Error(`Report ${id} not found`);
+  const now = new Date();
+  const conflict = jobConflict(existing, now, staleMs);
+  if (conflict === "active") {
+    return { conflict: "active", report: existing };
+  }
+
+  const staleBefore = new Date(now.getTime() - staleMs);
+  const db = getDb();
+  const [updated] = await db
+    .update(customerReports)
+    .set({
+      jobKind: kind,
+      jobStartedAt: now,
+      updatedAt: now,
+    })
+    .where(
+      and(
+        eq(customerReports.id, id),
+        or(isNull(customerReports.jobStartedAt), lt(customerReports.jobStartedAt, staleBefore)),
+      ),
+    )
+    .returning();
+
+  if (!updated) {
+    const raced = await getReportById(id);
+    return { conflict: "active", report: raced ?? existing };
+  }
+  return { report: updated, recoveredStale: conflict === "stale" };
+}
+
+export async function releaseGenerationJob(id: string, kind: string): Promise<void> {
+  const db = getDb();
+  await db
+    .update(customerReports)
+    .set({
+      jobKind: null,
+      jobStartedAt: null,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(customerReports.id, id), eq(customerReports.jobKind, kind)));
 }
 
 export async function claimPaidDelivery(id: string): Promise<CustomerReport | null> {
