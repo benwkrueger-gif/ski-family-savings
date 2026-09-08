@@ -151,13 +151,15 @@ test("SCAN_UPSELL Scan keeps the Plan teaser and refund offer", () => {
   assert.equal(data.freeScan?.cta?.price, "$49");
 });
 
-test("research leftover prose is not dumped into customer opportunity cards", () => {
+test("deterministic opportunity fallback does not dump research leftover prose", () => {
   const data = researchToReportData({
     research: sampleResearch(),
     reportId: "rid",
     offerMode: "SCAN_UPSELL",
   });
-  assert.equal(data.opportunities[0]?.found, undefined);
+  assert.match(data.opportunities[0]?.found ?? "", /verified and counted/i);
+  assert.ok(data.opportunities[0]?.action);
+  assert.ok(data.opportunities[0]?.saveNote);
   assert.doesNotMatch(JSON.stringify(data.opportunities[0]), /Kids tickets add up/);
   assert.equal(data.opportunities[0]?.title, "Secret Youth Passport");
   assert.equal(data.opportunities[0]?.deadline, "October 15");

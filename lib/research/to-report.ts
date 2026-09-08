@@ -28,6 +28,44 @@ function writingForOpportunity(writing: ReportWriting | undefined, id: string) {
   return writing?.plan.opportunities.find((item) => item.id === id);
 }
 
+function cleanResearchProse(value: string): string {
+  return withoutEmDashes(value)
+    .replace(/\bthe family\b/gi, "your family")
+    .replace(/\bthe child\b/gi, "your child")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+export function deterministicOpportunityCopy(item: DisplayOpportunity): {
+  found: string;
+  saveNote: string;
+  action: string;
+  catchNote?: string;
+} {
+  const opportunity = item.opportunity;
+  const range = formatCustomerRange(opportunity.netSavingsLow, opportunity.netSavingsHigh);
+  const counted = item.firm
+    ? `${range} is counted in the report total.`
+    : opportunity.alreadyKnownByFamily
+      ? `${range} is not counted as newly found savings.`
+      : `${range} remains uncounted until the open questions are resolved.`;
+  return {
+    found: opportunity.alreadyKnownByFamily
+      ? "This was already part of your plan, so it is included for comparison rather than counted as a new saving."
+      : item.firm
+        ? "This is verified and counted based on the details currently available."
+        : "This may be useful, but it stays uncounted until the open questions are resolved.",
+    saveNote: cleanResearchProse(`${counted} ${opportunity.countReason}`),
+    action: cleanResearchProse(
+      opportunity.recommendedAction || "Confirm the current details before buying.",
+    ),
+    catchNote:
+      item.firm || !opportunity.countReason
+        ? undefined
+        : cleanResearchProse(`Still unknown: ${opportunity.countReason}`),
+  };
+}
+
 function namedNote(
   items: Array<{ title: string; note: string }> | undefined,
   title: string,
@@ -43,6 +81,7 @@ function namedNote(
 function toReportOpportunity(item: DisplayOpportunity, writing?: ReportWriting) {
   const opportunity = item.opportunity;
   const copy = writingForOpportunity(writing, opportunity.id);
+  const fallback = deterministicOpportunityCopy(item);
   const pair =
     opportunity.baselineCost != null && opportunity.opportunityCost != null
       ? {
@@ -60,12 +99,16 @@ function toReportOpportunity(item: DisplayOpportunity, writing?: ReportWriting) 
     potentialSavings: formatCustomerRange(opportunity.netSavingsLow, opportunity.netSavingsHigh),
     countKind: item.kind,
     kindLabel: kindLabel(item.kind),
-    found: copy?.found ? withoutEmDashes(copy.found) : undefined,
-    saveNote: copy?.saveNote ? withoutEmDashes(copy.saveNote) : undefined,
-    whyItMatters: copy?.found ? withoutEmDashes(copy.found) : undefined,
-    recommendedAction: copy?.action ? withoutEmDashes(copy.action) : undefined,
-    action: copy?.action ? withoutEmDashes(copy.action) : undefined,
-    catchNote: copy?.catchNote ? withoutEmDashes(copy.catchNote) : undefined,
+    found: withoutEmDashes(copy?.found ?? fallback.found),
+    saveNote: withoutEmDashes(copy?.saveNote ?? fallback.saveNote),
+    whyItMatters: withoutEmDashes(copy?.found ?? fallback.found),
+    recommendedAction: withoutEmDashes(copy?.action ?? fallback.action),
+    action: withoutEmDashes(copy?.action ?? fallback.action),
+    catchNote: copy?.catchNote
+      ? withoutEmDashes(copy.catchNote)
+      : fallback.catchNote
+        ? withoutEmDashes(fallback.catchNote)
+        : undefined,
     deadline: copy?.timingNote
       ? withoutEmDashes(copy.timingNote)
       : opportunity.deadline

@@ -149,6 +149,8 @@ export function buildEditorialFactPacket(options: {
       offerMode === "FULL_PLAN_FREE"
         ? "Quiet close such as Hope this helps. Do not offer to put together a plan. Do not mention $49."
         : "Set closing to null. The template adds the $49 CTA.",
+    editorialCoverageRule:
+      "Write opportunity prose only when it adds useful conversational context. Optional, Watch, already-known, or unresolved opportunities may be omitted from plan.opportunities; deterministic code renders their facts, unknowns, math, source, deadline, and next action.",
     dollarStringsToUseExactly: {
       counted: formatCustomerRange(display.firmLow, display.firmHigh),
       possible: display.conditionalSavings ?? null,
@@ -199,11 +201,29 @@ export function repairEditorialWriting(
   const sanitized = sanitizeWriting(writing);
   const fallbackScan = buildScanCopy({ research, offerMode });
   const fallbackFindings = fallbackScan.findings ?? [];
+  const fullPlanFreeScan =
+    offerMode === "FULL_PLAN_FREE"
+      ? {
+          greeting: `Howdy ${research.family.firstName}!`,
+          opening:
+            "Thanks for letting me look at your winter. I found a couple things worth checking for the season.",
+          savingsLine: fallbackScan.savingsLine ?? "I found a few things worth checking.",
+          findings: fallbackFindings.map((finding) => ({
+            heading: finding.heading,
+            explanation: finding.explanation,
+          })),
+          myTake:
+            fallbackScan.myTake ??
+            "I'd confirm the biggest unknowns before buying anything else for the season.",
+          questions: [],
+          closing: fallbackScan.closing ?? "Hope this helps.",
+        }
+      : null;
   const repairScanField = (text: string, fallback: string) =>
     scanPaidContentIssues(text, research).length > 0 ? fallback : text;
   return parseReportWriting({
     ...sanitized,
-    scan: {
+    scan: fullPlanFreeScan ?? {
       ...sanitized.scan,
       opening: repairScanField(
         sanitized.scan.opening,
@@ -388,19 +408,16 @@ export function editorialQualityIssues(options: {
   issues.push(...writingVoiceIssues(blob));
 
   const opportunityIds = new Set(options.research.opportunities.map((item) => item.id));
-  const writtenIds = new Set(options.writing.plan.opportunities.map((item) => item.id));
   for (const opportunity of options.writing.plan.opportunities) {
     if (!opportunityIds.has(opportunity.id)) {
       issues.push(`writing references unknown opportunity ${opportunity.id}`);
     }
   }
-  for (const id of opportunityIds) {
-    if (!writtenIds.has(id)) issues.push(`missing writing for ${id}`);
-  }
   const startHereNumbers = new Set(options.research.paidPlan.startHere.map((item) => item.number));
-  const writtenStart = new Set(options.writing.plan.startHere.map((item) => item.number));
-  for (const number of startHereNumbers) {
-    if (!writtenStart.has(number)) issues.push(`missing start-here step ${number}`);
+  for (const step of options.writing.plan.startHere) {
+    if (!startHereNumbers.has(step.number)) {
+      issues.push(`writing references unknown start-here step ${step.number}`);
+    }
   }
 
   const scanText = collectWritingText(options.writing.scan);

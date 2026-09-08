@@ -137,5 +137,5 @@ test("saved SCAN writing can be reused for FULL_PLAN_FREE after teaser sentences
   assert.equal(/keep the exact details/i.test(adapted.scan.findings[0]!.explanation), false);
   const reused = reuseSavedWriting({ stored, research, offerMode: "FULL_PLAN_FREE" });
   assert.ok(reused);
-  assert.equal(reused.scan.closing, "Hope this helps.");
+  assert.match(reused.scan.closing ?? "", /Hope this helps/);
 });
