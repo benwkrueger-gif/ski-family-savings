@@ -11,6 +11,7 @@ import {
 } from "@/lib/pipeline/store";
 import { addPipelineLog } from "@/lib/db/settings";
 import { canLaunchResearch, MAX_ACTIVE_RESEARCH_JOBS } from "@/lib/pipeline/research-capacity";
+import { hasManualInitialSend } from "@/lib/pipeline/admin-queue";
 
 export type StartResearchResult = {
   started: boolean;
@@ -29,6 +30,9 @@ export async function startNextWaitingResearch(exceptId?: string): Promise<Start
 export async function startResearch(reportId: string): Promise<StartResearchResult> {
   const report = await getReportById(reportId);
   if (!report) throw new Error(`Report ${reportId} not found`);
+  if (hasManualInitialSend(report)) {
+    return { started: false, reason: "initial_report_sent" };
+  }
 
   const profile = report.familyProfile as FamilyProfile | null;
   if (!profile?.email && !profile?.firstName) {

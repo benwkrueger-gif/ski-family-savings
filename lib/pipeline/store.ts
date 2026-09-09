@@ -252,6 +252,7 @@ export async function listWaitingResearchReports(): Promise<CustomerReport[]> {
         eq(customerReports.autoResearch, true),
         isNull(customerReports.researchJson),
         isNull(customerReports.deletedAt),
+        isNull(customerReports.initialReportSentAt),
       ),
     )
     .orderBy(customerReports.receivedAt, customerReports.createdAt);
@@ -265,6 +266,7 @@ export async function listRecoverableResearchReports(): Promise<CustomerReport[]
     .where(
       and(
         sql`${customerReports.openaiResponseId} is not null`,
+        isNull(customerReports.initialReportSentAt),
         inArray(customerReports.status, CRON_RECOVERABLE_RESEARCH_STATUSES),
       ),
     )

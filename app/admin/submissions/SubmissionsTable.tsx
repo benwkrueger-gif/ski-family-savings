@@ -7,6 +7,7 @@ import type { CustomerReport } from "@/lib/db/schema";
 import { driveFolderUrl } from "@/lib/google/urls";
 import { artifactStatus } from "@/lib/pipeline/artifacts";
 import {
+  SENT_ARTIFACT_REFRESH_MESSAGE,
   hasPaidDeliveryRecord,
   isDeliveryReady,
   isJobActive,
@@ -37,7 +38,10 @@ async function postJson(url: string, body?: unknown) {
   if (response.status === 409 && data.action === "in_progress") {
     throw new Error(data.message || "A job is already running for this report");
   }
-  if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
+  if (response.status === 409 && data.action === "sent_protected") {
+    throw new Error(data.message || SENT_ARTIFACT_REFRESH_MESSAGE);
+  }
+  if (!response.ok) throw new Error(data.error || data.message || `Request failed (${response.status})`);
   return data as { ok?: boolean; results?: Array<{ ok: boolean; action: string; reason?: string; firstName?: string; email?: string }> };
 }
 
@@ -423,18 +427,36 @@ export function SubmissionsTable({
                       <button
                         className="text-left underline disabled:opacity-40"
                         disabled={artifacts.jobActive || Boolean(busy)}
-                        onClick={() => run(`pdfs-${report.id}`, async () => {
-                          await postJson(`/api/admin/reports/${report.id}/pdfs`);
-                        })}
+                        onClick={() => {
+                          const markedSent = report.initialReportSentAt != null;
+                          if (markedSent && !window.confirm(`${SENT_ARTIFACT_REFRESH_MESSAGE}\n\nContinue anyway?`)) {
+                            return;
+                          }
+                          void run(`pdfs-${report.id}`, async () => {
+                            await postJson(
+                              `/api/admin/reports/${report.id}/pdfs`,
+                              markedSent ? { confirmReplaceSent: true } : undefined,
+                            );
+                          });
+                        }}
                       >
                         Regenerate PDFs
                       </button>
                       <button
                         className="text-left underline disabled:opacity-40"
                         disabled={artifacts.jobActive || Boolean(busy)}
-                        onClick={() => run(`draft-${report.id}`, async () => {
-                          await postJson(`/api/admin/reports/${report.id}/draft`);
-                        })}
+                        onClick={() => {
+                          const markedSent = report.initialReportSentAt != null;
+                          if (markedSent && !window.confirm(`${SENT_ARTIFACT_REFRESH_MESSAGE}\n\nContinue anyway?`)) {
+                            return;
+                          }
+                          void run(`draft-${report.id}`, async () => {
+                            await postJson(
+                              `/api/admin/reports/${report.id}/draft`,
+                              markedSent ? { confirmReplaceSent: true } : undefined,
+                            );
+                          });
+                        }}
                       >
                         Recreate draft
                       </button>

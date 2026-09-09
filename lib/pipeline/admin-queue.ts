@@ -67,6 +67,30 @@ export function hasManualInitialSend(report: QueueReport): boolean {
   return report.initialReportSentAt != null;
 }
 
+export const SENT_ARTIFACT_REFRESH_MESSAGE =
+  "This family's initial report was already marked Sent. Refreshing may replace the Drive PDFs and the saved Gmail draft. The sent timestamp, delivery type, Gmail message ID, and payment records will be kept, and no email will be sent.";
+
+export type SentArtifactRefreshDecision =
+  | { action: "allow" }
+  | { action: "skip"; reason: "initial-report-sent" }
+  | { action: "confirm"; reason: "initial-report-sent"; message: string };
+
+export function decideSentArtifactRefresh(
+  report: Pick<QueueReport, "initialReportSentAt">,
+  options: { confirmReplaceSent?: boolean; mode: "auto" | "explicit" },
+): SentArtifactRefreshDecision {
+  if (!hasManualInitialSend(report)) return { action: "allow" };
+  if (options.confirmReplaceSent) return { action: "allow" };
+  if (options.mode === "explicit") {
+    return {
+      action: "confirm",
+      reason: "initial-report-sent",
+      message: SENT_ARTIFACT_REFRESH_MESSAGE,
+    };
+  }
+  return { action: "skip", reason: "initial-report-sent" };
+}
+
 export function isSentInQueue(report: QueueReport): boolean {
   return hasPaidDeliveryRecord(report) || hasManualInitialSend(report);
 }

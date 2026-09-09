@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth/require-admin";
-import { JobInProgressError } from "@/lib/pipeline/artifacts";
+import { JobInProgressError, SentReportRefreshError } from "@/lib/pipeline/artifacts";
 import { createInitialGmailDraft } from "@/lib/pipeline/complete";
 import { getReportById } from "@/lib/pipeline/store";
 
@@ -8,20 +8,29 @@ export const runtime = "nodejs";
 export const maxDuration = 120;
 
 export async function POST(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
   const unauthorized = await requireAdmin();
   if (unauthorized) return unauthorized;
   const { id } = await context.params;
+  const body = (await request.json().catch(() => null)) as { confirmReplaceSent?: boolean } | null;
   try {
-    const report = await createInitialGmailDraft(id);
+    const report = await createInitialGmailDraft(id, undefined, {
+      confirmReplaceSent: body?.confirmReplaceSent === true,
+    });
     return NextResponse.json({
       ok: true,
       status: report.status,
       draftFingerprint: report.draftFingerprint,
     });
   } catch (error) {
+    if (error instanceof SentReportRefreshError) {
+      return NextResponse.json(
+        { ok: false, action: error.action, message: error.message },
+        { status: 409 },
+      );
+    }
     if (error instanceof JobInProgressError) {
       const report = await getReportById(id);
       return NextResponse.json(

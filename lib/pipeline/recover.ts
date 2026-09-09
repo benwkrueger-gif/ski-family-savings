@@ -12,9 +12,10 @@ import {
   markError,
 } from "@/lib/pipeline/store";
 import { hasPurchased, type PipelineStatus } from "@/lib/pipeline/status";
+import { hasManualInitialSend } from "@/lib/pipeline/admin-queue";
 import type { CustomerReport } from "@/lib/db/schema";
 import { addPipelineLog } from "@/lib/db/settings";
-import { JobInProgressError, artifactStatus, jobConflict } from "@/lib/pipeline/artifacts";
+import { JobInProgressError, SentReportRefreshError, artifactStatus, jobConflict } from "@/lib/pipeline/artifacts";
 
 const OPEN_STATUSES = new Set(["queued", "in_progress"]);
 const FAILED_STATUSES = new Set(["failed", "incomplete", "cancelled"]);
@@ -75,6 +76,17 @@ export async function recoverExistingResearch(
   const report = await getReportById(reportId);
   if (!report) {
     return { ok: false, action: "error", message: `Report ${reportId} not found` };
+  }
+
+  if (hasManualInitialSend(report)) {
+    return {
+      ok: true,
+      action: "already_complete",
+      openaiStatus: "completed",
+      reportStatus: report.status,
+      message: "Initial report was already marked sent. PDFs and Gmail drafts were left unchanged.",
+      report,
+    };
   }
 
   if (options?.incomingResponseId) {
@@ -230,6 +242,16 @@ export async function recoverExistingResearch(
     await startNextIfIdle(current.id);
     return finished;
   } catch (error) {
+    if (error instanceof SentReportRefreshError) {
+      const current = await getReportById(reportId);
+      return {
+        ok: true,
+        action: "already_complete",
+        reportStatus: current?.status,
+        message: error.message,
+        report: current ?? report,
+      };
+    }
     if (error instanceof JobInProgressError) {
       const current = await getReportById(reportId);
       return {

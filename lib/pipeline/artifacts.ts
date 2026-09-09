@@ -93,3 +93,12 @@ export class JobInProgressError extends Error {
     this.name = "JobInProgressError";
   }
 }
+
+export class SentReportRefreshError extends Error {
+  readonly statusCode = 409;
+  readonly action = "sent_protected" as const;
+  constructor(message: string) {
+    super(message);
+    this.name = "SentReportRefreshError";
+  }
+}

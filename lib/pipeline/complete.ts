@@ -30,11 +30,13 @@ import {
 } from "./store";
 import {
   JobInProgressError,
+  SentReportRefreshError,
   artifactStatus,
   writingFingerprint,
 } from "./artifacts";
 import type { OfferMode, PipelineStatus } from "./status";
 import { hasPurchased } from "./status";
+import { decideSentArtifactRefresh, SENT_ARTIFACT_REFRESH_MESSAGE } from "@/lib/pipeline/admin-queue";
 
 async function syncOfferDecision(reportId: string) {
   const report = await requireReport(reportId);
@@ -273,7 +275,18 @@ export async function ensureCurrentWriting(
 export async function generateAndUploadPdfs(
   reportId: string,
   writingOverride?: ReportWriting,
+  options?: { confirmReplaceSent?: boolean },
 ): Promise<CustomerReport> {
+  const existing = await requireReport(reportId);
+  const sentDecision = decideSentArtifactRefresh(existing, {
+    confirmReplaceSent: options?.confirmReplaceSent,
+    mode: "explicit",
+  });
+  if (sentDecision.action !== "allow") {
+    throw new SentReportRefreshError(
+      sentDecision.action === "confirm" ? sentDecision.message : SENT_ARTIFACT_REFRESH_MESSAGE,
+    );
+  }
   return withGenerationJob(reportId, "pdfs", async () => {
     const ensured = await ensureCurrentWriting(reportId, writingOverride);
     const { research, offerMode, checkoutUrl, writing, report } = ensured;
@@ -362,7 +375,18 @@ function loadSavedWritingForDraft(
 export async function createInitialGmailDraft(
   reportId: string,
   writingOverride?: ReportWriting,
+  options?: { confirmReplaceSent?: boolean },
 ): Promise<CustomerReport> {
+  const existing = await requireReport(reportId);
+  const sentDecision = decideSentArtifactRefresh(existing, {
+    confirmReplaceSent: options?.confirmReplaceSent,
+    mode: "explicit",
+  });
+  if (sentDecision.action !== "allow") {
+    throw new SentReportRefreshError(
+      sentDecision.action === "confirm" ? sentDecision.message : SENT_ARTIFACT_REFRESH_MESSAGE,
+    );
+  }
   return withGenerationJob(reportId, "draft", async () => {
     const synced = await syncOfferDecision(reportId);
     const { research, offerMode, checkoutUrl, display, report } = synced;
@@ -471,6 +495,16 @@ export async function createInitialGmailDraft(
 }
 
 export async function continueAfterResearch(reportId: string): Promise<void> {
+  const report = await requireReport(reportId);
+  const sentDecision = decideSentArtifactRefresh(report, { mode: "auto" });
+  if (sentDecision.action === "skip") {
+    await addPipelineLog(
+      reportId,
+      report.status,
+      "Skipped PDF and draft refresh because the initial report was already marked sent",
+    );
+    return;
+  }
   await generateAndUploadPdfs(reportId);
   await createInitialGmailDraft(reportId);
 }
