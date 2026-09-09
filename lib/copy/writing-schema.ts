@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { zodTextFormat } from "openai/helpers/zod";
+
+export const EDITORIAL_STRUCTURED_OUTPUT_NAME = "ski_family_editorial";
 
 export const WritingFindingSchema = z.object({
   heading: z.string().min(4).max(90),
@@ -31,8 +34,8 @@ export const WritingNamedNoteSchema = z.object({
   note: z.string().min(8).max(280),
 });
 
-export const ReportWritingSchema = z.object({
-  scanContract: z.string().max(40).optional(),
+/** Schema sent to OpenAI Structured Outputs. Code-owned stamps must not appear here. */
+export const EditorialModelSchema = z.object({
   scan: z.object({
     greeting: z.string().min(4).max(40),
     opening: z.string().min(20).max(500),
@@ -60,8 +63,61 @@ export const ReportWritingSchema = z.object({
   }),
 });
 
+export const ReportWritingSchema = EditorialModelSchema.extend({
+  scanContract: z.string().max(40).optional(),
+});
+
+export type EditorialModelWriting = z.infer<typeof EditorialModelSchema>;
 export type ReportWriting = z.infer<typeof ReportWritingSchema>;
 
 export function parseReportWriting(input: unknown): ReportWriting {
   return ReportWritingSchema.parse(input);
+}
+
+export function parseEditorialModelWriting(input: unknown): EditorialModelWriting {
+  return EditorialModelSchema.parse(input);
+}
+
+export function editorialStructuredOutputFormat() {
+  return zodTextFormat(EditorialModelSchema, EDITORIAL_STRUCTURED_OUTPUT_NAME);
+}
+
+export function assertOpenAiStrictObjectSchema(
+  schema: unknown,
+  path: string[] = [],
+  issues: string[] = [],
+): string[] {
+  if (!schema || typeof schema !== "object") return issues;
+  const node = schema as {
+    type?: unknown;
+    properties?: Record<string, unknown>;
+    required?: unknown;
+    additionalProperties?: unknown;
+    items?: unknown;
+    anyOf?: unknown;
+    $defs?: Record<string, unknown>;
+    definitions?: Record<string, unknown>;
+  };
+  if (node.properties && typeof node.properties === "object") {
+    const keys = Object.keys(node.properties);
+    const required = Array.isArray(node.required) ? node.required.filter((key): key is string => typeof key === "string") : [];
+    for (const key of keys) {
+      if (!required.includes(key)) {
+        issues.push(
+          `Schema field at \`${[...path, "properties", key].join("/")}\` uses \`.optional()\` without \`.nullable()\` which is not supported by the API.`,
+        );
+      }
+      assertOpenAiStrictObjectSchema(node.properties[key], [...path, "properties", key], issues);
+    }
+  }
+  if (node.items) assertOpenAiStrictObjectSchema(node.items, [...path, "items"], issues);
+  if (Array.isArray(node.anyOf)) {
+    node.anyOf.forEach((branch, index) => {
+      assertOpenAiStrictObjectSchema(branch, [...path, "anyOf", String(index)], issues);
+    });
+  }
+  for (const [name, definition] of Object.entries(node.$defs ?? node.definitions ?? {})) {
+    assertOpenAiStrictObjectSchema(definition, [...path, "$defs", name], issues);
+  }
+  return issues;
 }

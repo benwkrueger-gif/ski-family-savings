@@ -1,0 +1,165 @@
+{
+  "family": {
+    "firstName": "Pat",
+    "lastName": null,
+    "homeZip": null,
+    "adults": 1,
+    "children": [
+      { "age": 7, "grade": "2nd grade" },
+      { "age": 13, "grade": "7th grade" }
+    ],
+    "skiProfile": "Mostly one home mountain; can ski weekdays sometimes.",
+    "annualDays": "8-15 days",
+    "destinations": ["Ridge Hollow"]
+  },
+  "summary": {
+    "coreSavingsLow": 0,
+    "coreSavingsHigh": 0,
+    "optionalSavingsLow": 76,
+    "optionalSavingsHigh": 492,
+    "jackpotCount": 0,
+    "strongCount": 1,
+    "usefulCount": 0,
+    "watchCount": 1,
+    "confidence": "MEDIUM",
+    "rationale": "No current-season pass price is countable. Seasonal rentals stay optional until equipment need is confirmed.",
+    "humanReviewFlags": [
+      "The home mountain has not published current-season pass pricing.",
+      "Rental savings assume both children need complete equipment.",
+      "Posted rental rates were not labeled for the current season."
+    ],
+    "offerModeRecommendation": "FULL_PLAN_FREE",
+    "offerModeReason": "There are no firm countable core savings.",
+    "headlineSavings": "No verified core savings yet; $76 to $492 optional",
+    "headline": "A home-mountain pass may exist, but it is not countable yet.",
+    "subhead": "Confirm current-season pricing and whether the kids need gear."
+  },
+  "opportunities": [
+    {
+      "id": "ridge-hollow-seasonal-rentals",
+      "name": "Local shop Silver Seasonal Ski Rentals",
+      "category": "Rentals",
+      "tier": "STRONG",
+      "familyMembersAffected": ["7 year old", "13 year old"],
+      "eligibility": "Junior and teen packages if both children need complete equipment.",
+      "familyFit": "This may help only if both children need rental gear for separate local days.",
+      "baselineCost": 475.84,
+      "opportunityCost": 399.98,
+      "netSavingsLow": 76,
+      "netSavingsHigh": 492,
+      "calculation": "Daily rental comparison versus seasonal packages. Uncounted until equipment need is confirmed.",
+      "deadline": null,
+      "restrictions": "Clustered multi-day rentals can reduce the savings.",
+      "blackoutDates": null,
+      "stackability": "Use instead of repeated daily rentals.",
+      "alreadyKnownByFamily": false,
+      "verificationStatus": "HIGH_CONFIDENCE",
+      "countedInHeadline": false,
+      "countReason": "Equipment need and the pattern of rental days are unknown.",
+      "sourceUrl": "https://example.com/season-rentals",
+      "sourceTitle": "Seasonal rental page",
+      "sourceCheckedAt": "2026-09-08",
+      "notes": "",
+      "location": "Nearby shop",
+      "whyItMatters": "Seasonal packages can cost less than repeated daily rentals.",
+      "howItWorks": "Reserve junior and teen packages if both kids need gear.",
+      "recommendedAction": "Confirm whether both children need complete equipment, then compare current seasonal packages with the actual day pattern."
+    },
+    {
+      "id": "ridge-hollow-school-pass-watch",
+      "name": "Ridge Hollow School Pass and Parent Add-On",
+      "category": "Lift tickets and passes",
+      "tier": "WATCH",
+      "familyMembersAffected": ["7 year old", "Adult"],
+      "eligibility": "School documentation was required on the prior-season page.",
+      "familyFit": "This may fit if current-season terms match last season.",
+      "baselineCost": null,
+      "opportunityCost": null,
+      "netSavingsLow": 0,
+      "netSavingsHigh": 0,
+      "calculation": "The displayed school-pass prices were valid only through September 1, 2026. Do not present them as currently available.",
+      "deadline": "No current-season deadline is posted. The prior early-price period ended October 31, 2025.",
+      "restrictions": "Only prior-season validity is published.",
+      "blackoutDates": null,
+      "stackability": "Wait for current-season terms before buying regular passes.",
+      "alreadyKnownByFamily": false,
+      "verificationStatus": "NEEDS_CHECK",
+      "countedInHeadline": false,
+      "countReason": "Only prior-season resort pricing and validity are available, so the opportunity is not current enough to count.",
+      "sourceUrl": "https://example.com/ridge-hollow-passes",
+      "sourceTitle": "Official pass page",
+      "sourceCheckedAt": "2026-09-08",
+      "notes": "",
+      "location": "Ridge Hollow",
+      "whyItMatters": "A school pass can change the season math if current terms return.",
+      "howItWorks": "Wait for current-season validity, then compare the school package with regular passes.",
+      "recommendedAction": "Wait for the official page to show current-season validity before buying regular passes."
+    }
+  ],
+  "scenarioGroups": [
+    {
+      "id": "optional-rentals",
+      "label": "Optional rentals",
+      "kind": "optional",
+      "savingsLow": 76,
+      "savingsHigh": 492,
+      "note": "Only if both children need complete equipment."
+    }
+  ],
+  "existingKnownSavings": [],
+  "watchlist": [
+    {
+      "title": "Current-season home-mountain pass prices",
+      "whatWeAreWatching": "Whether Ridge Hollow publishes current-season school-pass terms.",
+      "whyItCouldMatter": "Last season's school package could change the pass decision if it returns.",
+      "expectedTiming": "When the resort publishes current-season prices",
+      "trigger": "Current-season validity appears on the official pass page",
+      "sourceTitle": "Official pass page",
+      "sourceUrl": "https://example.com/ridge-hollow-passes"
+    }
+  ],
+  "freeScan": {
+    "headline": "A few areas are worth checking.",
+    "summaryText": "No incremental saving is firm yet.",
+    "primaryOpportunityArea": "Gear and a possible school pass",
+    "opportunityAreas": [],
+    "biggestPotentialWin": null,
+    "biggestPotentialWinLabel": "Conditional only",
+    "unknownsIntro": "Confirm:",
+    "importantUnknowns": ["Whether the kids need rental gear", "Current-season pass prices"],
+    "ctaHeadline": "Review the plan",
+    "ctaBody": "Confirm the unknowns before buying.",
+    "methodologyTitle": "No fake wins",
+    "methodologyText": "Unknown amounts remain uncounted."
+  },
+  "paidPlan": {
+    "overview": "Confirm current-season pass pricing and whether the kids need gear.",
+    "startHere": [
+      {
+        "number": 1,
+        "title": "Wait for current-season pass terms",
+        "description": "Wait for the official pass page to show current-season validity before buying regular passes.",
+        "sourceTitle": "Official pass page",
+        "sourceUrl": "https://example.com/ridge-hollow-passes"
+      },
+      {
+        "number": 2,
+        "title": "Decide whether the children need seasonal equipment",
+        "description": "If both children need skis, boots, bindings, and poles, compare current seasonal packages with the actual pattern of ski days.",
+        "sourceTitle": "Seasonal rental page",
+        "sourceUrl": "https://example.com/season-rentals"
+      }
+    ],
+    "optionalScenarios": [],
+    "alreadyDoingRight": [],
+    "bottomLine": "Nothing is counted until current-season prices and equipment need are confirmed.",
+    "closingLine": "Confirm the unknowns before purchasing.",
+    "referralLine": null,
+    "thankYouHeadline": "Research complete",
+    "thankYouBody": "The uncertain items remain uncounted."
+  },
+  "emailContext": {
+    "personalizedObservation": "A home-mountain season with two kids made rentals and the school pass worth checking.",
+    "enthusiasmLevel": "MEDIUM"
+  }
+}

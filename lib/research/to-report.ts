@@ -6,6 +6,7 @@ import {
   summarizeDisplaySavings,
   type DisplayOpportunity,
 } from "@/lib/research/display-savings";
+import { expiredPriceFact } from "@/lib/research/expired-price";
 import type { CanonicalResearch } from "@/lib/research/schema";
 import type { ReportData } from "@/reports/schema";
 
@@ -49,13 +50,19 @@ export function deterministicOpportunityCopy(item: DisplayOpportunity): {
     : opportunity.alreadyKnownByFamily
       ? `${range} is not counted as newly found savings.`
       : `${range} remains uncounted until the open questions are resolved.`;
+  const expired = expiredPriceFact(
+    `${opportunity.countReason} ${opportunity.calculation} ${opportunity.deadline ?? ""}`,
+  );
+  const expiredNote = expired
+    ? ` The ${expired} price is expired or requires current-price confirmation.`
+    : "";
   return {
     found: opportunity.alreadyKnownByFamily
       ? "This was already part of your plan, so it is included for comparison rather than counted as a new saving."
       : item.firm
         ? "This is verified and counted based on the details currently available."
         : "This may be useful, but it stays uncounted until the open questions are resolved.",
-    saveNote: cleanResearchProse(`${counted} ${opportunity.countReason}`),
+    saveNote: cleanResearchProse(`${counted} ${opportunity.countReason}${expiredNote}`),
     action: cleanResearchProse(
       opportunity.recommendedAction || "Confirm the current details before buying.",
     ),

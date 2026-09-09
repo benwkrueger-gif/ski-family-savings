@@ -6,7 +6,7 @@ import { customerReports, webhookEvents, type CustomerReport } from "@/lib/db/sc
 import type { FamilyProfile } from "@/lib/family/profile";
 import { JOB_STALE_MS, jobConflict } from "@/lib/pipeline/artifacts";
 import {
-  RECOVERABLE_RESEARCH_STATUSES,
+  CRON_RECOVERABLE_RESEARCH_STATUSES,
   RESEARCHING_STATUSES,
   type OfferMode,
   type PipelineStatus,
@@ -265,7 +265,7 @@ export async function listRecoverableResearchReports(): Promise<CustomerReport[]
     .where(
       and(
         sql`${customerReports.openaiResponseId} is not null`,
-        inArray(customerReports.status, RECOVERABLE_RESEARCH_STATUSES),
+        inArray(customerReports.status, CRON_RECOVERABLE_RESEARCH_STATUSES),
       ),
     )
     .orderBy(desc(customerReports.researchStartedAt), desc(customerReports.updatedAt));

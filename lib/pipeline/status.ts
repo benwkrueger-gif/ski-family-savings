@@ -55,6 +55,11 @@ export const RECOVERABLE_RESEARCH_STATUSES: PipelineStatus[] = [
   "RESEARCH_FAILED",
 ];
 
+/** Cron recovery retries unfinished research/PDF work. Writing contract failures need an explicit regenerate after the contract is fixed. */
+export const CRON_RECOVERABLE_RESEARCH_STATUSES: PipelineStatus[] = RECOVERABLE_RESEARCH_STATUSES.filter(
+  (status) => status !== "WRITING_FAILED",
+);
+
 export function isTerminalPaidStatus(status: PipelineStatus | null | undefined): boolean {
   return status === "PLAN_DELIVERED" || status === "PLAN_DELIVERING";
 }

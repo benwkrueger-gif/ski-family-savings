@@ -3,9 +3,20 @@ import type { OfferMode } from "@/lib/pipeline/status";
 import type { DisplaySavingsSummary } from "@/lib/research/display-savings";
 
 const DOLLAR_AMOUNT = /\$\d+(?:,\d{3})*(?:\.\d{1,2})?/g;
+const PAID_PLAN_PRICE_TOKEN = /\$49(?:\.00)?(?!\d)/;
+const PAID_PLAN_PRICE_SPOKEN = /\b49\s*bucks\b/i;
 
 export function extractDollarAmounts(text: string): string[] {
   return text.match(DOLLAR_AMOUNT) ?? [];
+}
+
+/** True only for the $49 Plan price, not for $492, $149, or other dollar amounts. */
+export function mentionsPaidPlanPrice(text: string): boolean {
+  return PAID_PLAN_PRICE_TOKEN.test(text) || PAID_PLAN_PRICE_SPOKEN.test(text);
+}
+
+export function stripPaidPlanPriceMentions(text: string): string {
+  return text.replace(/\$49(?:\.00)?(?!\d)/g, "").replace(/\b49\s*bucks\b/gi, "");
 }
 
 export function approvedScanSavingsStrings(

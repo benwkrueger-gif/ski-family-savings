@@ -40,3 +40,14 @@ test("FULL_PLAN_FREE PDFs should not contain $49", () => {
   const checks = runChecks("free", { ...sample, freeScan: undefined }, extracted, 1);
   assert.equal(checks.some((check) => !check.ok && /\$49/.test(check.message)), true);
 });
+
+test("FULL_PLAN_FREE PDFs may mention $492 optional savings", () => {
+  const extracted: ExtractedPdf = {
+    pageCount: 1,
+    pages: [{ text: "If a couple things still go your way, it could be about $76-$492.", urls: [] }],
+    allText: "If a couple things still go your way, it could be about $76-$492.",
+    allUrls: [],
+  };
+  const checks = runChecks("free", { ...sample, freeScan: undefined }, extracted, 1);
+  assert.equal(checks.some((check) => !check.ok && /\$49/.test(check.message)), false);
+});

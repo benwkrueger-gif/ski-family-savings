@@ -177,6 +177,24 @@ test("FULL_PLAN_FREE with no firm savings stays honest and still attaches the Pl
   );
 });
 
+test("FULL_PLAN_FREE copy checks do not treat $492 as the $49 Plan price", () => {
+  assert.equal(
+    assertDraftCopySafe({
+      offerMode: "FULL_PLAN_FREE",
+      body: "If a couple things still go your way, it could be about $76-$492.",
+      html: "<p>If a couple things still go your way, it could be about $76-$492.</p>",
+    }).length,
+    0,
+  );
+  assert.ok(
+    assertDraftCopySafe({
+      offerMode: "FULL_PLAN_FREE",
+      body: "Get the full Savings Plan for $49.",
+      html: "",
+    }).some((issue) => /purchase language|upsell/i.test(issue)),
+  );
+});
+
 test("creating a draft email does not send mail", () => {
   buildInitialDraftEmail({
     firstName: "Ada",

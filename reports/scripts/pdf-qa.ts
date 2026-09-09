@@ -5,6 +5,7 @@ import { pdf } from "pdf-to-img";
 import { PROJECT_ROOT, type ReportType } from "./render-report";
 import type { ReportData } from "../schema";
 import { writingVoiceIssues } from "../../lib/copy/banned";
+import { mentionsPaidPlanPrice } from "../../lib/copy/scan-amounts";
 
 async function loadPdfjs() {
   const pdfjsEntry = path.join(
@@ -117,9 +118,10 @@ export function runChecks(
   });
 
   if (!data.freeScan?.cta) {
+    const hasPlanPrice = mentionsPaidPlanPrice(extracted.allText);
     checks.push({
-      ok: !/\$49/.test(extracted.allText),
-      message: /\$49/.test(extracted.allText)
+      ok: !hasPlanPrice,
+      message: hasPlanPrice
         ? `${type}: $49 language present without an upsell CTA`
         : `${type}: no $49 language`,
     });

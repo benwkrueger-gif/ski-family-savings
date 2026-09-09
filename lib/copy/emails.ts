@@ -1,4 +1,5 @@
 import type { OfferMode } from "@/lib/pipeline/status";
+import { mentionsPaidPlanPrice, stripPaidPlanPriceMentions } from "@/lib/copy/scan-amounts";
 import { stripEmDashes } from "@/lib/copy/sanitize";
 
 export const SCAN_UPSELL_SUBJECT = "Your ski savings scan is ready ⛷️";
@@ -311,10 +312,11 @@ export function assertDraftCopySafe(options: {
     if (html && /buy\.stripe\.com|checkout\.stripe\.com/i.test(visibleHtml)) {
       issues.push("visible HTML contains a raw Stripe URL");
     }
-    const withoutAllowed = options.body
-      .replace(options.checkoutUrl ?? "", "")
-      .replace(/\$49/g, "")
-      .replace(/roughly\s+[^.]+worth a look/i, "");
+    const withoutAllowed = stripPaidPlanPriceMentions(
+      options.body
+        .replace(options.checkoutUrl ?? "", "")
+        .replace(/roughly\s+[^.]+worth a look/i, ""),
+    );
     if (/\$(?!\s)\d/.test(withoutAllowed) || /\bhttps?:\/\//i.test(withoutAllowed)) {
       issues.push("SCAN_UPSELL email includes paid program details");
     }
@@ -322,7 +324,7 @@ export function assertDraftCopySafe(options: {
 
   if (options.offerMode === "FULL_PLAN_FREE") {
     const combined = `${options.body}\n${html}`;
-    if (/\$49/.test(combined) || /stripe|checkout|buy\.stripe/i.test(combined)) {
+    if (mentionsPaidPlanPrice(combined) || /stripe|checkout|buy\.stripe/i.test(combined)) {
       issues.push("FULL_PLAN_FREE email contains purchase language");
     }
     if (/wasn't enough to sell|not enough to charge|couldn't find enough/i.test(combined)) {

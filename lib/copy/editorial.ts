@@ -1,12 +1,12 @@
 import fs from "fs";
 import path from "path";
-import { zodTextFormat } from "openai/helpers/zod";
 import { env } from "@/lib/env";
 import { openaiClient } from "@/lib/openai/research";
 import { isPlanDetailTeaser, collectWritingText, writingVoiceIssues } from "@/lib/copy/banned";
 import {
+  editorialStructuredOutputFormat,
+  parseEditorialModelWriting,
   parseReportWriting,
-  ReportWritingSchema,
   type ReportWriting,
 } from "@/lib/copy/writing-schema";
 import { stripEmDashes } from "@/lib/copy/sanitize";
@@ -17,6 +17,7 @@ import {
   approvedHeadlineSavingsLine,
   approvedScanSavingsStrings,
   extractDollarAmounts,
+  mentionsPaidPlanPrice,
 } from "@/lib/copy/scan-amounts";
 import type { OfferMode } from "@/lib/pipeline/status";
 import {
@@ -25,7 +26,10 @@ import {
   type DisplaySavingsSummary,
 } from "@/lib/research/display-savings";
 import type { CanonicalResearch } from "@/lib/research/schema";
+import { acknowledgesExpiredPrice, expiredPriceFact } from "@/lib/research/expired-price";
 import { freeScanLeakFlags, researchToReportData } from "@/lib/research/to-report";
+
+export { acknowledgesExpiredPrice, expiredPriceFact };
 
 export function loadEditorialGuide(): string {
   return fs.readFileSync(path.join(process.cwd(), "prompts/editorial.md"), "utf8");
@@ -158,6 +162,32 @@ export class EditorialTimeoutError extends Error {
   }
 }
 
+export class EditorialNonRetryableError extends Error {
+  readonly stage = "WRITING" as const;
+  readonly retryable = false;
+  readonly kind: "schema" | "contract";
+  constructor(message: string, kind: "schema" | "contract" = "contract") {
+    super(message);
+    this.name = "EditorialNonRetryableError";
+    this.kind = kind;
+  }
+}
+
+export function isNonRetryableWritingError(error: unknown): boolean {
+  if (error instanceof EditorialNonRetryableError) return true;
+  const message = error instanceof Error ? error.message : String(error);
+  return isNonRetryableWritingMessage(message);
+}
+
+export function isNonRetryableWritingMessage(message: string): boolean {
+  return (
+    /\.optional\(\) without \.nullable\(\)/i.test(message) ||
+    /which is not supported by the API/i.test(message) ||
+    /failed quality checks/i.test(message) ||
+    /Saved editorial copy failed validation/i.test(message)
+  );
+}
+
 export const EDITORIAL_MAX_OUTPUT_TOKENS = 8_000;
 
 export function remainingEditorialMs(timeoutMs: number, startedAt: number, now = Date.now()): number {
@@ -237,8 +267,11 @@ export function finalizeEditorialWriting(
     issues = editorialQualityIssues({ writing: fallback, research, offerMode });
     if (issues.length === 0) return fallback;
   }
-  const error = new Error(`Editorial writing failed quality checks: ${issues.join("; ")}`);
-  (error as Error & { writing?: ReportWriting }).writing = repaired;
+  const error = new EditorialNonRetryableError(
+    `Editorial writing failed quality checks: ${issues.join("; ")}`,
+    "contract",
+  );
+  (error as EditorialNonRetryableError & { writing?: ReportWriting }).writing = repaired;
   throw error;
 }
 
@@ -359,26 +392,6 @@ export function scanProseIssues(
   ];
 }
 
-export function expiredPriceFact(
-  text: string,
-  now = new Date(),
-): string | null {
-  const match = text.match(
-    /(?:valid(?:\s+only)?\s+through|purchase\s+by)\s+(September|October|November|December|January|February|March|April|May|June|July|August)\s+(\d{1,2})(?:,?\s+(\d{4}))?/i,
-  );
-  if (!match) return null;
-  const year = Number(match[3] ?? now.getUTCFullYear());
-  const expires = new Date(`${match[1]} ${match[2]}, ${year} 23:59:59 UTC`);
-  if (Number.isNaN(expires.getTime()) || now.getTime() <= expires.getTime()) return null;
-  return `${match[1]} ${match[2]}, ${year}`;
-}
-
-function acknowledgesExpiredPrice(text: string): boolean {
-  return /\b(expired|past|no longer current|current .{0,30}(?:price|prices|pricing|rate|rates)|today'?s .{0,30}(?:price|prices|pricing|rate|rates)|confirm .{0,30}(?:price|prices|pricing|rate|rates)|call .{0,40}(?:price|prices|pricing|rate|rates)|not counted)\b/i.test(
-    text,
-  );
-}
-
 function dropTeaserSentences(text: string): string {
   const kept = text
     .split(/(?<=[.!?])\s+/)
@@ -392,7 +405,9 @@ export function adaptWritingForOfferMode(writing: ReportWriting, offerMode: Offe
   const closingSource = writing.scan.closing ?? "";
   const strippedClosing = dropTeaserSentences(closingSource);
   const closing =
-    !strippedClosing || /put together|step-by-step plan|\$49|full details/i.test(strippedClosing)
+    !strippedClosing ||
+    /put together|step-by-step plan|full details/i.test(strippedClosing) ||
+    mentionsPaidPlanPrice(strippedClosing)
       ? "Hope this helps."
       : strippedClosing;
   return parseReportWriting({
@@ -524,10 +539,13 @@ export function editorialQualityIssues(options: {
   }
   if (options.offerMode === "FULL_PLAN_FREE") {
     const closing = options.writing.scan.closing ?? "";
-    if (/put together|step-by-step plan|\$49|full details/i.test(closing)) {
+    if (
+      /put together|step-by-step plan|full details/i.test(closing) ||
+      mentionsPaidPlanPrice(closing)
+    ) {
       issues.push("Scan closing sounds like an upsell");
     }
-    if (/\$49/.test(scanText)) {
+    if (mentionsPaidPlanPrice(scanText)) {
       issues.push("FULL_PLAN_FREE Scan copy includes $49 language");
     }
     if (isPlanDetailTeaser(scanText)) {
@@ -618,6 +636,15 @@ export async function writeReportCopy(options: {
       `Editorial timed out after ${Date.now() - startedAt}ms (budget ${timeoutMs}ms)`,
     );
   }
+  let format;
+  try {
+    format = editorialStructuredOutputFormat();
+  } catch (error) {
+    throw new EditorialNonRetryableError(
+      error instanceof Error ? error.message : String(error),
+      "schema",
+    );
+  }
   let response;
   try {
     response = await openai.responses.create(
@@ -626,7 +653,7 @@ export async function writeReportCopy(options: {
           store: false,
           max_output_tokens: EDITORIAL_MAX_OUTPUT_TOKENS,
           text: {
-            format: zodTextFormat(ReportWritingSchema, "ski_family_editorial"),
+            format,
           },
           instructions: loadEditorialGuide(),
           input: [
@@ -656,13 +683,19 @@ export async function writeReportCopy(options: {
         `Editorial OpenAI call timed out after ${Date.now() - startedAt}ms (budget ${timeoutMs}ms)`,
       );
     }
+    if (isNonRetryableWritingError(error)) {
+      throw new EditorialNonRetryableError(
+        error instanceof Error ? error.message : String(error),
+        "schema",
+      );
+    }
     throw error;
   }
 
   const text = response.output_text?.trim();
   if (!text) throw new Error("Editorial model returned no output");
   return finalizeEditorialWriting(
-    parseReportWriting(JSON.parse(text)),
+    parseReportWriting(parseEditorialModelWriting(JSON.parse(text))),
     options.research,
     options.offerMode,
   );
