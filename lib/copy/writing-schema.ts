@@ -32,6 +32,7 @@ export const WritingNamedNoteSchema = z.object({
 });
 
 export const ReportWritingSchema = z.object({
+  scanContract: z.string().max(40).optional(),
   scan: z.object({
     greeting: z.string().min(4).max(40),
     opening: z.string().min(20).max(500),

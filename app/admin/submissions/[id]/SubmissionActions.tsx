@@ -54,7 +54,7 @@ export function SubmissionActions({
     { id: "research", label: "Run / retry research", url: `/api/admin/reports/${report.id}/research` },
     {
       id: "pdfs",
-      label: artifacts.writing === "current" ? "Regenerate PDFs" : "Write copy and regenerate PDFs",
+      label: artifacts.writing === "missing" ? "Write copy and regenerate PDFs" : "Regenerate PDFs",
       url: `/api/admin/reports/${report.id}/pdfs`,
     },
     { id: "offer", label: "Recalculate offer mode", url: `/api/admin/reports/${report.id}/offer-mode` },

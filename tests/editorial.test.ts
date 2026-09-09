@@ -133,6 +133,10 @@ test("saved SCAN writing can be reused for FULL_PLAN_FREE after teaser sentences
   });
 
   assert.equal(reuseSavedWriting({ stored, research, offerMode: "SCAN_UPSELL" }) != null, true);
+  const scanUpsell = reuseSavedWriting({ stored, research, offerMode: "SCAN_UPSELL" });
+  assert.ok(scanUpsell);
+  assert.equal(scanUpsell.plan.myTake, stored.plan.myTake);
+  assert.doesNotMatch(scanUpsell.scan.findings.map((item) => item.heading).join(" "), /Something worth a look/);
   const adapted = adaptWritingForOfferMode(stored, "FULL_PLAN_FREE");
   assert.equal(/keep the exact details/i.test(adapted.scan.findings[0]!.explanation), false);
   const reused = reuseSavedWriting({ stored, research, offerMode: "FULL_PLAN_FREE" });

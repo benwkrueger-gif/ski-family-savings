@@ -1,8 +1,10 @@
 import { createHash } from "crypto";
+import { SCAN_WRITING_CONTRACT } from "@/lib/copy/scan-contract";
 import type { CustomerReport } from "@/lib/db/schema";
 import type { OfferMode } from "@/lib/pipeline/status";
 
 export const REPORT_TEMPLATE_VERSION = "approved-scan-plan-v1";
+export { SCAN_WRITING_CONTRACT };
 export const DEFAULT_EDITORIAL_TIMEOUT_MS = 120_000;
 export const JOB_STALE_MS = 6 * 60 * 1000;
 
@@ -24,7 +26,9 @@ export function writingFingerprint(input: {
   offerMode: OfferMode | string;
 }): string {
   return createHash("sha256")
-    .update(`${REPORT_TEMPLATE_VERSION}|${input.offerMode}|${input.openaiResponseId ?? ""}`)
+    .update(
+      `${REPORT_TEMPLATE_VERSION}|${SCAN_WRITING_CONTRACT}|${input.offerMode}|${input.openaiResponseId ?? ""}`,
+    )
     .digest("hex")
     .slice(0, 24);
 }

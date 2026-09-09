@@ -6,8 +6,10 @@ import {
   buildEditorialFactPacket,
   finalizeEditorialWriting,
   repairEditorialWriting,
+  reuseSavedWriting,
   scanPaidContentIssues,
 } from "../lib/copy/editorial.ts";
+import { SCAN_WRITING_CONTRACT } from "../lib/copy/scan-contract.ts";
 import { parseReportWriting } from "../lib/copy/writing-schema.ts";
 import { buildScanCopy } from "../lib/copy/reports.ts";
 import { blandScanIssues } from "../lib/copy/scan-findings.ts";
@@ -169,6 +171,60 @@ test("Scan fact packet seeds omit paid execution details", () => {
   assert.match(seeds, /weekday private lesson|extra-resort pass|off-slope/i);
   assert.doesNotMatch(seeds, /\$\d|https?:\/\/|SRS-|September 21|Half-Price/i);
   assert.equal((packet.scanFindingSeeds as unknown[]).length > 0, true);
+});
+
+test("unversioned saved writing refreshes Scan and keeps Plan copy", () => {
+  const writing = blandWriting(lessonResearch);
+  writing.plan.myTake = "Keep this Plan take exactly as written.";
+  writing.scan.findings = [
+    {
+      heading: "A lesson discount at North Peak",
+      explanation:
+        "This looks like a cheaper way to get the kids on snow if it fits the days you already have on the calendar.",
+    },
+  ];
+  writing.scan.opening = "Thanks for letting me look at your winter. Here's the first thing I noticed for this season.";
+  writing.scan.myTake = "Start with the home mountain, then decide on extras this season.";
+  const reused = reuseSavedWriting({
+    stored: writing,
+    research: lessonResearch,
+    offerMode: "SCAN_UPSELL",
+  });
+  assert.ok(reused);
+  assert.equal(reused.scanContract, SCAN_WRITING_CONTRACT);
+  assert.equal(reused.plan.myTake, "Keep this Plan take exactly as written.");
+  assert.match(reused.scan.opening, /8-year-old and a 5-year-old/);
+  assert.match(reused.scan.findings[0]?.heading ?? "", /weekday private lesson at North Peak/);
+  assert.doesNotMatch(reused.scan.opening, /first thing I noticed/);
+  assert.doesNotMatch(reused.scan.myTake, /Start with the home mountain, then decide on extras this season/);
+});
+
+test("versioned Scan copy is kept when it already uses the current contract", () => {
+  const base = reuseSavedWriting({
+    stored: blandWriting(lessonResearch),
+    research: lessonResearch,
+    offerMode: "SCAN_UPSELL",
+  });
+  assert.ok(base);
+  const stored = parseReportWriting({
+    ...base,
+    scan: {
+      ...base.scan,
+      opening:
+        "Thanks for letting me look at this. You've got an 8-year-old and a 5-year-old, and a season around Home Notch.",
+    },
+  });
+  const reused = reuseSavedWriting({
+    stored,
+    research: lessonResearch,
+    offerMode: "SCAN_UPSELL",
+  });
+  assert.ok(reused);
+  assert.equal(
+    reused.scan.opening,
+    "Thanks for letting me look at this. You've got an 8-year-old and a 5-year-old, and a season around Home Notch.",
+  );
+  assert.equal(reused.plan.myTake, stored.plan.myTake);
 });
 
 test("Scan repair replaces heading and explanation together when either is bland", () => {

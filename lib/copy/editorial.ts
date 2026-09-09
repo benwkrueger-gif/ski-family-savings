@@ -11,6 +11,7 @@ import {
 } from "@/lib/copy/writing-schema";
 import { stripEmDashes } from "@/lib/copy/sanitize";
 import { buildScanCopy, fallbackFindingCopy, highlightOpportunities, shortMountainName } from "@/lib/copy/reports";
+import { SCAN_WRITING_CONTRACT } from "@/lib/copy/scan-contract";
 import { blandScanIssues, buildScanFindingSeeds, fallbackScanOpening } from "@/lib/copy/scan-findings";
 import {
   approvedHeadlineSavingsLine,
@@ -255,6 +256,7 @@ export function repairEditorialWriting(
     scanProseIssues(text, research, display, offerMode).length > 0 ? fallback : text;
   return parseReportWriting({
     ...sanitized,
+    scanContract: SCAN_WRITING_CONTRACT,
     scan: fullPlanFreeScan ?? {
       ...sanitized.scan,
       opening: repairScanField(sanitized.scan.opening, fallbackScan.opening),
@@ -415,11 +417,16 @@ export function reuseSavedWriting(options: {
 }): ReportWriting | null {
   if (options.stored == null) return null;
   try {
-    return finalizeEditorialWriting(
-      parseReportWriting(options.stored),
-      options.research,
-      options.offerMode,
-    );
+    const stored = parseReportWriting(options.stored);
+    const writing =
+      stored.scanContract === SCAN_WRITING_CONTRACT
+        ? stored
+        : parseReportWriting({
+            ...stored,
+            scan: deterministicScanWriting(options.research, options.offerMode),
+            scanContract: SCAN_WRITING_CONTRACT,
+          });
+    return finalizeEditorialWriting(writing, options.research, options.offerMode);
   } catch {
     return null;
   }
