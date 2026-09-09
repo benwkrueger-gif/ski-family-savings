@@ -4,6 +4,7 @@ import path from "node:path";
 import { test } from "node:test";
 import {
   decideSentArtifactRefresh,
+  hasManualInitialSend,
   SENT_ARTIFACT_REFRESH_MESSAGE,
 } from "../lib/pipeline/admin-queue.ts";
 
@@ -12,6 +13,17 @@ const root = process.cwd();
 function read(rel: string): string {
   return fs.readFileSync(path.join(root, rel), "utf8");
 }
+
+test("sent-status checks accept a record that only has the sent timestamp", () => {
+  assert.equal(hasManualInitialSend({ initialReportSentAt: null }), false);
+  assert.equal(hasManualInitialSend({ initialReportSentAt: new Date("2026-09-09T15:22:00Z") }), true);
+  const adminQueue = read("lib/pipeline/admin-queue.ts");
+  assert.match(adminQueue, /hasManualInitialSend\(report: Pick<QueueReport, "initialReportSentAt">\)/);
+  const actions = read("app/admin/submissions/[id]/SubmissionActions.tsx");
+  assert.match(actions, /type ActionResponse/);
+  assert.match(actions, /Promise<ActionResponse>/);
+  assert.match(actions, /data\.reason === "initial_report_sent"/);
+});
 
 test("unsent reports may refresh artifacts without confirmation", () => {
   assert.deepEqual(decideSentArtifactRefresh({ initialReportSentAt: null }, { mode: "auto" }), {

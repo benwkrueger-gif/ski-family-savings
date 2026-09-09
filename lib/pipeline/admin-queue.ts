@@ -63,7 +63,7 @@ export function hasPaidDeliveryRecord(report: QueueReport): boolean {
   );
 }
 
-export function hasManualInitialSend(report: QueueReport): boolean {
+export function hasManualInitialSend(report: Pick<QueueReport, "initialReportSentAt">): boolean {
   return report.initialReportSentAt != null;
 }
 

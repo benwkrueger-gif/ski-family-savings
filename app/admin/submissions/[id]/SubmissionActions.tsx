@@ -6,21 +6,29 @@ import type { CustomerReport } from "@/lib/db/schema";
 import type { ArtifactStatus } from "@/lib/pipeline/artifacts";
 import { SENT_ARTIFACT_REFRESH_MESSAGE } from "@/lib/pipeline/admin-queue";
 
-async function post(url: string, body?: { confirmReplaceSent?: boolean }) {
+type ActionResponse = {
+  ok?: boolean;
+  message?: string;
+  action?: string;
+  started?: boolean;
+  reason?: string;
+};
+
+async function post(url: string, body?: { confirmReplaceSent?: boolean }): Promise<ActionResponse> {
   const response = await fetch(url, {
     method: "POST",
     headers: body ? { "Content-Type": "application/json" } : undefined,
     body: body ? JSON.stringify(body) : undefined,
   });
-  const data = await response.json().catch(() => ({}));
+  const data = (await response.json().catch(() => ({}))) as ActionResponse & { error?: string };
   if (response.status === 409 && data.action === "in_progress") {
-    return data as { ok?: boolean; message?: string; action?: string };
+    return data;
   }
   if (response.status === 409 && data.action === "sent_protected") {
     throw new Error(data.message || SENT_ARTIFACT_REFRESH_MESSAGE);
   }
   if (!response.ok) throw new Error(data.message || data.error || "Request failed");
-  return data as { ok?: boolean; message?: string; action?: string; started?: boolean; reason?: string };
+  return data;
 }
 
 export function SubmissionActions({
