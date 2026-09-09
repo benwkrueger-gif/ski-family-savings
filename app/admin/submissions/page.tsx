@@ -4,21 +4,46 @@ import { AdminNav } from "@/app/admin/AdminNav";
 import { SubmissionsTable } from "@/app/admin/submissions/SubmissionsTable";
 import { ERROR_STATUSES, RESEARCHING_STATUSES } from "@/lib/pipeline/status";
 import { artifactStatus } from "@/lib/pipeline/artifacts";
+import {
+  isDeleted,
+  isInternalTest,
+  isSentInQueue,
+  matchesQueueView,
+  parseQueueView,
+  type QueueView,
+} from "@/lib/pipeline/admin-queue";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-export default async function SubmissionsPage() {
+const VIEWS: Array<{ id: QueueView; label: string }> = [
+  { id: "todo", label: "To do" },
+  { id: "sent", label: "Sent" },
+  { id: "all", label: "All" },
+  { id: "deleted", label: "Deleted" },
+];
+
+export default async function SubmissionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string }>;
+}) {
+  const params = await searchParams;
+  const view = parseQueueView(params.view);
   const reports = await listReports();
-  const counted = reports.filter((row) => row.source !== "internal-test");
+  const counted = reports.filter((row) => !isDeleted(row) && !isInternalTest(row));
+  const todo = counted.filter((row) => !isSentInQueue(row));
+  const sent = counted.filter((row) => isSentInQueue(row));
+  const visible = reports.filter((row) => matchesQueueView(row, view));
   const summary = {
-    New: counted.filter((row) => row.status === "RECEIVED").length,
-    Researching: counted.filter((row) => RESEARCHING_STATUSES.includes(row.status as never)).length,
-    "Ready for review": counted.filter((row) => artifactStatus(row).deliveryReady).length,
-    "Scan + upsell": counted.filter((row) => row.offerMode === "SCAN_UPSELL").length,
-    "Full plan free": counted.filter((row) => row.offerMode === "FULL_PLAN_FREE").length,
+    "To do": todo.length,
+    Sent: sent.length,
+    New: todo.filter((row) => row.status === "RECEIVED").length,
+    Researching: todo.filter((row) => RESEARCHING_STATUSES.includes(row.status as never)).length,
+    "Ready for review": todo.filter((row) => artifactStatus(row).deliveryReady).length,
+    Errors: todo.filter((row) => ERROR_STATUSES.includes(row.status as never)).length,
     Purchased: counted.filter((row) => Boolean(row.purchasedAt) || row.status === "PURCHASED").length,
-    Delivered: counted.filter((row) => row.status === "PLAN_DELIVERED").length,
-    Errors: counted.filter((row) => ERROR_STATUSES.includes(row.status as never)).length,
+    "Paid delivered": counted.filter((row) => row.status === "PLAN_DELIVERED").length,
   };
 
   return (
@@ -45,7 +70,25 @@ export default async function SubmissionsPage() {
         ))}
       </div>
 
-      <SubmissionsTable reports={reports} />
+      <div className="mt-8 flex flex-wrap items-center gap-2">
+        {VIEWS.map((item) => {
+          const href = item.id === "todo" ? "/admin/submissions" : `/admin/submissions?view=${item.id}`;
+          const active = view === item.id;
+          return (
+            <Link
+              key={item.id}
+              href={href}
+              className={`rounded-[4px] px-3 py-2 text-sm font-bold ${
+                active ? "bg-dark text-white" : "border border-border bg-background text-dark"
+              }`}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
+      </div>
+
+      <SubmissionsTable reports={visible} view={view} />
     </main>
   );
 }

@@ -107,6 +107,9 @@ export async function upsertFromTally(options: {
         homeZip: options.profile.homeZip,
         familySummary,
         submittedAt: options.submittedAt ?? existing.submittedAt,
+        deletedAt: existing.deletedAt,
+        initialReportSentAt: existing.initialReportSentAt,
+        initialReportDeliveryType: existing.initialReportDeliveryType,
         updatedAt: now,
       })
       .where(eq(customerReports.id, existing.id))
@@ -248,6 +251,7 @@ export async function listWaitingResearchReports(): Promise<CustomerReport[]> {
         eq(customerReports.status, "RECEIVED"),
         eq(customerReports.autoResearch, true),
         isNull(customerReports.researchJson),
+        isNull(customerReports.deletedAt),
       ),
     )
     .orderBy(customerReports.receivedAt, customerReports.createdAt);

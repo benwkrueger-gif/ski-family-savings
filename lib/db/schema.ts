@@ -78,6 +78,9 @@ export const customerReports = pgTable(
     purchasedAt: timestamp("purchased_at", { withTimezone: true }),
     planDeliveringAt: timestamp("plan_delivering_at", { withTimezone: true }),
     planDeliveredAt: timestamp("plan_delivered_at", { withTimezone: true }),
+    initialReportSentAt: timestamp("initial_report_sent_at", { withTimezone: true }),
+    initialReportDeliveryType: text("initial_report_delivery_type"),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
 
     autoResearch: boolean("auto_research").notNull().default(true),
     source: text("source").notNull().default("webhook"),

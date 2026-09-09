@@ -51,6 +51,12 @@ export default async function SubmissionDetailPage({
         Status <strong>{report.status}</strong>
         {report.offerMode ? ` · ${report.offerMode}` : ""}
         {artifacts.deliveryReady ? " · delivery ready" : " · not ready for delivery"}
+        {report.deletedAt ? " · archived" : ""}
+        {report.initialReportSentAt
+          ? ` · marked sent ${report.initialReportSentAt.toLocaleString()}`
+          : report.planDeliveredAt
+            ? ` · paid delivery ${report.planDeliveredAt.toLocaleString()}`
+            : ""}
       </p>
       {report.offerModeReason ? <p className="mt-2 text-sm text-muted">{report.offerModeReason}</p> : null}
       {artifacts.jobActive ? (
