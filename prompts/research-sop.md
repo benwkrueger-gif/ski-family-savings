@@ -88,6 +88,17 @@ Do not count the same ski day twice.
 
 Do not assume every theoretical ski day gets a discount. Use the family's stated behavior.
 
+Separate customer-confirmed facts, official source facts, reasonable assumptions, and unknowns. An unknown must not become counted savings.
+
+Do not count:
+- a military, student, dependent, or age discount unless the specific family members who qualify are identified
+- every adult as a pass buyer just because the household has multiple adults
+- a cheaper daytime, weekday, or restricted pass if the family may still need the access it removes
+- gear lease or rental savings unless the family needs equipment and a real baseline (owned gear, a planned purchase, or stated rental days) is known
+- hypothetical future purchases the customer did not say they need
+
+If a cheaper product gives up night skiing, weekday access, or mountain coverage, keep it conditional until that trade-off is known. Ask a direct question instead of recommending the switch.
+
 Tentative trips ("considering France in March") are optional scenarios, not core savings.
 
 Do not count expired opportunities.
@@ -102,10 +113,10 @@ Only VERIFIED or HIGH_CONFIDENCE opportunities with countedInHeadline=true may c
 
 ## Tiers
 
-- JACKPOT: $250+ net savings from one opportunity/decision
+- JACKPOT: $250+ net savings from one opportunity/decision that is actually countable for this family
 - STRONG: $50–$249
 - USEFUL: under $50
-- WATCH: potentially relevant but not currently confirmable/countable
+- WATCH: potentially relevant but not currently confirmable/countable, including hypothetical gear needs and access trade-offs the family has not confirmed
 
 ## Offer mode recommendation
 

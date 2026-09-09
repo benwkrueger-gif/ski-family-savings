@@ -10,7 +10,7 @@ import {
 } from "@/lib/tally/payload";
 import { normalizeTallyAnswers } from "@/lib/tally/normalize";
 import { upsertFromTally } from "@/lib/pipeline/store";
-import { startResearch } from "@/lib/pipeline/research";
+import { dispatchQueuedResearch, startResearch } from "@/lib/pipeline/research";
 import type { CustomerReport } from "@/lib/db/schema";
 import { env } from "@/lib/env";
 import {
@@ -19,15 +19,54 @@ import {
   shouldAttemptSubmissionConfirmation,
 } from "@/lib/pipeline/confirmation";
 
+export function shouldDispatchAutoResearch(options: {
+  created: boolean;
+  autoResearch: boolean;
+  openaiResponseId?: string | null;
+}): boolean {
+  return options.autoResearch && options.created && !options.openaiResponseId;
+}
+
+async function sendConfirmationIfNeeded(report: CustomerReport, created: boolean): Promise<void> {
+  const confirmationEnabled = env.tallyConfirmationEmailEnabled();
+  if (
+    shouldAttemptSubmissionConfirmation({
+      created,
+      enabled: confirmationEnabled,
+      source: report.source,
+    })
+  ) {
+    await runConfirmationWithoutBlocking(() =>
+      sendSubmissionConfirmation(report, { enabled: confirmationEnabled }),
+    );
+  }
+}
+
+export async function runTallyWebhookSideEffects(options: {
+  report: CustomerReport;
+  created: boolean;
+}): Promise<void> {
+  await sendConfirmationIfNeeded(options.report, options.created);
+  const preferredId = shouldDispatchAutoResearch({
+    created: options.created,
+    autoResearch: options.report.autoResearch,
+    openaiResponseId: options.report.openaiResponseId,
+  })
+    ? options.report.id
+    : undefined;
+  await dispatchQueuedResearch(preferredId);
+}
+
 export async function ingestTallyWebhook(
   payload: TallyWebhookPayload,
-  options?: { autoResearch?: boolean },
+  options?: { autoResearch?: boolean; deferSideEffects?: boolean },
 ): Promise<{ report: CustomerReport; created: boolean; researchStarted: boolean }> {
   const submissionId = payload.data?.submissionId || payload.data?.responseId;
   if (!submissionId) {
     throw new Error("Tally payload is missing submissionId");
   }
 
+  const autoResearch = options?.autoResearch ?? true;
   const profile = normalizeTallyAnswers({
     internalId: randomUUID(),
     tallySubmissionId: submissionId,
@@ -42,7 +81,7 @@ export async function ingestTallyWebhook(
     rawTallyJson: payload,
     profile,
     submittedAt,
-    autoResearch: options?.autoResearch ?? true,
+    autoResearch,
     source: "webhook",
   });
 
@@ -59,31 +98,28 @@ export async function ingestTallyWebhook(
     });
   }
 
-  const shouldResearch = (options?.autoResearch ?? true) && created && !report.openaiResponseId;
+  if (options?.deferSideEffects) {
+    return { report, created, researchStarted: false };
+  }
+
+  await sendConfirmationIfNeeded(report, created);
+
+  const shouldResearch = shouldDispatchAutoResearch({
+    created,
+    autoResearch,
+    openaiResponseId: report.openaiResponseId,
+  });
   let researchStarted = false;
   if (shouldResearch) {
     try {
-      await startResearch(report.id);
-      researchStarted = true;
+      const result = await startResearch(report.id);
+      researchStarted = result.started;
     } catch (error) {
       log.error("research_start_failed", {
         reportId: report.id,
         error: error instanceof Error ? error.message : String(error),
       });
     }
-  }
-
-  const confirmationEnabled = env.tallyConfirmationEmailEnabled();
-  if (
-    shouldAttemptSubmissionConfirmation({
-      created,
-      enabled: confirmationEnabled,
-      source: report.source,
-    })
-  ) {
-    await runConfirmationWithoutBlocking(() =>
-      sendSubmissionConfirmation(report, { enabled: confirmationEnabled }),
-    );
   }
 
   return { report, created, researchStarted };

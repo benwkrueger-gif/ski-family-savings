@@ -9,6 +9,7 @@ import {
 } from "@/lib/copy/editorial";
 import type { ReportWriting } from "@/lib/copy/writing-schema";
 import { parseResearch, type CanonicalResearch } from "@/lib/research/schema";
+import { applySavingsIntegrity } from "@/lib/research/savings-integrity";
 import { freeScanLeakFlags, researchToReportData } from "@/lib/research/to-report";
 import { summarizeDisplaySavings } from "@/lib/research/display-savings";
 import { buildSavingsPlanCheckoutUrl } from "@/lib/stripe/checkout";
@@ -44,11 +45,21 @@ async function syncOfferDecision(reportId: string) {
   const display = summarizeDisplaySavings(research);
   const decision = display.offer;
   const checkoutUrl = decision.offerMode === "SCAN_UPSELL" ? buildCheckout(report) : null;
+  const sent = report.initialReportSentAt != null;
   const updated = await updateReport(report.id, {
     offerMode: decision.offerMode,
     offerModeReason: decision.reason,
     stripeCheckoutUrl: checkoutUrl,
     stripeClientReferenceId: report.id,
+    ...(sent
+      ? {}
+      : {
+          researchJson: research,
+          coreSavingsLow: display.firmLow,
+          coreSavingsHigh: display.firmHigh,
+          optionalSavingsLow: display.conditionalLow,
+          optionalSavingsHigh: display.conditionalHigh,
+        }),
   });
   return {
     report: updated,
@@ -103,22 +114,24 @@ export async function storeCompletedResearch(options: {
   research: CanonicalResearch;
   openaiResponseId: string;
 }): Promise<CustomerReport> {
-  const decision = summarizeDisplaySavings(options.research).offer;
+  const research = applySavingsIntegrity(options.research);
+  const display = summarizeDisplaySavings(research);
+  const decision = display.offer;
   const checkoutUrl =
     decision.offerMode === "SCAN_UPSELL" ? await checkoutUrlFor(options.reportId) : null;
 
   const updated = await updateReport(options.reportId, {
     status: "RESEARCH_COMPLETE",
-    researchJson: options.research,
+    researchJson: research,
     openaiResponseId: options.openaiResponseId,
-    coreSavingsLow: options.research.summary.coreSavingsLow,
-    coreSavingsHigh: options.research.summary.coreSavingsHigh,
-    optionalSavingsLow: options.research.summary.optionalSavingsLow,
-    optionalSavingsHigh: options.research.summary.optionalSavingsHigh,
-    confidence: options.research.summary.confidence,
+    coreSavingsLow: display.firmLow,
+    coreSavingsHigh: display.firmHigh,
+    optionalSavingsLow: display.conditionalLow,
+    optionalSavingsHigh: display.conditionalHigh,
+    confidence: research.summary.confidence,
     humanReviewFlags: [
-      ...options.research.summary.humanReviewFlags,
-      ...freeScanFlags(options.research, options.reportId, decision.offerMode, checkoutUrl),
+      ...research.summary.humanReviewFlags,
+      ...freeScanFlags(research, options.reportId, decision.offerMode, checkoutUrl),
     ],
     offerMode: decision.offerMode,
     offerModeReason: decision.reason,
@@ -140,8 +153,8 @@ export async function storeCompletedResearch(options: {
     reportId: options.reportId,
     offerMode: decision.offerMode,
     firmCoreSavingsLow: decision.coreSavingsLow,
-    headlineCoreSavingsLow: options.research.summary.coreSavingsLow,
-    confidence: options.research.summary.confidence,
+    headlineCoreSavingsLow: display.firmLow,
+    confidence: research.summary.confidence,
   });
   log.info("offer_mode_selected", {
     reportId: options.reportId,
@@ -540,7 +553,7 @@ function buildCheckout(report: CustomerReport): string | null {
 
 function parseStoredResearch(report: CustomerReport): CanonicalResearch {
   if (!report.researchJson) throw new Error("Research JSON is missing");
-  return parseResearch(report.researchJson);
+  return applySavingsIntegrity(parseResearch(report.researchJson));
 }
 
 async function requireReport(reportId: string): Promise<CustomerReport> {

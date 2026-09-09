@@ -122,8 +122,8 @@ function toReportOpportunity(item: DisplayOpportunity, writing?: ReportWriting) 
         ? withoutEmDashes(opportunity.deadline)
         : undefined,
     restrictions: [],
-    facts: [],
-    assumptions: [],
+    facts: item.facts,
+    assumptions: item.assumptions,
     scenarios: item.scenarios.map((scenario) => {
       const note = copy?.scenarioNotes.find(
         (entry) => entry.label.toLowerCase() === scenario.label.toLowerCase(),

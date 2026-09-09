@@ -1,7 +1,8 @@
+import { after } from "next/server";
 import { log } from "@/lib/logger";
 import { env } from "@/lib/env";
 import { verifyTallySignature } from "@/lib/tally/signature";
-import { ingestTallyWebhook } from "@/lib/pipeline/ingest";
+import { ingestTallyWebhook, runTallyWebhookSideEffects } from "@/lib/pipeline/ingest";
 import { claimWebhookEvent } from "@/lib/pipeline/store";
 import type { TallyWebhookPayload } from "@/lib/tally/payload";
 
@@ -40,7 +41,7 @@ export async function POST(request: Request) {
   });
 
   try {
-    const result = await ingestTallyWebhook(payload, { autoResearch: true });
+    const result = await ingestTallyWebhook(payload, { autoResearch: true, deferSideEffects: true });
     if (eventId) {
       await claimWebhookEvent({
         provider: "tally",
@@ -49,6 +50,14 @@ export async function POST(request: Request) {
         payload,
       });
     }
+    after(() =>
+      runTallyWebhookSideEffects({ report: result.report, created: result.created }).catch((error) => {
+        log.error("tally_webhook_side_effects_failed", {
+          reportId: result.report.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }),
+    );
     return Response.json({ ok: true, reportId: result.report.id, created: result.created });
   } catch (error) {
     log.error("tally_webhook_error", {

@@ -58,6 +58,9 @@ export default async function SubmissionDetailPage({
             ? ` · paid delivery ${report.planDeliveredAt.toLocaleString()}`
             : ""}
       </p>
+      <p className="mt-1 text-xs text-muted">
+        Last progress {report.updatedAt ? report.updatedAt.toLocaleString() : "unknown"}
+      </p>
       {report.offerModeReason ? <p className="mt-2 text-sm text-muted">{report.offerModeReason}</p> : null}
       {artifacts.jobActive ? (
         <p className="mt-2 text-sm text-red-700">

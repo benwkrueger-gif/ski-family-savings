@@ -1,16 +1,19 @@
 import { randomUUID } from "crypto";
-import { and, desc, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, lt, ne, or, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { addPipelineLog } from "@/lib/db/settings";
 import { customerReports, webhookEvents, type CustomerReport } from "@/lib/db/schema";
 import type { FamilyProfile } from "@/lib/family/profile";
 import { JOB_STALE_MS, jobConflict } from "@/lib/pipeline/artifacts";
+import { maxActiveResearchJobs } from "@/lib/pipeline/research-capacity";
 import {
   CRON_RECOVERABLE_RESEARCH_STATUSES,
   RESEARCHING_STATUSES,
   type OfferMode,
   type PipelineStatus,
 } from "@/lib/pipeline/status";
+
+export const RESEARCH_START_STALE_MS = 3 * 60 * 1000;
 
 export async function getReportById(id: string): Promise<CustomerReport | undefined> {
   const db = getDb();
@@ -237,7 +240,7 @@ export async function listActiveResearchReports(): Promise<CustomerReport[]> {
   return db
     .select()
     .from(customerReports)
-    .where(inArray(customerReports.status, RESEARCHING_STATUSES))
+    .where(and(inArray(customerReports.status, RESEARCHING_STATUSES), isNull(customerReports.deletedAt)))
     .orderBy(desc(customerReports.researchStartedAt), desc(customerReports.updatedAt));
 }
 
@@ -267,10 +270,86 @@ export async function listRecoverableResearchReports(): Promise<CustomerReport[]
       and(
         sql`${customerReports.openaiResponseId} is not null`,
         isNull(customerReports.initialReportSentAt),
+        isNull(customerReports.deletedAt),
         inArray(customerReports.status, CRON_RECOVERABLE_RESEARCH_STATUSES),
       ),
     )
     .orderBy(desc(customerReports.researchStartedAt), desc(customerReports.updatedAt));
+}
+
+export async function claimResearchStart(
+  id: string,
+  options?: { maxActive?: number; now?: Date; staleMs?: number },
+): Promise<CustomerReport | null> {
+  const maxActive = options?.maxActive ?? maxActiveResearchJobs();
+  const now = options?.now ?? new Date();
+  const staleBefore = new Date(now.getTime() - (options?.staleMs ?? RESEARCH_START_STALE_MS));
+  const db = getDb();
+  const [claimed] = await db
+    .update(customerReports)
+    .set({
+      status: "RESEARCH_STARTING",
+      jobKind: "research",
+      jobStartedAt: now,
+      updatedAt: now,
+      lastError: null,
+    })
+    .where(
+      and(
+        eq(customerReports.id, id),
+        isNull(customerReports.deletedAt),
+        isNull(customerReports.initialReportSentAt),
+        isNull(customerReports.openaiResponseId),
+        inArray(customerReports.status, ["RECEIVED", "RESEARCH_FAILED", "RESEARCH_STARTING"]),
+        or(
+          ne(customerReports.status, "RESEARCH_STARTING"),
+          isNull(customerReports.jobStartedAt),
+          lt(customerReports.jobStartedAt, staleBefore),
+        ),
+        sql`(
+          select count(*)::int from customer_reports
+          where status in ('RESEARCH_STARTING', 'RESEARCHING')
+            and deleted_at is null
+            and id <> ${id}
+        ) < ${maxActive}`,
+      ),
+    )
+    .returning();
+  return claimed ?? null;
+}
+
+export async function resetStaleResearchStarts(
+  staleMs = RESEARCH_START_STALE_MS,
+): Promise<CustomerReport[]> {
+  const db = getDb();
+  const now = new Date();
+  const staleBefore = new Date(now.getTime() - staleMs);
+  const message = "Research start timed out before OpenAI returned a response id; queued for retry";
+  const rows = await db
+    .update(customerReports)
+    .set({
+      status: "RECEIVED",
+      autoResearch: true,
+      jobKind: null,
+      jobStartedAt: null,
+      lastError: message,
+      lastErrorAt: now,
+      updatedAt: now,
+    })
+    .where(
+      and(
+        eq(customerReports.status, "RESEARCH_STARTING"),
+        isNull(customerReports.openaiResponseId),
+        isNull(customerReports.deletedAt),
+        isNull(customerReports.initialReportSentAt),
+        or(isNull(customerReports.jobStartedAt), lt(customerReports.jobStartedAt, staleBefore)),
+      ),
+    )
+    .returning();
+  for (const row of rows) {
+    await addPipelineLog(row.id, "RECEIVED", message);
+  }
+  return rows;
 }
 
 export async function getReportsByIds(ids: string[]): Promise<CustomerReport[]> {

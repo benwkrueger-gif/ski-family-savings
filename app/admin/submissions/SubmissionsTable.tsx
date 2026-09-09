@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { CustomerReport } from "@/lib/db/schema";
 import { driveFolderUrl } from "@/lib/google/urls";
+import { gmailDraftUrl } from "@/lib/google/gmail";
 import { artifactStatus } from "@/lib/pipeline/artifacts";
 import {
   SENT_ARTIFACT_REFRESH_MESSAGE,
@@ -26,6 +27,32 @@ function yesNo(value: unknown): string {
 function formatDate(value: Date | string | null | undefined): string {
   if (!value) return "—";
   return new Date(value).toLocaleString();
+}
+
+function opportunityLabel(report: CustomerReport): string {
+  const summary = (
+    report.researchJson as
+      | {
+          summary?: {
+            jackpotCount?: number;
+            strongCount?: number;
+            usefulCount?: number;
+            watchCount?: number;
+          };
+        }
+      | null
+  )?.summary;
+  if (!summary) return "—";
+  const counted =
+    (summary.jackpotCount ?? 0) + (summary.strongCount ?? 0) + (summary.usefulCount ?? 0);
+  return `${counted} counted · ${summary.watchCount ?? 0} watch`;
+}
+
+function draftLabel(report: CustomerReport, draft: "current" | "missing" | "stale"): string {
+  if (!report.gmailDraftId) return "—";
+  if (draft === "current") return "Open draft";
+  if (draft === "stale") return "Stale draft";
+  return "Draft";
 }
 
 async function postJson(url: string, body?: unknown) {
@@ -310,6 +337,7 @@ export function SubmissionsTable({
                 />
               </th>
               <th className="px-3 py-3">Submitted</th>
+              <th className="px-3 py-3">Updated</th>
               <th className="px-3 py-3">First name</th>
               <th className="px-3 py-3">Email</th>
               <th className="px-3 py-3">ZIP</th>
@@ -317,6 +345,7 @@ export function SubmissionsTable({
               <th className="px-3 py-3">Tally ID</th>
               <th className="px-3 py-3">Status</th>
               <th className="px-3 py-3">Savings</th>
+              <th className="px-3 py-3">Opps</th>
               <th className="px-3 py-3">Confidence</th>
               <th className="px-3 py-3">Offer</th>
               <th className="px-3 py-3">Scan</th>
@@ -332,7 +361,7 @@ export function SubmissionsTable({
           <tbody>
             {reports.length === 0 ? (
               <tr>
-                <td colSpan={19} className="px-3 py-8 text-center text-muted">
+                <td colSpan={21} className="px-3 py-8 text-center text-muted">
                   {view === "todo"
                     ? "Nothing in the working queue."
                     : view === "sent"
@@ -360,6 +389,9 @@ export function SubmissionsTable({
                   <td className="px-3 py-3 whitespace-nowrap">
                     {report.submittedAt ? new Date(report.submittedAt).toLocaleDateString() : "—"}
                   </td>
+                  <td className="px-3 py-3 whitespace-nowrap text-xs text-muted">
+                    {formatDate(report.updatedAt)}
+                  </td>
                   <td className="px-3 py-3">
                     <Link className="font-semibold text-dark underline" href={`/admin/submissions/${report.id}`}>
                       {report.firstName || "—"}
@@ -375,6 +407,7 @@ export function SubmissionsTable({
                       ? `${money(report.coreSavingsLow)}–${money(report.coreSavingsHigh)}`
                       : "—"}
                   </td>
+                  <td className="px-3 py-3 whitespace-nowrap text-xs">{opportunityLabel(report)}</td>
                   <td className="px-3 py-3">{report.confidence || "—"}</td>
                   <td className="px-3 py-3">{report.offerMode || "—"}</td>
                   <td className="px-3 py-3">
@@ -405,7 +438,13 @@ export function SubmissionsTable({
                     )}
                   </td>
                   <td className="px-3 py-3">
-                    {artifacts.draft === "current" ? "Current" : artifacts.draft === "stale" ? "Stale" : "—"}
+                    {report.gmailDraftId ? (
+                      <a className="underline" href={gmailDraftUrl(report.gmailDraftId)} target="_blank">
+                        {draftLabel(report, artifacts.draft)}
+                      </a>
+                    ) : (
+                      "—"
+                    )}
                   </td>
                   <td className="px-3 py-3">{yesNo(report.purchasedAt || report.stripePaymentStatus === "paid")}</td>
                   <td className="px-3 py-3 whitespace-nowrap">

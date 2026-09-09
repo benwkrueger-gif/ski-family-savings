@@ -329,11 +329,23 @@ export function repairEditorialWriting(
       }),
       opportunities: sanitized.plan.opportunities.map((copy) => {
         const source = research.opportunities.find((item) => item.id === copy.id);
+        const displayItem = display.opportunities.find((item) => item.opportunity.id === copy.id);
         const requiredDates = calendarDateFacts(source?.deadline ?? "");
         const kept = `${copy.timingNote ?? ""} ${copy.action}`;
-        return requiredDates.some((fact) => !hasCalendarFact(kept, fact)) && source?.deadline
-          ? { ...copy, timingNote: repairCopyPunctuation(source.deadline) }
-          : copy;
+        const withDeadline =
+          requiredDates.some((fact) => !hasCalendarFact(kept, fact)) && source?.deadline
+            ? { ...copy, timingNote: repairCopyPunctuation(source.deadline) }
+            : copy;
+        if (!displayItem || displayItem.firm) return withDeadline;
+        return {
+          ...withDeadline,
+          found: withDeadline.found
+            .replace(/counted in the report total/gi, "not counted yet")
+            .replace(/in counted savings/gi, "as a possible saving"),
+          saveNote: withDeadline.saveNote
+            .replace(/is counted in the report total/gi, "is not counted yet")
+            .replace(/in counted savings/gi, "as a possible saving"),
+        };
       }),
     },
   });
@@ -554,6 +566,9 @@ export function editorialQualityIssues(options: {
   }
   for (const item of display.opportunities) {
     const copy = options.writing.plan.opportunities.find((entry) => entry.id === item.opportunity.id);
+    if (copy && !item.firm && /counted in the report total|in counted savings/i.test(`${copy.saveNote} ${copy.found}`)) {
+      issues.push(`${item.opportunity.id} treats uncounted savings as counted`);
+    }
     const deadlineFacts = calendarDateFacts(item.opportunity.deadline ?? "");
     if (copy && deadlineFacts.length > 0) {
       const checkedAt = new Date(`${item.opportunity.sourceCheckedAt}T12:00:00`);

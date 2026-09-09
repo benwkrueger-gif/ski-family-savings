@@ -88,3 +88,18 @@ export function estimatedTpmReservation(options: {
   const inputTokens = Math.ceil(options.inputChars / 4);
   return Math.max(options.maxOutputTokens, inputTokens);
 }
+
+export function isTransientRateLimitError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  if (/exceeds the TPM budget/i.test(message)) return false;
+  const parsed = parseTpmRateLimit({ message });
+  if (parsed.requested != null && parsed.limit != null && parsed.requested > parsed.limit) {
+    return false;
+  }
+  const status =
+    typeof error === "object" && error && "status" in error
+      ? Number((error as { status?: unknown }).status)
+      : 0;
+  if (status === 429) return true;
+  return /Rate limit reached|tokens per min \(TPM\)/i.test(message);
+}

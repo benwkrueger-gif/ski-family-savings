@@ -1,6 +1,6 @@
 import type { FamilyProfile, NormalizedChild } from "@/lib/family/profile";
 import { familySummaryLine } from "@/lib/family/profile";
-import type { NormalizedTallyField } from "./payload";
+import { fieldsFromStoredRawTally, type NormalizedTallyField } from "./payload";
 
 /**
  * Optional exact Tally question IDs. Prefer these over label matching when present.
@@ -29,9 +29,9 @@ const LABEL_MATCHERS: Array<{
   { field: "adultsCount", tests: [/\badults?\b/i] },
   { field: "skiingStyle", tests: [/\bski(ing)? style\b/i, /\bhow you ski\b/i, /\bski profile\b/i] },
   { field: "typicalSkiDays", tests: [/\bski days\b/i, /\bhow many days\b/i, /\bdays (a|per|this) season\b/i] },
-  { field: "weekdayFlexibility", tests: [/\bweekday\b/i, /\bmidweek\b/i, /\bflexib/i] },
+  { field: "weekdayFlexibility", tests: [/\bweekdays?\b/i, /\bmidweek\b/i, /\bflexib/i] },
   { field: "expectedSpend", tests: [/\bspend\b/i, /\bbudget\b/i] },
-  { field: "alreadyKnownSavings", tests: [/\balready\b/i, /\bknow about\b/i, /\balready using\b/i, /\balready planning\b/i] },
+  { field: "alreadyKnownSavings", tests: [/\balready know about\b/i, /\bdeals? do you already\b/i, /\bprograms or deals\b/i] },
   { field: "additionalNotes", tests: [/\banything else\b/i, /\bnotes?\b/i, /\bother\b/i, /\bcomments?\b/i] },
 ];
 
@@ -149,9 +149,20 @@ export function normalizeTallyAnswers(options: {
   const categories = listValue(
     findFields(fields, [/\bcategor/i, /\bwhat should i (look|search)/i, /\bareas to (search|look)/i])[0],
   );
-  const affiliations = listValue(
-    findFields(fields, [/\baffiliat/i, /\bschool\b/i, /\bclub\b/i, /\bmilitary\b/i, /\bemployer\b/i])[0],
-  );
+  const affiliationFields = findFields(fields, [
+    /\baffiliat/i,
+    /\bmilitary\b/i,
+    /\bemployer\b/i,
+    /\bski[- ]?club\b/i,
+    /\bapplicable details\b/i,
+  ]).filter((field) => !/\b(child|kid).*(grade|age)|grade this school year/i.test(field.label));
+  const affiliations = [...new Set(affiliationFields.flatMap((field) => {
+    if (field.type === "TEXTAREA" || field.type === "INPUT_TEXT" || /\bapplicable details\b/i.test(field.label)) {
+      const value = stringifyValue(field);
+      return value ? [value] : [];
+    }
+    return listValue(field);
+  }))];
 
   const profile: FamilyProfile = {
     internalId: options.internalId,
@@ -174,6 +185,18 @@ export function normalizeTallyAnswers(options: {
   };
 
   return profile;
+}
+
+export function profileFromRawTally(options: {
+  internalId: string;
+  tallySubmissionId: string;
+  rawTallyJson: unknown;
+}): FamilyProfile {
+  return normalizeTallyAnswers({
+    internalId: options.internalId,
+    tallySubmissionId: options.tallySubmissionId,
+    fields: fieldsFromStoredRawTally(options.rawTallyJson),
+  });
 }
 
 export function profileSummary(profile: FamilyProfile): string {

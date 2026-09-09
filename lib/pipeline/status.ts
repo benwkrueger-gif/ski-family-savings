@@ -36,11 +36,33 @@ export const RESEARCHING_STATUSES: PipelineStatus[] = [
   "RESEARCHING",
 ];
 
+export const GENERATING_STATUSES: PipelineStatus[] = [
+  "RESEARCH_COMPLETE",
+  "WRITING",
+  "PDF_GENERATING",
+  "PDFS_READY",
+];
+
 export const READY_FOR_REVIEW_STATUSES: PipelineStatus[] = [
   "GMAIL_DRAFT_READY",
   "FREE_PLAN_READY",
-  "PDFS_READY",
 ];
+
+export function isQueuedForAutoResearch(report: {
+  status: string;
+  autoResearch?: boolean | null;
+  researchJson?: unknown;
+  openaiResponseId?: string | null;
+  deletedAt?: Date | string | null;
+}): boolean {
+  return (
+    report.status === "RECEIVED" &&
+    Boolean(report.autoResearch) &&
+    !report.researchJson &&
+    !report.openaiResponseId &&
+    !report.deletedAt
+  );
+}
 
 export const RECOVERABLE_RESEARCH_STATUSES: PipelineStatus[] = [
   "RESEARCH_STARTING",

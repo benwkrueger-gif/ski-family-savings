@@ -2,7 +2,12 @@ import { COMPELLING_SAVINGS_MIN } from "@/config/compelling-savings";
 import { listReports } from "@/lib/pipeline/store";
 import { AdminNav } from "@/app/admin/AdminNav";
 import { SubmissionsTable } from "@/app/admin/submissions/SubmissionsTable";
-import { ERROR_STATUSES, RESEARCHING_STATUSES } from "@/lib/pipeline/status";
+import {
+  ERROR_STATUSES,
+  GENERATING_STATUSES,
+  RESEARCHING_STATUSES,
+  isQueuedForAutoResearch,
+} from "@/lib/pipeline/status";
 import { artifactStatus } from "@/lib/pipeline/artifacts";
 import {
   isDeleted,
@@ -38,12 +43,12 @@ export default async function SubmissionsPage({
   const summary = {
     "To do": todo.length,
     Sent: sent.length,
-    New: todo.filter((row) => row.status === "RECEIVED").length,
+    Queued: todo.filter((row) => isQueuedForAutoResearch(row)).length,
     Researching: todo.filter((row) => RESEARCHING_STATUSES.includes(row.status as never)).length,
+    Generating: todo.filter((row) => GENERATING_STATUSES.includes(row.status as never)).length,
     "Ready for review": todo.filter((row) => artifactStatus(row).deliveryReady).length,
     Errors: todo.filter((row) => ERROR_STATUSES.includes(row.status as never)).length,
     Purchased: counted.filter((row) => Boolean(row.purchasedAt) || row.status === "PURCHASED").length,
-    "Paid delivered": counted.filter((row) => row.status === "PLAN_DELIVERED").length,
   };
 
   return (
@@ -56,7 +61,9 @@ export default async function SubmissionsPage({
             Submissions
           </h1>
           <p className="mt-2 text-sm text-muted">
-            Compelling savings threshold: ${COMPELLING_SAVINGS_MIN}. Historical imports do not auto-research.
+            Compelling savings threshold: ${COMPELLING_SAVINGS_MIN}. New Tally submissions research
+            automatically. Historical imports stay idle until you select them and click Run research.
+            Drafts are never sent until you send them from Gmail.
           </p>
         </div>
       </div>

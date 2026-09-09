@@ -10,6 +10,15 @@ import {
   roundCents,
 } from "@/lib/research/money";
 import type { CanonicalResearch, ResearchOpportunity } from "@/lib/research/schema";
+import {
+  canCountInHeadline,
+  hasUnconfirmedDependents,
+  hasUnconfirmedMemberIdentity,
+  hasUnconfirmedSavingsUpside,
+  isHypotheticalGearNeed,
+  overlappingPassSavings,
+  sacrificesUnconfirmedAccess,
+} from "@/lib/research/savings-integrity";
 
 export type DisplayTier = "JACKPOT" | "STRONG" | "USEFUL" | "WATCH";
 export type CountKind = "firm" | "conditional" | "optional" | "watch";
@@ -126,16 +135,27 @@ export function isFirmlyCountable(
   if (opportunity.netSavingsLow <= 0) return false;
   if (destinationIsConsidering(research, opportunity.location)) return false;
   if (isPurchaseUnresolved(opportunity, research)) return false;
+  if (!canCountInHeadline(opportunity, research)) return false;
   return (
     opportunity.verificationStatus === "VERIFIED" ||
     opportunity.verificationStatus === "HIGH_CONFIDENCE"
   );
 }
 
-export function displayTierFor(opportunity: ResearchOpportunity): DisplayTier {
+export function displayTierFor(
+  opportunity: ResearchOpportunity,
+  research?: CanonicalResearch,
+): DisplayTier {
   if (opportunity.alreadyKnownByFamily) return "WATCH";
   if (opportunity.verificationStatus === "NEEDS_CHECK") return "WATCH";
-  return tierFromConservativeLow(opportunity.netSavingsLow);
+  const fromAmount = tierFromConservativeLow(opportunity.netSavingsLow);
+  const uncertainFit =
+    isHypotheticalGearNeed(opportunity) || sacrificesUnconfirmedAccess(opportunity);
+  if (uncertainFit && fromAmount === "JACKPOT") return "STRONG";
+  if (research && !isFirmlyCountable(opportunity, research) && fromAmount === "JACKPOT") {
+    return "STRONG";
+  }
+  return fromAmount;
 }
 
 export function countKindFor(
@@ -147,6 +167,7 @@ export function countKindFor(
   if (tier === "WATCH") return "watch";
   if (destinationIsConsidering(research, opportunity.location)) return "optional";
   if (isPurchaseUnresolved(opportunity, research)) return "conditional";
+  if (!canCountInHeadline(opportunity, research)) return "conditional";
   if (!opportunity.countedInHeadline) return "optional";
   return "conditional";
 }
@@ -323,6 +344,28 @@ function gearScenarios(): {
   };
 }
 
+function integrityAssumptions(opportunity: ResearchOpportunity): string[] {
+  const notes: string[] = [];
+  if (hasUnconfirmedDependents(opportunity)) {
+    notes.push("Dependent eligibility is not confirmed, so this is not counted yet.");
+  }
+  if (hasUnconfirmedMemberIdentity(opportunity)) {
+    notes.push("The specific family member is not identified, so this stays uncounted.");
+  }
+  if (isHypotheticalGearNeed(opportunity)) {
+    notes.push("A lease only saves money if those skiers still need equipment.");
+  }
+  if (sacrificesUnconfirmedAccess(opportunity)) {
+    notes.push(
+      "A daytime-only pass costs less but removes evening access. Do not switch until you know whether night skiing matters.",
+    );
+  }
+  if (hasUnconfirmedSavingsUpside(opportunity)) {
+    notes.push("The high end of this range assumes extra family members also qualify.");
+  }
+  return notes;
+}
+
 function detailsFor(
   opportunity: ResearchOpportunity,
 ): Pick<DisplayOpportunity, "facts" | "assumptions" | "scenarios" | "sourceCheckedNote"> {
@@ -360,15 +403,37 @@ function detailsFor(
 export function summarizeDisplaySavings(research: CanonicalResearch): DisplaySavingsSummary {
   const unique = countableLedgerOpportunities(research.opportunities);
   const opportunities = unique.map((opportunity) => {
-    const tier = displayTierFor(opportunity);
+    const tier = displayTierFor(opportunity, research);
     const firm = isFirmlyCountable(opportunity, research);
     const kind = countKindFor(opportunity, research, tier);
+    const details = detailsFor(opportunity);
     return {
       opportunity,
       tier,
       firm,
       kind,
-      ...detailsFor(opportunity),
+      ...details,
+      assumptions: [...integrityAssumptions(opportunity), ...details.assumptions],
+    };
+  });
+
+  const firmCandidates = opportunities
+    .filter((item) => item.firm)
+    .sort((a, b) => b.opportunity.netSavingsLow - a.opportunity.netSavingsLow);
+  const keptFirm: typeof firmCandidates = [];
+  for (const item of firmCandidates) {
+    const overlaps = keptFirm.some((existing) =>
+      overlappingPassSavings(existing.opportunity, item.opportunity),
+    );
+    if (!overlaps) keptFirm.push(item);
+  }
+  const keptFirmIds = new Set(keptFirm.map((item) => item.opportunity.id));
+  const opportunitiesWithStacking = opportunities.map((item) => {
+    if (!item.firm || keptFirmIds.has(item.opportunity.id)) return item;
+    return {
+      ...item,
+      firm: false,
+      kind: "conditional" as const,
     };
   });
 
@@ -378,26 +443,38 @@ export function summarizeDisplaySavings(research: CanonicalResearch): DisplaySav
     usefulCount: 0,
     watchCount: 0,
   };
-  for (const item of opportunities) {
+  for (const item of opportunitiesWithStacking) {
     counts[TIER_KEY[item.tier]] += 1;
   }
 
-  const firmItems = opportunities.filter((item) => item.firm);
+  const firmItems = opportunitiesWithStacking.filter((item) => item.firm);
   const firmLow = roundCents(
     firmItems.reduce((sum, item) => sum + item.opportunity.netSavingsLow, 0),
   );
   const firmHigh = roundCents(
-    firmItems.reduce((sum, item) => sum + item.opportunity.netSavingsHigh, 0),
+    firmItems.reduce((sum, item) => {
+      const high = hasUnconfirmedSavingsUpside(item.opportunity)
+        ? item.opportunity.netSavingsLow
+        : item.opportunity.netSavingsHigh;
+      return sum + high;
+    }, 0),
   );
 
-  const conditionalItems = opportunities.filter(
+  const conditionalItems = opportunitiesWithStacking.filter(
     (item) => !item.firm && item.kind !== "watch" && item.opportunity.netSavingsLow > 0,
   );
+  const includedConditional: typeof conditionalItems = [];
+  for (const item of conditionalItems) {
+    const overlaps = includedConditional.some((existing) =>
+      overlappingPassSavings(existing.opportunity, item.opportunity),
+    );
+    if (!overlaps) includedConditional.push(item);
+  }
   const conditionalLow = roundCents(
-    conditionalItems.reduce((sum, item) => sum + item.opportunity.netSavingsLow, 0),
+    includedConditional.reduce((sum, item) => sum + item.opportunity.netSavingsLow, 0),
   );
   const conditionalHigh = roundCents(
-    conditionalItems.reduce((sum, item) => sum + item.opportunity.netSavingsHigh, 0),
+    includedConditional.reduce((sum, item) => sum + item.opportunity.netSavingsHigh, 0),
   );
 
   const offer = decideOfferMode({
@@ -419,7 +496,7 @@ export function summarizeDisplaySavings(research: CanonicalResearch): DisplaySav
       conditionalLow > 0 || conditionalHigh > 0
         ? formatCustomerRange(conditionalLow, conditionalHigh)
         : undefined,
-    opportunities,
+    opportunities: opportunitiesWithStacking,
   };
 }
 

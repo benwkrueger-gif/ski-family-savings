@@ -10,6 +10,7 @@ import {
   getReportByOpenAiResponseId,
   listRecoverableResearchReports,
   markError,
+  resetStaleResearchStarts,
 } from "@/lib/pipeline/store";
 import { hasPurchased, type PipelineStatus } from "@/lib/pipeline/status";
 import { hasManualInitialSend } from "@/lib/pipeline/admin-queue";
@@ -27,7 +28,8 @@ export type RecoverAction =
   | "missing_response"
   | "stale"
   | "failed"
-  | "error";
+  | "error"
+  | "requeued";
 
 export type RecoverResult = {
   ok: boolean;
@@ -275,8 +277,15 @@ export async function recoverExistingResearch(
 }
 
 export async function recoverStuckResearchJobs(): Promise<RecoverResult[]> {
+  const reset = await resetStaleResearchStarts();
   const reports = await listRecoverableResearchReports();
-  const results: RecoverResult[] = [];
+  const results: RecoverResult[] = reset.map((report) => ({
+    ok: true,
+    action: "requeued" as const,
+    reportStatus: report.status,
+    message: "Stale research start was requeued without an OpenAI response id",
+    report,
+  }));
   for (const report of reports) {
     results.push(await recoverExistingResearch(report.id));
   }

@@ -38,7 +38,9 @@ Include:
 
 Deterministic code inserts the approved savingsLine. Leave savingsLine as a short placeholder without numbers. Follow scanAmountRule. Do not invent extra dollar amounts.
 
-If savings.note says the savings are counted, say that plainly. Do not hedge counted savings with "if things line up" or "you could save." If they are only possible, say that plainly. Do not present possible savings as money already in the bank.
+If savings.note says the savings are counted, say that plainly. Do not hedge counted savings with "if things line up" or "you could save." If they are only possible, say that plainly. Do not present possible savings as money already in the bank. Do not describe a conditional or Watch amount as counted.
+
+Do not invent family members, ages, or identities. If a college student, teacher, or veteran was mentioned without saying who that person is, keep the question open.
 
 It is okay to say a lesson may be cheaper, that the kids may fit a benefit, or that a pass is only worth buying if they will actually use it. Do not contort normal language to hide that an opportunity exists.
 

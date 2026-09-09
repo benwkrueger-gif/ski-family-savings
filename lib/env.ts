@@ -42,6 +42,10 @@ export const env = {
     const parsed = Number.parseInt(optional("OPENAI_EDITORIAL_TIMEOUT_MS") ?? "120000", 10);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 120_000;
   },
+  researchMaxActive: () => {
+    const parsed = Number.parseInt(optional("RESEARCH_MAX_ACTIVE") ?? "1", 10);
+    return Number.isFinite(parsed) && parsed >= 1 ? parsed : 1;
+  },
 
   googleClientId: () => required("GOOGLE_CLIENT_ID"),
   googleClientSecret: () => required("GOOGLE_CLIENT_SECRET"),

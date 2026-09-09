@@ -13,7 +13,12 @@ import {
   parseResearchOutputText,
   RESEARCH_MAX_OUTPUT_TOKENS,
 } from "../lib/openai/research.ts";
-import { canLaunchResearch, MAX_ACTIVE_RESEARCH_JOBS } from "../lib/pipeline/research-capacity.ts";
+import {
+  canLaunchResearch,
+  DEFAULT_MAX_ACTIVE_RESEARCH_JOBS,
+  MAX_ACTIVE_RESEARCH_JOBS,
+  maxActiveResearchJobs,
+} from "../lib/pipeline/research-capacity.ts";
 import { compactTallyAnswersForResearch } from "../lib/tally/payload.ts";
 import type { FamilyProfile } from "../lib/family/profile.ts";
 
@@ -137,19 +142,26 @@ test("rate-limit retries wait for retry-after and never retry an oversized reque
   assert.equal(exhausted.action, "fail");
 });
 
-test("only one research job can launch at a time", () => {
+test("only one research job can launch at a time unless RESEARCH_MAX_ACTIVE is raised", () => {
   assert.equal(MAX_ACTIVE_RESEARCH_JOBS, 1);
+  assert.equal(DEFAULT_MAX_ACTIVE_RESEARCH_JOBS, 1);
+  assert.equal(maxActiveResearchJobs(), 1);
   assert.equal(canLaunchResearch(0), true);
   assert.equal(canLaunchResearch(1), false);
   assert.equal(canLaunchResearch(2), false);
+  assert.equal(canLaunchResearch(1, 2), true);
   const runSelected = fs.readFileSync(
     path.join(process.cwd(), "app/api/admin/reports/run-selected/route.ts"),
     "utf8",
   );
   const startResearch = fs.readFileSync(path.join(process.cwd(), "lib/pipeline/research.ts"), "utf8");
+  const store = fs.readFileSync(path.join(process.cwd(), "lib/pipeline/store.ts"), "utf8");
   assert.match(runSelected, /for \(const id of ids\)/);
   assert.match(startResearch, /waiting_for_capacity/);
-  assert.match(startResearch, /listActiveResearchReports/);
+  assert.match(startResearch, /claimResearchStart/);
+  assert.match(startResearch, /isTransientRateLimitError/);
+  assert.match(store, /claimResearchStart/);
+  assert.match(store, /select count\(\*\)::int from customer_reports/);
 });
 
 test("failed OpenAI responses still yield canonical research when output_text is valid", () => {

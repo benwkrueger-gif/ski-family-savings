@@ -3,6 +3,10 @@ import type {
   DisplaySavingsSummary,
 } from "@/lib/research/display-savings";
 import type { CanonicalResearch } from "@/lib/research/schema";
+import {
+  isHypotheticalGearNeed,
+  sacrificesUnconfirmedAccess,
+} from "@/lib/research/savings-integrity";
 
 const TIER_RANK: Record<DisplayOpportunity["tier"], number> = {
   JACKPOT: 0,
@@ -85,15 +89,16 @@ export function highlightOpportunities(display: DisplaySavingsSummary): DisplayO
         b.opportunity.netSavingsHigh - a.opportunity.netSavingsHigh
       );
     });
-  const extraWatch = display.opportunities.find(
-    (item) =>
-      item.tier === "WATCH" &&
-      /4pass|statewide|variety|multi-resort/i.test(
-        `${item.opportunity.category} ${item.opportunity.name}`,
-      ),
-  );
+  const extras = display.opportunities.filter((item) => {
+    if (item.tier !== "WATCH") return false;
+    const blob = `${item.opportunity.category} ${item.opportunity.name} ${item.opportunity.id}`;
+    return /4pass|statewide|variety|multi-resort|gear|lease|daytime|night ski|military|veteran/i.test(blob);
+  });
   const picked = [...main];
-  if (extraWatch && picked.length < 3) picked.push(extraWatch);
+  for (const extra of extras) {
+    if (picked.length >= 3) break;
+    if (!picked.some((item) => item.opportunity.id === extra.opportunity.id)) picked.push(extra);
+  }
   return picked.slice(0, 3);
 }
 
@@ -142,12 +147,14 @@ type ScanShape =
   | "off_slope"
   | "gear"
   | "home_pass"
+  | "affiliation"
   | "other";
 
 function classifyScanShape(item: DisplayOpportunity): ScanShape {
   const blob = `${item.opportunity.category} ${item.opportunity.name}`;
   if (/lesson/i.test(blob)) return "lesson";
   if (/multi-resort|indy|statewide|4pass/i.test(blob)) return "multi_resort";
+  if (/military|veteran|dependent/i.test(blob) && /pass|discount|ticket/i.test(blob)) return "affiliation";
   if (/home-mountain|youth/i.test(blob) && /pass|access|ticket/i.test(blob)) return "kids_access";
   if (/passport|youth/i.test(blob) && /pass|access|ticket|passport/i.test(blob)) return "kids_access";
   if (/camp|kids ski|kids program/i.test(blob)) return "kids_program";
@@ -246,7 +253,7 @@ export function buildScanFindingSeed(
       opportunityType: "kids' season access",
       countKind,
       whyItMatters: kids
-        ? `Your ${kids.replace(/^an? /, "")} still looks like a good fit for kids' season access${atMountain}.`
+        ? `Your ${kids.replace(/^an? /, "")} still ${/\d+ kids| and /.test(kids) ? "look" : "looks"} like a good fit for kids' season access${atMountain}.`
         : `There's a kids' season-access window${atMountain}.`,
       suggestion:
         countKind === "counted"
@@ -288,6 +295,19 @@ export function buildScanFindingSeed(
         : "A season gear setup could help, but only if you still need equipment.",
       suggestion: "I wouldn't buy this yet. Confirm what you already own and what currently fits.",
       caveat: "This stays unresolved until those questions are answered.",
+    };
+  }
+
+  if (shape === "affiliation") {
+    return {
+      mountain,
+      opportunityType: "affiliation pass",
+      countKind,
+      whyItMatters: mountain
+        ? `There's a possible veteran or military pass price at ${mountain}, but I don't yet know who in the family qualifies.`
+        : "There's a possible veteran or military pass price, but I don't yet know who in the family qualifies.",
+      suggestion: "I'd confirm who the veteran is and which kids or adults would actually be treated as dependents.",
+      caveat: "Don't count this until those details are clear.",
     };
   }
 
@@ -336,6 +356,8 @@ export function fallbackFindingCopy(
     heading = mountain ? `Off-slope extras at ${mountain}` : "Off-slope extras only if you'll use them";
   } else if (seed.opportunityType === "season gear") {
     heading = "Don't buy extra gear until you know you need it";
+  } else if (seed.opportunityType === "affiliation pass") {
+    heading = mountain ? `Confirm the military pass price at ${mountain}` : "Confirm the military pass price before counting it";
   } else if (seed.opportunityType === "pass setup") {
     heading = mountain ? `Check the pass setup at ${mountain}` : "Check the pass setup before you change it";
   } else if (seed.opportunityType === "kids program") {
@@ -456,13 +478,27 @@ export function fallbackScanQuestions(research: CanonicalResearch, display: Disp
       questions.push("Will you actually use the indoor time enough to bother?");
     }
     if (seed.opportunityType === "season gear") {
-      questions.push("Does the little one already have gear that fits?");
+      questions.push("Do the skiers who would lease already have gear that fits?");
     }
     if (consideringMountain(item, research) && seed.mountain) {
       questions.push(`Is ${seed.mountain} actually happening this winter?`);
     }
+    if (seed.opportunityType === "affiliation pass") {
+      questions.push("Who is the veteran, and which family members would actually qualify as dependents?");
+    }
     if (seed.opportunityType === "pass setup") {
       questions.push("Do you already have the pass setup you need, including night access?");
+    }
+  }
+  for (const item of display.opportunities) {
+    if (sacrificesUnconfirmedAccess(item.opportunity)) {
+      const mountain = opportunityMountain(item, research) ?? "your home mountain";
+      questions.push(
+        `Do you or the kids expect to use ${mountain}'s night skiing, including after-school or evening trips?`,
+      );
+    }
+    if (isHypotheticalGearNeed(item.opportunity)) {
+      questions.push("Do the skiers who would lease already have gear that fits?");
     }
   }
   return [...new Set(questions)].slice(0, 3).map((question) => clipScanText(question, QUESTION_MAX));

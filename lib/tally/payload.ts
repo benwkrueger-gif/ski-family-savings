@@ -84,19 +84,22 @@ function compactFieldValue(field: NormalizedTallyField): unknown {
   return texts.length === 1 ? texts[0] : texts;
 }
 
-export function compactTallyAnswersForResearch(
-  rawTallyJson: unknown,
-): Array<{ label: string; type?: string; value: unknown }> {
+export function fieldsFromStoredRawTally(rawTallyJson: unknown): NormalizedTallyField[] {
   const payload = rawTallyJson as TallyWebhookPayload & {
     questions?: TallyApiQuestion[];
     submission?: TallyApiSubmission;
   };
-  const fields = payload?.data?.fields
-    ? fieldsFromWebhook(payload)
-    : payload?.questions && payload?.submission
-      ? fieldsFromApi(payload.questions, payload.submission)
-      : [];
-  return fields
+  if (payload?.data?.fields) return fieldsFromWebhook(payload);
+  if (payload?.questions && payload?.submission) {
+    return fieldsFromApi(payload.questions, payload.submission);
+  }
+  return [];
+}
+
+export function compactTallyAnswersForResearch(
+  rawTallyJson: unknown,
+): Array<{ label: string; type?: string; value: unknown }> {
+  return fieldsFromStoredRawTally(rawTallyJson)
     .filter((field) => field.label || field.value != null)
     .map((field) => ({
       label: field.label,
