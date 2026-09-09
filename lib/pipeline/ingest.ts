@@ -12,6 +12,12 @@ import { normalizeTallyAnswers } from "@/lib/tally/normalize";
 import { upsertFromTally } from "@/lib/pipeline/store";
 import { startResearch } from "@/lib/pipeline/research";
 import type { CustomerReport } from "@/lib/db/schema";
+import { env } from "@/lib/env";
+import {
+  runConfirmationWithoutBlocking,
+  sendSubmissionConfirmation,
+  shouldAttemptSubmissionConfirmation,
+} from "@/lib/pipeline/confirmation";
 
 export async function ingestTallyWebhook(
   payload: TallyWebhookPayload,
@@ -54,20 +60,33 @@ export async function ingestTallyWebhook(
   }
 
   const shouldResearch = (options?.autoResearch ?? true) && created && !report.openaiResponseId;
+  let researchStarted = false;
   if (shouldResearch) {
     try {
       await startResearch(report.id);
-      return { report, created, researchStarted: true };
+      researchStarted = true;
     } catch (error) {
       log.error("research_start_failed", {
         reportId: report.id,
         error: error instanceof Error ? error.message : String(error),
       });
-      return { report, created, researchStarted: false };
     }
   }
 
-  return { report, created, researchStarted: false };
+  const confirmationEnabled = env.tallyConfirmationEmailEnabled();
+  if (
+    shouldAttemptSubmissionConfirmation({
+      created,
+      enabled: confirmationEnabled,
+      source: report.source,
+    })
+  ) {
+    await runConfirmationWithoutBlocking(() =>
+      sendSubmissionConfirmation(report, { enabled: confirmationEnabled }),
+    );
+  }
+
+  return { report, created, researchStarted };
 }
 
 export async function ingestTallyApiSubmission(options: {

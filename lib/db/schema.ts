@@ -54,6 +54,11 @@ export const customerReports = pgTable(
 
     gmailDraftId: text("gmail_draft_id"),
     gmailPaidMessageId: text("gmail_paid_message_id"),
+    confirmationStatus: text("confirmation_status"),
+    gmailConfirmationMessageId: text("gmail_confirmation_message_id"),
+    confirmationAttemptedAt: timestamp("confirmation_attempted_at", { withTimezone: true }),
+    confirmationSentAt: timestamp("confirmation_sent_at", { withTimezone: true }),
+    confirmationError: text("confirmation_error"),
 
     stripeClientReferenceId: text("stripe_client_reference_id"),
     stripeCheckoutUrl: text("stripe_checkout_url"),

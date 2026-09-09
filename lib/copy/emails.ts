@@ -4,6 +4,7 @@ import { stripEmDashes } from "@/lib/copy/sanitize";
 export const SCAN_UPSELL_SUBJECT = "Your ski savings scan is ready";
 export const FREE_PLAN_SUBJECT = "Your ski savings plan is ready";
 export const CHECKOUT_LINK_LABEL = "Get the full Savings Plan for $49";
+export const SUBMISSION_CONFIRMATION_SUBJECT = "I'm digging for your ski savings ⛷️";
 
 export type DraftEmailInput = {
   firstName: string;
@@ -29,6 +30,33 @@ export type DraftEmail = {
   body: string;
   html: string;
 };
+
+export function buildSubmissionConfirmationEmail(firstName?: string | null): DraftEmail {
+  const greetingName =
+    stripEmDashes(firstName ?? "")
+      .replace(/\s+/g, " ")
+      .trim() || "there";
+  const paragraphs = [
+    `Hey ${greetingName},`,
+    "Got your Ski Family Savings Scan submission! Thanks for trying this out.",
+    "I'm digging into your family's situation now and looking for the programs, discounts, passes, and other savings that might make sense for how you ski.",
+    "I work through scans in the order they're received, and most are completed within 2 business days. If I get an unusually big batch of requests, yours may take a little longer.",
+    "As soon as your scan is ready, I'll send it over by email.",
+    "Ben",
+  ];
+  const htmlParagraphs = paragraphs
+    .map((paragraph, index) => {
+      const margin = index === paragraphs.length - 1 ? "0" : "0 0 18px";
+      return `<p style="margin:${margin};">${escapeEmailHtml(paragraph)}</p>`;
+    })
+    .join("");
+
+  return {
+    subject: SUBMISSION_CONFIRMATION_SUBJECT,
+    body: paragraphs.join("\n\n"),
+    html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#ffffff;"><div style="max-width:600px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;color:#202124;">${htmlParagraphs}</div></body></html>`,
+  };
+}
 
 type EmailPart = { type: "text"; text: string } | { type: "link"; label: string; href: string };
 

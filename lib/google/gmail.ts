@@ -84,7 +84,7 @@ export async function sendGmailMessage(options: {
   return sent.data.id;
 }
 
-export async function findSentPaidMessage(options: {
+export async function findSentMessage(options: {
   to: string;
   rfc822MessageId: string;
 }): Promise<string | null | "search-failed"> {
@@ -99,6 +99,13 @@ export async function findSentPaidMessage(options: {
   } catch {
     return "search-failed";
   }
+}
+
+export async function findSentPaidMessage(options: {
+  to: string;
+  rfc822MessageId: string;
+}): Promise<string | null | "search-failed"> {
+  return findSentMessage(options);
 }
 
 export function gmailDraftUrl(draftId: string): string {

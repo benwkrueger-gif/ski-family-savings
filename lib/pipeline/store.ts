@@ -171,6 +171,48 @@ export async function updateReport(
   return updated;
 }
 
+export async function claimConfirmationDelivery(id: string): Promise<CustomerReport | null> {
+  const db = getDb();
+  const now = new Date();
+  const [claimed] = await db
+    .update(customerReports)
+    .set({
+      confirmationStatus: "SENDING",
+      confirmationAttemptedAt: now,
+      confirmationError: null,
+      updatedAt: now,
+    })
+    .where(
+      and(
+        eq(customerReports.id, id),
+        eq(customerReports.source, "webhook"),
+        isNull(customerReports.confirmationStatus),
+      ),
+    )
+    .returning();
+  return claimed ?? null;
+}
+
+export async function markConfirmationSent(
+  id: string,
+  gmailMessageId: string,
+): Promise<CustomerReport> {
+  return updateReport(id, {
+    confirmationStatus: "SENT",
+    gmailConfirmationMessageId: gmailMessageId,
+    confirmationSentAt: new Date(),
+    confirmationError: null,
+  });
+}
+
+export async function markConfirmationUncertain(id: string, error: unknown): Promise<CustomerReport> {
+  const message = error instanceof Error ? error.message : String(error);
+  return updateReport(id, {
+    confirmationStatus: "UNCERTAIN",
+    confirmationError: message.slice(0, 2000),
+  });
+}
+
 export async function markError(id: string, status: PipelineStatus, error: unknown): Promise<void> {
   const message = error instanceof Error ? error.message : String(error);
   await updateReport(id, {

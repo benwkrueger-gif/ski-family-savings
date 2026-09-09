@@ -31,6 +31,8 @@ export const env = {
   tallyApiKey: () => required("TALLY_API_KEY"),
   tallyFormId: () => optional("TALLY_FORM_ID"),
   tallyWebhookSecret: () => required("TALLY_WEBHOOK_SECRET"),
+  tallyConfirmationEmailEnabled: () =>
+    optional("TALLY_CONFIRMATION_EMAIL_ENABLED")?.toLowerCase() === "true",
 
   openaiApiKey: () => required("OPENAI_API_KEY"),
   openaiWebhookSecret: () => required("OPENAI_WEBHOOK_SECRET"),
