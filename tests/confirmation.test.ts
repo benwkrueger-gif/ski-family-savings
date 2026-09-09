@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { buildSubmissionConfirmationEmail } from "../lib/copy/emails.ts";
+import {
+  SUBMISSION_CONFIRMATION_SUBJECT,
+  buildSubmissionConfirmationEmail,
+} from "../lib/copy/emails.ts";
 import type { CustomerReport } from "../lib/db/schema.ts";
 import {
   sendSubmissionConfirmation,
@@ -44,6 +47,8 @@ test("historical Tally imports never send confirmations", () => {
 
 test("missing first name uses a natural fallback and multipart-safe copy", () => {
   const email = buildSubmissionConfirmationEmail(" \n ");
+  assert.equal(email.subject, "I'm digging for your ski savings ⛷️");
+  assert.equal(email.subject, SUBMISSION_CONFIRMATION_SUBJECT);
   assert.match(email.body, /^Hey there,\n\nGot your Ski Family Savings Scan submission!/);
   assert.match(email.html, /<p style="margin:0 0 18px;">Hey there,<\/p>/);
   assert.match(email.html, /<p style="margin:0;">Ben<\/p>/);

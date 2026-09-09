@@ -1,8 +1,8 @@
 import type { OfferMode } from "@/lib/pipeline/status";
 import { stripEmDashes } from "@/lib/copy/sanitize";
 
-export const SCAN_UPSELL_SUBJECT = "Your ski savings scan is ready";
-export const FREE_PLAN_SUBJECT = "Your ski savings plan is ready";
+export const SCAN_UPSELL_SUBJECT = "Your ski savings scan is ready ⛷️";
+export const FREE_PLAN_SUBJECT = "Your ski savings plan is ready ⛷️";
 export const CHECKOUT_LINK_LABEL = "Get the full Savings Plan for $49";
 export const SUBMISSION_CONFIRMATION_SUBJECT = "I'm digging for your ski savings ⛷️";
 
@@ -69,7 +69,7 @@ export function freePlanSubject(): string {
 }
 
 export function paidPlanSubject(): string {
-  return "Your full Ski Savings Plan is ready";
+  return "Here's your Ski Savings Plan⛷️";
 }
 
 export function initialDraftAttachmentKind(offerMode: OfferMode): "scan" | "plan" {

@@ -4,12 +4,14 @@ import path from "node:path";
 import { test } from "node:test";
 import {
   CHECKOUT_LINK_LABEL,
+  FREE_PLAN_SUBJECT,
   SCAN_UPSELL_SUBJECT,
   assertDraftCopySafe,
   buildInitialDraftEmail,
   buildPaidPlanEmail,
   highLevelFindingsPhrase,
   initialDraftAttachmentKind,
+  paidPlanSubject,
   visibleEmailHtml,
 } from "../lib/copy/emails.ts";
 import { buildRawEmail } from "../lib/google/mime.ts";
@@ -17,6 +19,12 @@ import { countPdfPages } from "../lib/google/pdf-pages.ts";
 
 const checkoutUrl =
   "https://buy.stripe.com/test_abc?client_reference_id=rid&locked_prefilled_email=ada%40example.com";
+
+test("all report-delivery subjects include the ski emoji", () => {
+  assert.equal(SCAN_UPSELL_SUBJECT, "Your ski savings scan is ready ⛷️");
+  assert.equal(FREE_PLAN_SUBJECT, "Your ski savings plan is ready ⛷️");
+  assert.equal(paidPlanSubject(), "Here's your Ski Savings Plan⛷️");
+});
 
 test("SCAN_UPSELL HTML uses a friendly checkout link and hides the raw Stripe URL", () => {
   const email = buildInitialDraftEmail({
@@ -196,7 +204,7 @@ test("paid plan email is short, first person, and has no checkout CTA", () => {
     firstName: "Ada",
     startHereRecommendation: "Get the Winter Park youth pass",
   });
-  assert.equal(email.subject, "Your full Ski Savings Plan is ready");
+  assert.equal(email.subject, "Here's your Ski Savings Plan⛷️");
   assert.match(email.body, /Hey Ada,/);
   assert.match(email.body, /My first recommendation: Get the Winter Park youth pass/);
   assert.doesNotMatch(email.body, /I'd start with Get the Winter Park youth pass/);
