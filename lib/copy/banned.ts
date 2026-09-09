@@ -34,10 +34,14 @@ function withoutFamilyProductPhrases(text: string): string {
 }
 
 export function rewriteCustomerAsYou(text: string): string {
-  return text.replace(
-    /\bthe family\b(?!\s+(pass|passes|options?|days?|cards?|access|pack|packs|rate|rates|product|products)\b)/gi,
-    "your family",
-  );
+  return text
+    .replace(/\bthe household\b/gi, "you")
+    .replace(/\bhousehold's\b/gi, "your")
+    .replace(/\bhousehold\b/gi, "your group")
+    .replace(
+      /\bthe family\b(?!\s+(pass|passes|options?|days?|cards?|access|pack|packs|rate|rates|product|products)\b)/gi,
+      "your family",
+    );
 }
 
 export function isPlanDetailTeaser(text: string): boolean {

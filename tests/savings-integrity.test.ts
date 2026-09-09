@@ -7,7 +7,7 @@ import {
   isFirmlyCountable,
   summarizeDisplaySavings,
 } from "../lib/research/display-savings.ts";
-import { buildScanFindingSeed } from "../lib/copy/scan-findings.ts";
+import { buildScanFindingSeed, fallbackScanQuestions } from "../lib/copy/scan-findings.ts";
 import {
   canCountInHeadline,
   hasUnconfirmedDependents,
@@ -410,4 +410,9 @@ test("old Katie-style output would have counted unsupported military and Jackpot
   );
   assert.equal(militarySeed.opportunityType, "affiliation pass");
   assert.doesNotMatch(militarySeed.whyItMatters, /kids' season access/i);
+  const questions = fallbackScanQuestions(research, summary);
+  assert.equal(
+    questions.some((question) => /night skiing, including after-school or evening trips/i.test(question)),
+    true,
+  );
 });

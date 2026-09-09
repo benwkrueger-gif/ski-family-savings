@@ -4,6 +4,7 @@ import type {
 } from "@/lib/research/display-savings";
 import type { CanonicalResearch } from "@/lib/research/schema";
 import {
+  hasUnconfirmedDependents,
   isHypotheticalGearNeed,
   sacrificesUnconfirmedAccess,
 } from "@/lib/research/savings-integrity";
@@ -466,6 +467,20 @@ export function fallbackScanMyTake(research: CanonicalResearch, display: Display
 
 export function fallbackScanQuestions(research: CanonicalResearch, display: DisplaySavingsSummary): string[] {
   const questions: string[] = [];
+  for (const item of display.opportunities) {
+    if (sacrificesUnconfirmedAccess(item.opportunity)) {
+      const mountain = opportunityMountain(item, research) ?? "your home mountain";
+      questions.push(
+        `Do you or the kids expect to use ${mountain}'s night skiing, including after-school or evening trips?`,
+      );
+    }
+    if (hasUnconfirmedDependents(item.opportunity)) {
+      questions.push("Who is the veteran, and which family members would actually qualify as dependents?");
+    }
+    if (isHypotheticalGearNeed(item.opportunity)) {
+      questions.push("Do the skiers who would lease already have gear that fits?");
+    }
+  }
   for (const item of highlightOpportunities(display)) {
     const seed = buildScanFindingSeed(item, research);
     if (mentionsSharedLesson(item) && !questions.some((question) => /share a lesson|similar level/i.test(question))) {
@@ -477,28 +492,8 @@ export function fallbackScanQuestions(research: CanonicalResearch, display: Disp
     if (seed.opportunityType === "off-slope add-on") {
       questions.push("Will you actually use the indoor time enough to bother?");
     }
-    if (seed.opportunityType === "season gear") {
-      questions.push("Do the skiers who would lease already have gear that fits?");
-    }
     if (consideringMountain(item, research) && seed.mountain) {
       questions.push(`Is ${seed.mountain} actually happening this winter?`);
-    }
-    if (seed.opportunityType === "affiliation pass") {
-      questions.push("Who is the veteran, and which family members would actually qualify as dependents?");
-    }
-    if (seed.opportunityType === "pass setup") {
-      questions.push("Do you already have the pass setup you need, including night access?");
-    }
-  }
-  for (const item of display.opportunities) {
-    if (sacrificesUnconfirmedAccess(item.opportunity)) {
-      const mountain = opportunityMountain(item, research) ?? "your home mountain";
-      questions.push(
-        `Do you or the kids expect to use ${mountain}'s night skiing, including after-school or evening trips?`,
-      );
-    }
-    if (isHypotheticalGearNeed(item.opportunity)) {
-      questions.push("Do the skiers who would lease already have gear that fits?");
     }
   }
   return [...new Set(questions)].slice(0, 3).map((question) => clipScanText(question, QUESTION_MAX));

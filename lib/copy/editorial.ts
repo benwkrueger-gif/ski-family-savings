@@ -287,7 +287,7 @@ export function repairEditorialWriting(
   const fullPlanFreeScan = offerMode === "FULL_PLAN_FREE" ? fallbackScan : null;
   const repairScanField = (text: string, fallback: string) =>
     scanProseIssues(text, research, display, offerMode).length > 0 ? fallback : text;
-  return parseReportWriting({
+  const repaired = parseReportWriting({
     ...sanitized,
     scanContract: SCAN_WRITING_CONTRACT,
     scan: fullPlanFreeScan ?? {
@@ -349,6 +349,7 @@ export function repairEditorialWriting(
       }),
     },
   });
+  return sanitizeWriting(repaired);
 }
 
 export function scanDollarIssues(options: {
