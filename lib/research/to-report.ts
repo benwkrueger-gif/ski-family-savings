@@ -1,4 +1,5 @@
 import type { OfferMode } from "@/lib/pipeline/status";
+import { rewriteCustomerAsYou } from "@/lib/copy/banned";
 import { buildPlanVoice, buildScanCopy, withoutEmDashes } from "@/lib/copy/reports";
 import type { ReportWriting } from "@/lib/copy/writing-schema";
 import {
@@ -30,8 +31,7 @@ function writingForOpportunity(writing: ReportWriting | undefined, id: string) {
 }
 
 function cleanResearchProse(value: string): string {
-  return withoutEmDashes(value)
-    .replace(/\bthe family\b/gi, "your family")
+  return withoutEmDashes(rewriteCustomerAsYou(value))
     .replace(/\bthe child\b/gi, "your child")
     .replace(/\s{2,}/g, " ")
     .trim();

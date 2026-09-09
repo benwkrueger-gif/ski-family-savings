@@ -4,6 +4,7 @@ import { log } from "@/lib/logger";
 import {
   EditorialTimeoutError,
   editorialQualityIssues,
+  isNonRetryableWritingError,
   reuseSavedWriting,
   writeReportCopy,
 } from "@/lib/copy/editorial";
@@ -229,9 +230,11 @@ export async function ensureCurrentWriting(
   if (writingOverride) {
     const issues = editorialQualityIssues({ writing: writingOverride, research, offerMode });
     if (issues.length > 0) {
-      throw new Error(`Saved editorial copy failed validation: ${issues.join("; ")}`);
+      const error = new Error(`Saved editorial copy failed validation: ${issues.join("; ")}`);
+      await markError(reportId, "WRITING_FAILED", error);
+      throw error;
     }
-    await persist(writingOverride, "saved", report.status === "WRITING" ? "WRITING" : undefined);
+    await persist(writingOverride, "saved");
     return {
       report: await requireReport(reportId),
       research,
@@ -243,15 +246,35 @@ export async function ensureCurrentWriting(
     };
   }
 
-  const reused = reuseSavedWriting({
-    stored: report.writingJson,
-    research,
-    offerMode,
-  });
-  if (reused) {
-    await persist(reused, "saved", report.status === "WRITING" ? "WRITING" : undefined);
-    log.info("editorial_reused", { reportId, fingerprint: expected });
-    return { report: await requireReport(reportId), research, offerMode, checkoutUrl, display, writing: reused, reused: true };
+  try {
+    const reused = reuseSavedWriting({
+      stored: report.writingJson,
+      research,
+      offerMode,
+    });
+    if (reused) {
+      await persist(reused, "saved");
+      log.info("editorial_reused", { reportId, fingerprint: expected });
+      return {
+        report: await requireReport(reportId),
+        research,
+        offerMode,
+        checkoutUrl,
+        display,
+        writing: reused,
+        reused: true,
+      };
+    }
+  } catch (error) {
+    if (isNonRetryableWritingError(error)) {
+      log.error("writing_failed", {
+        reportId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      await markError(reportId, "WRITING_FAILED", error);
+      throw error;
+    }
+    throw error;
   }
 
   await updateReport(reportId, {
@@ -262,7 +285,7 @@ export async function ensureCurrentWriting(
 
   try {
     const writing = await writeReportCopy({ research, offerMode });
-    await persist(writing, "generated", "WRITING");
+    await persist(writing, "generated");
     return {
       report: await requireReport(reportId),
       research,

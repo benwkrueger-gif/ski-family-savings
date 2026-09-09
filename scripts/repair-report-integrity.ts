@@ -143,7 +143,6 @@ async function main() {
       openaiResponseId: report.openaiResponseId,
       offerMode: display.offer.offerMode,
       source: "generated",
-      status: "WRITING",
     });
     console.log("rewrote editorial copy");
   }

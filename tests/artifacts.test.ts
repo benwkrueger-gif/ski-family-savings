@@ -81,6 +81,33 @@ test("old Gmail draft is not current just because a draft id exists", () => {
   assert.equal(artifacts.deliveryReady, false);
 });
 
+test("old SCAN_UPSELL Gmail draft is stale after offer mode becomes FULL_PLAN_FREE", () => {
+  const currentWriting = writingFingerprint({
+    openaiResponseId: "resp_current",
+    offerMode: "FULL_PLAN_FREE",
+  });
+  const staleDraft = writingFingerprint({
+    openaiResponseId: "resp_current",
+    offerMode: "SCAN_UPSELL",
+  });
+  const artifacts = artifactStatus(
+    report({
+      offerMode: "FULL_PLAN_FREE",
+      writingJson: { ok: true },
+      writingFingerprint: currentWriting,
+      writingCompletedAt: new Date(),
+      pdfsFingerprint: currentWriting,
+      draftFingerprint: staleDraft,
+      gmailDraftId: "r-7282227846437892374",
+      status: "GMAIL_DRAFT_READY",
+    }),
+  );
+  assert.equal(artifacts.writing, "current");
+  assert.equal(artifacts.pdfs, "current");
+  assert.equal(artifacts.draft, "stale");
+  assert.equal(artifacts.deliveryReady, false);
+});
+
 test("GMAIL_DRAFT_READY is stale when offer mode is FULL_PLAN_FREE", () => {
   const fingerprint = writingFingerprint({
     openaiResponseId: "resp_current",

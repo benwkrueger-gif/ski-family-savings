@@ -22,26 +22,32 @@ const BANNED_CUSTOMER_PHRASES = [
   /\bVERIFIED\b/,
 ];
 
-function refersToCustomerAsTheFamily(text: string): boolean {
-  return /\bthe family\b/i.test(withoutFamilyProductPhrases(text));
+const FAMILY_PRODUCT_PHRASE =
+  /\bthe family\s+(pass|passes|options?|days?|cards?|access|pack|packs|rate|rates|product|products)\b/gi;
+const HARMLESS_FAMILY_LOCATOR =
+  /\b(?:who|someone|anyone|somebody|people|kids|adults|person)\s+in the family\b/gi;
+const HARMLESS_FAMILY_POSSESSIVE = /\bthe family's (?!stated\b)/gi;
+const UNSUPPORTED_FAMILY_ELIGIBILITY_CLAIM =
+  /\bthe family\s+(qualifies|qualified|is eligible|are eligible|was eligible|were eligible|gets?\b|got\b|receives?|received)\b/i;
+
+function withoutHarmlessFamilyPhrases(text: string): string {
+  return text
+    .replace(FAMILY_PRODUCT_PHRASE, "")
+    .replace(HARMLESS_FAMILY_LOCATOR, "")
+    .replace(HARMLESS_FAMILY_POSSESSIVE, "");
 }
 
-function withoutFamilyProductPhrases(text: string): string {
-  return text.replace(
-    /\bthe family\s+(pass|passes|options?|days?|cards?|access|pack|packs|rate|rates|product|products)\b/gi,
-    "",
+export function unsupportedFamilyClaim(text: string): boolean {
+  const rest = withoutHarmlessFamilyPhrases(text);
+  return (
+    UNSUPPORTED_FAMILY_ELIGIBILITY_CLAIM.test(rest) ||
+    /\bthe family explicitly\b/i.test(rest) ||
+    /\bthe family's stated\b/i.test(rest)
   );
 }
 
 export function rewriteCustomerAsYou(text: string): string {
-  return text
-    .replace(/\bthe household\b/gi, "you")
-    .replace(/\bhousehold's\b/gi, "your")
-    .replace(/\bhousehold\b/gi, "your group")
-    .replace(
-      /\bthe family\b(?!\s+(pass|passes|options?|days?|cards?|access|pack|packs|rate|rates|product|products)\b)/gi,
-      "your family",
-    );
+  return text.replace(/\bthe household\b/gi, "you").replace(/\bhousehold's\b/gi, "your");
 }
 
 export function isPlanDetailTeaser(text: string): boolean {
@@ -55,7 +61,7 @@ export function isPlanDetailTeaser(text: string): boolean {
 export function writingVoiceIssues(text: string): string[] {
   const issues: string[] = [];
   if (text.includes("\u2014")) issues.push("em dash");
-  if (refersToCustomerAsTheFamily(text)) issues.push("the family");
+  if (unsupportedFamilyClaim(text)) issues.push("the family");
   for (const pattern of BANNED_CUSTOMER_PHRASES) {
     if (pattern.test(text)) issues.push(pattern.source);
   }

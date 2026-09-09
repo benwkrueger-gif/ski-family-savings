@@ -195,10 +195,7 @@ export function remainingEditorialMs(timeoutMs: number, startedAt: number, now =
 }
 
 export function repairCopyPunctuation(text: string): string {
-  return text
-    .replace(/,([^\s\d])/g, ", $1")
-    .replace(/\bthe family\b/gi, "your family")
-    .replace(/\b(?:your|the) household\b/gi, "your family");
+  return text.replace(/,([^\s\d])/g, ", $1");
 }
 
 export function calendarDateFacts(text: string): string[] {
@@ -455,7 +452,8 @@ export function reuseSavedWriting(options: {
             scanContract: SCAN_WRITING_CONTRACT,
           });
     return finalizeEditorialWriting(writing, options.research, options.offerMode);
-  } catch {
+  } catch (error) {
+    if (isNonRetryableWritingError(error)) throw error;
     return null;
   }
 }

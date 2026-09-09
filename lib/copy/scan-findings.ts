@@ -305,8 +305,8 @@ export function buildScanFindingSeed(
       opportunityType: "affiliation pass",
       countKind,
       whyItMatters: mountain
-        ? `There's a possible veteran or military pass price at ${mountain}, but I don't yet know who in the family qualifies.`
-        : "There's a possible veteran or military pass price, but I don't yet know who in the family qualifies.",
+        ? `There's a possible veteran or military pass price at ${mountain}, but I don't yet know who qualifies.`
+        : "There's a possible veteran or military pass price, but I don't yet know who qualifies.",
       suggestion: "I'd confirm who the veteran is and which kids or adults would actually be treated as dependents.",
       caveat: "Don't count this until those details are clear.",
     };

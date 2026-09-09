@@ -410,6 +410,8 @@ test("old Katie-style output would have counted unsupported military and Jackpot
   );
   assert.equal(militarySeed.opportunityType, "affiliation pass");
   assert.doesNotMatch(militarySeed.whyItMatters, /kids' season access/i);
+  assert.doesNotMatch(militarySeed.whyItMatters, /\bthe family\b/i);
+  assert.match(militarySeed.whyItMatters, /who qualifies/i);
   const questions = fallbackScanQuestions(research, summary);
   assert.equal(
     questions.some((question) => /night skiing, including after-school or evening trips/i.test(question)),

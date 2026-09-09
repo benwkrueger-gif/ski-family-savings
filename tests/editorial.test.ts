@@ -15,7 +15,7 @@ test("flags consultant and research-audit phrases", () => {
   assert.ok(issues.length >= 2);
 });
 
-test("allows normal second-person copy", () => {
+test("allows ordinary family language and still rejects unsupported eligibility claims", () => {
   assert.deepEqual(
     writingVoiceIssues("You mentioned that keeping skiing affordable is important. I'd look at Cochran's first."),
     [],
@@ -24,6 +24,20 @@ test("allows normal second-person copy", () => {
     writingVoiceIssues("Compare the family options during the fall sale."),
     [],
   );
+  assert.deepEqual(
+    writingVoiceIssues("I'd look at the family's ski plans first, then decide on passes."),
+    [],
+  );
+  assert.deepEqual(
+    writingVoiceIssues(
+      "There's a possible veteran or military pass price at Bolton Valley, but I don't yet know who in the family qualifies.",
+    ),
+    [],
+  );
+  assert.ok(
+    writingVoiceIssues("The family qualifies for the military discount.").includes("the family"),
+  );
+  assert.ok(writingVoiceIssues("This household still needs a cheaper pass.").some((issue) => /household/i.test(issue)));
 });
 
 test("flags Scan teaser language used on a free Plan", () => {
