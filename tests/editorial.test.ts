@@ -49,7 +49,7 @@ test("saved SCAN writing can be reused for FULL_PLAN_FREE after teaser sentences
     scan: {
       greeting: "Howdy Maya!",
       opening: "Thanks for letting me look at your winter. Winter Park as home with a 12-year-old is a pretty clear setup.",
-      savingsLine: "I found roughly $280-$350 that looks worth a look.",
+      savingsLine: "I found roughly $280-$350 in counted savings.",
       findings: [
         {
           heading: "Something worth a look at Winter Park",

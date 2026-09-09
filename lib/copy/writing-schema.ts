@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const WritingFindingSchema = z.object({
   heading: z.string().min(4).max(90),
-  explanation: z.string().min(20).max(420),
+  explanation: z.string().min(20).max(500),
 });
 
 export const WritingScenarioNoteSchema = z.object({
@@ -37,7 +37,7 @@ export const ReportWritingSchema = z.object({
     opening: z.string().min(20).max(500),
     savingsLine: z.string().min(12).max(280),
     findings: z.array(WritingFindingSchema).min(1).max(3),
-    myTake: z.string().min(20).max(420),
+    myTake: z.string().min(20).max(500),
     questions: z.array(z.string().min(8).max(140)).max(4),
     closing: z.string().max(280).nullable(),
   }),

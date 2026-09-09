@@ -108,7 +108,7 @@ test("approved headline estimate is allowed and $180 product amount is blocked",
   assert.equal(display.offer.offerMode, "SCAN_UPSELL");
   assert.deepEqual(
     scanDollarIssues({
-      scanText: `I found roughly ${display.headlineSavings} that looks worth a look.`,
+      scanText: `I found roughly ${display.headlineSavings} in counted savings.`,
       approvedSavings: [display.headlineSavings],
     }),
     [],

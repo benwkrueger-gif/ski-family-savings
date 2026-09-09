@@ -11,6 +11,7 @@ import {
 } from "@/lib/copy/writing-schema";
 import { stripEmDashes } from "@/lib/copy/sanitize";
 import { buildScanCopy, fallbackFindingCopy, highlightOpportunities, shortMountainName } from "@/lib/copy/reports";
+import { blandScanIssues, buildScanFindingSeeds, fallbackScanOpening } from "@/lib/copy/scan-findings";
 import {
   approvedHeadlineSavingsLine,
   approvedScanSavingsStrings,
@@ -116,39 +117,19 @@ export function buildEditorialFactPacket(options: {
       watching: item.whatWeAreWatching,
       trigger: item.trigger,
     })),
-    scanFindingSeeds: display.opportunities
-      .filter((item) => item.tier !== "WATCH")
-      .slice(0, 2)
-      .concat(
-        display.opportunities.filter((item) =>
-          /4pass|statewide|variety|multi-resort/i.test(`${item.opportunity.category} ${item.opportunity.name}`),
-        ).slice(0, 1),
-      )
-      .slice(0, 3)
-      .map((item) => ({
-        mountain: shortMountainName(item.opportunity.location),
-        category: item.opportunity.category,
-        displayTier: item.tier,
-        countKind: item.kind,
-        scanHint:
-          item.kind === "conditional"
-            ? "Only if this season's home-mountain pass is not already taken care of."
-            : item.kind === "optional"
-              ? "Only if you actually want days at this extra mountain."
-              : undefined,
-      })),
+    scanFindingSeeds: buildScanFindingSeeds(display, research),
     scanForbidden: [
       "exact program or product names",
-      "exact prices, percents, or emails",
-      "deadlines",
+      "exact prices, percents, promo codes, or emails",
+      "calendar deadlines",
       "source URLs",
-      "purchase instructions detailed enough to skip the Plan",
-      "words like reduced-price, need-based, fall sale, Stark, 4Pass, blackout, register by",
+      "purchase, booking, or qualification steps detailed enough to skip the Plan",
+      "half-price or percent-off mechanics",
     ],
     scanFindingRule:
       offerMode === "FULL_PLAN_FREE"
-        ? "The full Plan is already being provided. Do not tease it. Do not say you are keeping details in the Plan. Describe what you found at Scan-safe level only."
-        : "Findings may say the exact details are in the Plan. Do not name programs, prices, deadlines, or links.",
+        ? "The full Plan is already being provided. Do not tease it. Do not say you are keeping details in the Plan. Write useful Scan-safe advice from scanFindingSeeds only."
+        : "Write useful Scan-safe advice from scanFindingSeeds only. Do not tease the Plan in findings. The template adds one $49 transition at the end.",
     scanClosingRule:
       offerMode === "FULL_PLAN_FREE"
         ? "Quiet close such as Hope this helps. Do not offer to put together a plan. Do not mention $49."
@@ -157,6 +138,8 @@ export function buildEditorialFactPacket(options: {
       "Write opportunity prose only when it adds useful conversational context. Optional, Watch, already-known, or unresolved opportunities may be omitted from plan.opportunities; deterministic code renders their facts, unknowns, math, source, deadline, and next action.",
     scanAmountRule:
       "Do not put any dollar amounts, prices, percents, or numeric savings in Scan fields. Deterministic code inserts the approved savingsLine. Use dollar strings only in Plan fields.",
+    scanVoiceRule:
+      "For Scan fields, use only you, savings.note, and scanFindingSeeds. Do not copy officialName, eligibility, deadline, officialPricesAndRules, howItWorks, actionFacts, or source URLs into the Scan. Name mountains and broad opportunity types. Say why it matters for this family, what you would do, and whether it is counted, optional, conditional, or unresolved. It is okay to say a lesson may be cheaper, that the kids may fit a benefit, or that a pass is only worth it if they will use it.",
     dollarStringsToUseExactly: {
       counted: formatCustomerRange(display.firmLow, display.firmHigh),
       possible: display.conditionalSavings ?? null,
@@ -211,22 +194,21 @@ export function deterministicScanWriting(
   }));
   return {
     greeting: `Howdy ${research.family.firstName}!`,
-    opening:
-      "Thanks for letting me look at your winter. I found a couple things worth checking for the season.",
+    opening: fallbackScanOpening(research, summarizeDisplaySavings(research)),
     savingsLine: approvedHeadlineSavingsLine(summarizeDisplaySavings(research)),
     findings:
       findings.length > 0
         ? findings
         : [
             {
-              heading: "A useful season option",
-              explanation: "There's a useful option for the season you described.",
+              heading: "Start with the winter you actually have",
+              explanation: "I'd look at the choice that matches how you ski, then skip anything that is only a maybe.",
             },
           ],
     myTake:
       fallbackScan.myTake ??
       "I'd start with the clearest current-season option, then decide what else is actually on the calendar.",
-    questions: [],
+    questions: fallbackScan.importantUnknowns ?? [],
     closing: offerMode === "FULL_PLAN_FREE" ? "Hope this helps." : null,
   };
 }
@@ -280,10 +262,10 @@ export function repairEditorialWriting(
       findings: sanitized.scan.findings.map((finding, index) => {
         const item = highlighted[index];
         const fallback = item
-          ? fallbackFindingCopy(item, offerMode)
+          ? fallbackFindingCopy(item, research)
           : fallbackScan.findings[index] ?? {
-              heading: "A useful season option",
-              explanation: "There's a useful option for the season you described.",
+              heading: "Start with the winter you actually have",
+              explanation: "I'd look at the choice that matches how you ski, then skip anything that is only a maybe.",
             };
         return {
           heading: repairScanField(finding.heading, fallback.heading),
@@ -291,9 +273,12 @@ export function repairEditorialWriting(
         };
       }),
       myTake: repairScanField(sanitized.scan.myTake, fallbackScan.myTake),
-      questions: sanitized.scan.questions.filter(
-        (question) => scanProseIssues(question, research, display, offerMode).length === 0,
-      ),
+      questions: (() => {
+        const kept = sanitized.scan.questions.filter(
+          (question) => scanProseIssues(question, research, display, offerMode).length === 0,
+        );
+        return kept.length > 0 ? kept : fallbackScan.questions;
+      })(),
     },
     plan: {
       ...sanitized.plan,
@@ -328,7 +313,7 @@ export function scanDollarIssues(options: {
 }
 
 const SCAN_PAID_MECHANICS =
-  /\b(passport|vouchers?|blackout|register(?:ed| by)?|sales open|purchase|proof of (?:grade|age)|fifth grade (?:offer|benefit|option|program)|qualif(?:y|ies|ied)|corporate (?:pricing|program|access|savings)|employers?|human resources|\bHR\b|book(?:ed|ing)? .{0,20}(?:ahead|advance|early)|half(?:[- ]price| the (?:usual |regular )?price)|(?:\d+\s*(?:%|percent))|promo(?:\s+code)?|adult .{0,20}valid access|unrestricted .{0,24}access)\b/i;
+  /\b(passport|vouchers?|blackout|register(?:ed| by)?|sales open|proof of (?:grade|age)|fifth grade (?:offer|benefit|option|program)|corporate (?:pricing|program|access|savings)|employers?|human resources|\bHR\b|book(?:ed|ing)? .{0,20}(?:ahead|advance|early)|half(?:[- ]price| the (?:usual |regular )?price)|(?:\d+\s*(?:%|percent))|promo(?:\s+code)?|discount code|adult .{0,20}valid access|unrestricted .{0,24}access)\b/i;
 
 const SCAN_BRAND_LEAKS =
   /\b(ikon|epic pass|indy(?:\s+pass)?|mountain collective|kids ski free|promo code|discount code)\b/i;
@@ -365,6 +350,7 @@ export function scanProseIssues(
       approvedSavings: approvedScanSavingsStrings(display, offerMode),
       allowPlanPrice: offerMode === "SCAN_UPSELL",
     }),
+    ...blandScanIssues(text),
   ];
 }
 
@@ -479,6 +465,7 @@ export function editorialQualityIssues(options: {
   const scanText = collectWritingText(options.writing.scan);
   const scanLower = scanText.toLowerCase();
   issues.push(...scanPaidContentIssues(scanText, options.research));
+  issues.push(...blandScanIssues(scanText));
   for (const item of options.research.opportunities) {
     if (scanText.includes(item.name)) {
       issues.push(`Scan copy includes paid program name "${item.name}"`);

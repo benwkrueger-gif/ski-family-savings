@@ -200,7 +200,7 @@ export function researchToReportData(options: {
     },
     summary: {
       headlineSavings,
-      headline: scan.savingsLine ?? `I found roughly ${headlineSavings} worth a look.`,
+      headline: scan.savingsLine ?? `I found roughly ${headlineSavings} in counted savings.`,
       subhead: scan.savingsCondition,
       jackpotCount: display.counts.jackpotCount,
       strongCount: display.counts.strongCount,
@@ -273,7 +273,7 @@ export function freeScanLeakFlags(data: ReportData): string[] {
   const scan = data.freeScan;
   if (!scan) return ["missing freeScan"];
 
-  const blobs = [
+  const prose = [
     scan.greeting,
     scan.opening,
     scan.savingsLine,
@@ -292,13 +292,12 @@ export function freeScanLeakFlags(data: ReportData): string[] {
     ]),
     ...(scan.opportunityAreas ?? []).flatMap((area) => [area.label, area.teaser]),
     ...(scan.importantUnknowns ?? []),
-    scan.cta?.headline,
-    scan.cta?.body,
   ]
     .filter(Boolean)
     .join("\n");
+  const blobs = [prose, scan.cta?.headline, scan.cta?.body].filter(Boolean).join("\n");
 
-  if (LEAK_HINTS.test(blobs) || SCAN_CALENDAR_DATE.test(blobs)) {
+  if (LEAK_HINTS.test(prose) || SCAN_CALENDAR_DATE.test(prose)) {
     flags.push("Free Scan copy may reveal a program name, deadline, or link.");
   }
 

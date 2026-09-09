@@ -139,15 +139,17 @@ test("FULL_PLAN_FREE omits the $49 CTA from the Scan payload", () => {
   assert.doesNotMatch(JSON.stringify(data.freeScan), /\$49/);
 });
 
-test("SCAN_UPSELL Scan keeps the Plan teaser and refund offer", () => {
+test("SCAN_UPSELL Scan gives useful advice, then one paid transition", () => {
   const data = researchToReportData({
     research: sampleResearch(),
     reportId: "rid",
     offerMode: "SCAN_UPSELL",
     checkoutUrl: "https://buy.stripe.com/test_abc",
   });
-  assert.match(String(data.freeScan?.findings[0]?.explanation), /I'll keep the exact details in the full Plan/);
+  assert.match(String(data.freeScan?.findings[0]?.explanation), /8-year-old|Sugarbush|kids/i);
+  assert.doesNotMatch(String(data.freeScan?.findings[0]?.explanation), /I'll keep the exact details in the full Plan/);
   assert.match(String(data.freeScan?.cta?.body), /I'll refund you/);
+  assert.match(String(data.freeScan?.cta?.body), /doing the digging yourself/);
   assert.equal(data.freeScan?.cta?.price, "$49");
 });
 

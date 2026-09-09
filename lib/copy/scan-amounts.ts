@@ -38,7 +38,7 @@ export function approvedHeadlineSavingsLine(display: DisplaySavingsSummary): str
   const range =
     display.firmLow > 0 ? display.headlineSavings : (display.conditionalSavings ?? display.headlineSavings);
   if (display.firmLow > 0) {
-    return `I found roughly ${range} that looks worth a look.`;
+    return `I found roughly ${range} in counted savings.`;
   }
   return `I couldn't lock in a sure number yet. If a couple things still go your way, it could be about ${range}.`;
 }
