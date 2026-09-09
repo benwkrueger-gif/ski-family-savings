@@ -108,6 +108,4 @@ export async function findSentPaidMessage(options: {
   return findSentMessage(options);
 }
 
-export function gmailDraftUrl(draftId: string): string {
-  return `https://mail.google.com/mail/u/0/#drafts?compose=${draftId}`;
-}
+export { gmailDraftUrl } from "./urls";

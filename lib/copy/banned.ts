@@ -23,11 +23,21 @@ const BANNED_CUSTOMER_PHRASES = [
 ];
 
 function refersToCustomerAsTheFamily(text: string): boolean {
-  const stripped = text.replace(
+  return /\bthe family\b/i.test(withoutFamilyProductPhrases(text));
+}
+
+function withoutFamilyProductPhrases(text: string): string {
+  return text.replace(
     /\bthe family\s+(pass|passes|options?|days?|cards?|access|pack|packs|rate|rates|product|products)\b/gi,
     "",
   );
-  return /\bthe family\b/i.test(stripped);
+}
+
+export function rewriteCustomerAsYou(text: string): string {
+  return text.replace(
+    /\bthe family\b(?!\s+(pass|passes|options?|days?|cards?|access|pack|packs|rate|rates|product|products)\b)/gi,
+    "your family",
+  );
 }
 
 export function isPlanDetailTeaser(text: string): boolean {

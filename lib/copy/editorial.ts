@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { env } from "@/lib/env";
 import { openaiClient } from "@/lib/openai/research";
-import { isPlanDetailTeaser, collectWritingText, writingVoiceIssues } from "@/lib/copy/banned";
+import { isPlanDetailTeaser, collectWritingText, rewriteCustomerAsYou, writingVoiceIssues } from "@/lib/copy/banned";
 import {
   editorialStructuredOutputFormat,
   parseEditorialModelWriting,
@@ -462,11 +462,13 @@ export function reuseSavedWriting(options: {
 function sanitizeWriting(writing: ReportWriting): ReportWriting {
   const walk = (value: unknown): unknown => {
     if (typeof value === "string") {
-      return repairCopyPunctuation(stripEmDashes(value))
-        .replace(/[\u2018\u2019]/g, "'")
-        .replace(/[\u201C\u201D]/g, '"')
-        .replace(/\s{2,}/g, " ")
-        .trim();
+      return rewriteCustomerAsYou(
+        repairCopyPunctuation(stripEmDashes(value))
+          .replace(/[\u2018\u2019]/g, "'")
+          .replace(/[\u201C\u201D]/g, '"')
+          .replace(/\s{2,}/g, " ")
+          .trim(),
+      );
     }
     if (Array.isArray(value)) return value.map(walk);
     if (value && typeof value === "object") {

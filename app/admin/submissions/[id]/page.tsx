@@ -6,8 +6,7 @@ import { getDb } from "@/lib/db";
 import { pipelineLogs } from "@/lib/db/schema";
 import { getReportById } from "@/lib/pipeline/store";
 import { artifactStatus, type ArtifactHealth } from "@/lib/pipeline/artifacts";
-import { driveFileUrl, driveFolderUrl } from "@/lib/google/urls";
-import { gmailDraftUrl } from "@/lib/google/gmail";
+import { driveFileUrl, driveFolderUrl, gmailDraftUrl } from "@/lib/google/urls";
 import { SubmissionActions } from "./SubmissionActions";
 
 export const dynamic = "force-dynamic";

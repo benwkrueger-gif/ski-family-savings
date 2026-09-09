@@ -164,6 +164,8 @@ test("admin dashboard surfaces queued, generating, ready, draft, and last progre
 
   const table = read("app/admin/submissions/SubmissionsTable.tsx");
   assert.match(table, /gmailDraftUrl/);
+  assert.match(table, /@\/lib\/google\/urls/);
+  assert.doesNotMatch(table, /@\/lib\/google\/gmail/);
   assert.match(table, /report.updatedAt/);
   assert.match(table, /opportunityLabel/);
   assert.doesNotMatch(table, /sendGmailMessage/);

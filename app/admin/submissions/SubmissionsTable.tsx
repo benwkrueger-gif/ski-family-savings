@@ -4,8 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { CustomerReport } from "@/lib/db/schema";
-import { driveFolderUrl } from "@/lib/google/urls";
-import { gmailDraftUrl } from "@/lib/google/gmail";
+import { driveFolderUrl, gmailDraftUrl } from "@/lib/google/urls";
 import { artifactStatus } from "@/lib/pipeline/artifacts";
 import {
   SENT_ARTIFACT_REFRESH_MESSAGE,
