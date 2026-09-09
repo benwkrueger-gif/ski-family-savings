@@ -122,6 +122,10 @@ const BLAND_SCAN_PATTERNS = [
   /time-sensitive lesson option/i,
   /If I were in your shoes, I'?d start with the home-mountain question/i,
   /There's a way to add extra resorts if you're actually going to use those days/i,
+  /kids lesson window/i,
+  /More mountains only if you want them/i,
+  /^An? off-slope option/i,
+  /^A useful (season )?option/i,
 ];
 
 export function blandScanIssues(text: string): string[] {

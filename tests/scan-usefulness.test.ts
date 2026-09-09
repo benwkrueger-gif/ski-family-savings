@@ -5,6 +5,7 @@ import { test } from "node:test";
 import {
   buildEditorialFactPacket,
   finalizeEditorialWriting,
+  repairEditorialWriting,
   scanPaidContentIssues,
 } from "../lib/copy/editorial.ts";
 import { parseReportWriting } from "../lib/copy/writing-schema.ts";
@@ -168,6 +169,23 @@ test("Scan fact packet seeds omit paid execution details", () => {
   assert.match(seeds, /weekday private lesson|extra-resort pass|off-slope/i);
   assert.doesNotMatch(seeds, /\$\d|https?:\/\/|SRS-|September 21|Half-Price/i);
   assert.equal((packet.scanFindingSeeds as unknown[]).length > 0, true);
+});
+
+test("Scan repair replaces heading and explanation together when either is bland", () => {
+  const writing = blandWriting(lessonResearch);
+  writing.scan.findings = [
+    {
+      heading: "A kids lesson window at North Peak",
+      explanation:
+        "A weekday private lesson at North Peak looks cheaper than the usual rate for an 8-year-old and a 5-year-old. I'd look at that lesson first. This is counted savings.",
+    },
+  ];
+  writing.plan.myTake = "Keep this Plan take exactly as written.";
+  const repaired = repairEditorialWriting(writing, lessonResearch, "SCAN_UPSELL");
+  assert.equal(repaired.plan.myTake, "Keep this Plan take exactly as written.");
+  assert.equal(repaired.scan.findings[0]?.heading, "Start with a weekday private lesson at North Peak");
+  assert.match(repaired.scan.findings[0]?.explanation ?? "", /weekday private lesson at North Peak/);
+  assert.doesNotMatch(repaired.scan.findings[0]?.heading ?? "", /kids lesson window/i);
 });
 
 test("useful Scan language is allowed and half-price mechanics are still blocked", () => {

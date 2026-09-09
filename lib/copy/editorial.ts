@@ -267,10 +267,13 @@ export function repairEditorialWriting(
               heading: "Start with the winter you actually have",
               explanation: "I'd look at the choice that matches how you ski, then skip anything that is only a maybe.",
             };
-        return {
-          heading: repairScanField(finding.heading, fallback.heading),
-          explanation: repairScanField(finding.explanation, fallback.explanation),
-        };
+        if (
+          scanProseIssues(finding.heading, research, display, offerMode).length > 0 ||
+          scanProseIssues(finding.explanation, research, display, offerMode).length > 0
+        ) {
+          return fallback;
+        }
+        return finding;
       }),
       myTake: repairScanField(sanitized.scan.myTake, fallbackScan.myTake),
       questions: (() => {
