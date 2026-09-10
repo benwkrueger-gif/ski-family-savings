@@ -16,7 +16,7 @@ import { summarizeDisplaySavings } from "@/lib/research/display-savings";
 import { buildSavingsPlanCheckoutUrl } from "@/lib/stripe/checkout";
 import { generateReportPdfBuffer } from "@/reports/generate-pdf-buffer";
 import { downloadDriveFile, ensureCustomerFolder, upsertDrivePdf } from "@/lib/google/drive";
-import { familyMountains } from "@/lib/copy/reports";
+import { familyMountains, highlightOpportunities } from "@/lib/copy/reports";
 import { upsertGmailDraft } from "@/lib/google/gmail";
 import { countPdfPages } from "@/lib/google/pdf-pages";
 import { assertDraftCopySafe, buildInitialDraftEmail, initialDraftAttachmentKind } from "@/lib/copy/emails";
@@ -481,6 +481,12 @@ export async function createInitialGmailDraft(
       coreSavingsLow: display.firmLow,
       mountains: familyMountains(research),
       findings: writing?.scan.findings.map((finding) => finding.heading) ?? [],
+      programs: highlightOpportunities(display)
+        .filter((item) => item.firm)
+        .map((item) => item.opportunity.name),
+      extras: highlightOpportunities(display)
+        .filter((item) => !item.firm)
+        .map((item) => item.opportunity.name),
       planPageCount,
     });
 

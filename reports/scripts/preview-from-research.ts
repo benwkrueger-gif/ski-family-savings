@@ -8,6 +8,7 @@ import { researchToReportData } from "../../lib/research/to-report";
 import { DEFAULT_SEASON } from "../../config/compelling-savings";
 import { compileReportCss, generateReport, PROJECT_ROOT, readArg } from "./render-report";
 import { assertDraftCopySafe, buildInitialDraftEmail } from "../../lib/copy/emails";
+import { familyMountains, highlightOpportunities } from "../../lib/copy/reports";
 
 async function main() {
   const researchPath = readArg("research");
@@ -58,12 +59,17 @@ async function main() {
   const email = buildInitialDraftEmail({
     firstName: research.family.firstName,
     offerMode: display.offer.offerMode,
-    savingsRange:
-      display.firmLow > 0 ? display.headlineSavings : (display.conditionalSavings ?? display.headlineSavings),
-    personalizedObservation: writing.email.observation,
-    emailOpening: writing.email.opening,
+    savingsRange: display.firmLow > 0 ? display.headlineSavings : "",
     checkoutUrl: display.offer.offerMode === "SCAN_UPSELL" ? "https://buy.stripe.com/test_preview" : null,
     coreSavingsLow: display.firmLow,
+    mountains: familyMountains(research),
+    findings: writing.scan.findings.map((finding) => finding.heading),
+    programs: highlightOpportunities(display)
+      .filter((item) => item.firm)
+      .map((item) => item.opportunity.name),
+    extras: highlightOpportunities(display)
+      .filter((item) => !item.firm)
+      .map((item) => item.opportunity.name),
   });
   const emailIssues = assertDraftCopySafe({
     offerMode: display.offer.offerMode,

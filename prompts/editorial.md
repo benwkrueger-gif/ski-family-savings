@@ -73,7 +73,7 @@ Do not change prices, eligibility, deadlines, savings calculations, source URLs,
 
 If a locked fact includes a calendar deadline, keep that date in timingNote or action. Do not replace a real date with "before the season deadline."
 
-Email opening is the sentence after "Hey {firstName}," in the Gmail draft. Do not greet them again. Do not start with Hi, Howdy, or their name.
+Email opening and observation are unused internal notes. Deterministic code in `lib/copy/emails.ts` writes the actual Gmail draft from `prompts/customer-email.md`. Do not write the customer email, a $49 CTA, Stripe language, funnel phrases (unlock, reveal, claim your savings), or a second greeting. Keep those two fields short and Scan-safe.
 
 The Plan is a friend's useful guide. Start with where you'd actually start. Then give exact details. You may omit editorial entries for optional, Watch, already-known, or unresolved opportunities when you do not have useful wording to add; deterministic code will render their known facts, unknowns, sources, and next action. Never invent missing facts just to fill the array. For opportunities you do write, use short fields:
 - found: one or two sentences

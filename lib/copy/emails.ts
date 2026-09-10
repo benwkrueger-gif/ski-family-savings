@@ -1,11 +1,19 @@
 import type { OfferMode } from "@/lib/pipeline/status";
 import { mentionsPaidPlanPrice, stripPaidPlanPriceMentions } from "@/lib/copy/scan-amounts";
+import { conversationalMountainList, withConversationalMountains } from "@/lib/copy/mountain-names";
 import { stripEmDashes } from "@/lib/copy/sanitize";
 
 export const SCAN_UPSELL_SUBJECT = "Your ski savings scan is ready ⛷️";
 export const FREE_PLAN_SUBJECT = "Your ski savings plan is ready ⛷️";
 export const CHECKOUT_LINK_LABEL = "Get the full Savings Plan for $49";
 export const SUBMISSION_CONFIRMATION_SUBJECT = "I'm digging for your ski savings ⛷️";
+export const REFUND_LANGUAGE =
+  "And genuinely, if you get it and don't think it was worth $49 bucks, just reply and tell me. I'll refund it and you keep the Plan. No hoops or nonsense.";
+export const FEEDBACK_PS =
+  "ps. This is a new project so any feedback you're willing to share would be incredibly helpful! Do these work/fit for you? Did you already know about them? If you could wave a magic wand, what would make booking skiing for your family easier/cheaper?";
+
+const FUNNEL_LANGUAGE =
+  /\b(unlock(?:ing)? your savings|reveal(?:ing)? your savings|claim your savings|upgrade now|savings are locked|see what's hiding|don't miss out|access your savings|we've uncovered|waiting for you)\b/i;
 
 export type DraftEmailInput = {
   firstName: string;
@@ -18,6 +26,8 @@ export type DraftEmailInput = {
   coreSavingsLow: number;
   mountains?: string[];
   findings?: string[];
+  programs?: string[];
+  extras?: string[];
   planPageCount?: number | null;
 };
 
@@ -106,11 +116,17 @@ function looksLikePaidDetail(text: string): boolean {
     /\$\d/.test(text) ||
     /\bhttps?:\/\//i.test(text) ||
     /\b[\w.-]+\.(com|org|net)\b/i.test(text) ||
-    /\b(register by|blackout dates?|eligib|deadline|RFID|voucher|passport)\b/i.test(text) ||
+    /\b(register by|blackout dates?|eligib|deadline|RFID|voucher|passport|promo code|half(?:-|\s)?price|\d+\s*(?:%|percent))\b/i.test(
+      text,
+    ) ||
     /\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}\b/i.test(
       text,
     )
   );
+}
+
+function isBlandEmailFinding(text: string): boolean {
+  return /something worth a look|useful option here|worth checking|a couple of useful options/i.test(text);
 }
 
 function joinPhrase(items: string[]): string {
@@ -121,29 +137,159 @@ function joinPhrase(items: string[]): string {
 }
 
 function mountainsPhrase(mountains: string[] | undefined): string {
-  const names = (mountains ?? [])
-    .map((item) => stripEmDashes(item).trim())
-    .filter(Boolean)
-    .slice(0, 3);
-  return joinPhrase(names);
+  return joinPhrase(conversationalMountainList(mountains));
+}
+
+const GENERIC_EXAMPLE_WORDS = new Set([
+  "pass",
+  "passes",
+  "ticket",
+  "tickets",
+  "pack",
+  "access",
+  "kids",
+  "youth",
+  "weekday",
+  "weekdays",
+  "lesson",
+  "private",
+  "extra",
+  "only",
+  "with",
+  "from",
+  "through",
+  "family",
+  "discount",
+  "upgrade",
+  "offer",
+  "season",
+  "days",
+  "adult",
+  "junior",
+  "local",
+  "swaps",
+  "equipment",
+  "lease",
+  "gear",
+  "options",
+  "option",
+  "mountains",
+  "mountain",
+]);
+
+function exampleTokens(text: string): string[] {
+  return (text.toLowerCase().match(/[a-z']{4,}/g) ?? []).filter((word) => !GENERIC_EXAMPLE_WORDS.has(word));
+}
+
+function overlapsChosenExample(candidate: string, chosen: string[]): boolean {
+  const tokens = exampleTokens(candidate);
+  if (tokens.length === 0) return false;
+  return chosen.some((label) => {
+    const have = new Set(exampleTokens(label));
+    return tokens.some((token) => have.has(token));
+  });
+}
+
+function cleanExampleLabel(text: string): string {
+  return withConversationalMountains(
+    stripEmDashes(text)
+      .replace(/\b20\d{2}\s*\/\s*20\d{2}\b/g, "")
+      .replace(/\b20\d{2}\s*\/\s*\d{2}\b/g, "")
+      .replace(/\b20\d{2}-\d{2}\b/g, "")
+      .replace(/\b20\d{2}\b/g, "")
+      .replace(/^(start with|confirm the|check the)\s+/i, "")
+      .replace(/\s{2,}/g, " ")
+      .trim()
+      .replace(/^\/\s*/, "")
+      .replace(/\.+$/, ""),
+  );
+}
+
+function isEmailSafeExample(text: string): boolean {
+  if (text.length < 4 || text.length > 90) return false;
+  if (looksLikePaidDetail(text) || isBlandEmailFinding(text)) return false;
+  return true;
+}
+
+export function pickEmailExamples(options: {
+  programs?: string[];
+  findings?: string[];
+  extras?: string[];
+}): string[] {
+  const labels: string[] = [];
+  const seen = new Set<string>();
+  for (const source of [
+    ...(options.programs ?? []),
+    ...(options.findings ?? []),
+    ...(options.extras ?? []),
+  ]) {
+    const label = cleanExampleLabel(source);
+    const key = label.toLowerCase();
+    if (!isEmailSafeExample(label) || seen.has(key)) continue;
+    if (overlapsChosenExample(label, labels)) continue;
+    seen.add(key);
+    labels.push(label);
+    if (labels.length === 2) break;
+  }
+  return labels;
 }
 
 export function highLevelFindingsPhrase(findings: string[] | undefined): string | null {
-  const cleaned = (findings ?? [])
-    .map((item) => stripEmDashes(item).trim().replace(/\.+$/, ""))
-    .filter((item) => item.length >= 4 && item.length <= 90 && !looksLikePaidDetail(item))
-    .slice(0, 2);
+  const cleaned = pickEmailExamples({ findings });
   if (cleaned.length === 0) return null;
   const [first, second] = cleaned;
-  if (!second) return first!.charAt(0).toLowerCase() + first!.slice(1);
-  return `${first!.charAt(0).toLowerCase() + first!.slice(1)} and ${second.charAt(0).toLowerCase()}${second.slice(1)}`;
+  if (!second) return first!;
+  return `${first} and ${second}`;
+}
+
+function findingsSentence(input: DraftEmailInput, mountains: string): string {
+  const examples = pickEmailExamples({
+    programs: input.programs,
+    findings: input.findings,
+    extras: input.extras,
+  });
+  const counted = input.coreSavingsLow > 0;
+  if (examples.length === 2) {
+    return counted
+      ? `Looks like there's solid savings starting with ${examples[0]} and ${examples[1]}.`
+      : `Looks like the useful checks start with ${examples[0]} and ${examples[1]}.`;
+  }
+  if (examples.length === 1) {
+    return counted
+      ? `Looks like there's solid savings starting with ${examples[0]}.`
+      : `Looks like the useful check starts with ${examples[0]}.`;
+  }
+  if (mountains) {
+    return counted
+      ? `Looks like there are a few options around ${mountains} worth a closer look.`
+      : `Looks like there are a few options around ${mountains} still worth checking.`;
+  }
+  return counted
+    ? "Looks like there are a few options worth a closer look."
+    : "Looks like there are a few options still worth checking.";
+}
+
+function savingsSentence(input: DraftEmailInput): string | null {
+  if (!(input.coreSavingsLow > 0 && input.savingsRange.trim())) return null;
+  const range = input.savingsRange.trim();
+  if (input.coreSavingsLow < 150) {
+    return `I found a couple options that are worth a look, roughly ${range} savings.`;
+  }
+  return `I found a few solid options that are worth a look, roughly ${range} savings.`;
 }
 
 function planPhrase(planPageCount?: number | null): string {
   if (typeof planPageCount === "number" && Number.isInteger(planPageCount) && planPageCount > 0) {
-    return `the full ${planPageCount}-page Savings Plan`;
+    return `a full ${planPageCount}-page Savings Plan`;
   }
-  return "the full Savings Plan";
+  return "a full Savings Plan";
+}
+
+function openingSentence(mountains: string): string {
+  if (mountains) {
+    return `I put together what I found around ${mountains} to help save some $$ this season.`;
+  }
+  return "I put together what I found for your season to help save some $$.";
 }
 
 function renderPlain(parts: EmailPart[]): string {
@@ -181,30 +327,19 @@ function fromParts(subject: string, parts: EmailPart[]): DraftEmail {
 export function buildInitialDraftEmail(input: DraftEmailInput): DraftEmail {
   const firstName = input.firstName || "there";
   const mountains = mountainsPhrase(input.mountains);
-  const around = mountains ? ` around ${mountains}` : "";
+  const opening = openingSentence(mountains);
+  const findings = findingsSentence(input, mountains);
+  const savings = savingsSentence(input);
 
   if (input.offerMode === "SCAN_UPSELL") {
-    const findings = highLevelFindingsPhrase(input.findings);
-    const fallbackFindings = mountains ? `a couple of useful options around ${mountains}` : "a couple of useful options";
     const parts: EmailPart[] = [
       { type: "text", text: `Hey ${firstName},` },
-      {
-        type: "text",
-        text: `I've put together a quick scan of your options${around} to help you save on this season's skiing.`,
-      },
-      {
-        type: "text",
-        text: `Looks like you can capture solid savings starting with ${findings ?? fallbackFindings}.`,
-      },
+      { type: "text", text: opening },
+      { type: "text", text: findings },
     ];
-    if (input.coreSavingsLow > 0 && input.savingsRange.trim()) {
-      parts.push({
-        type: "text",
-        text: `I found some pretty good stuff for you. It looks like there's roughly ${input.savingsRange} worth a look.`,
-      });
-    }
+    if (savings) parts.push({ type: "text", text: savings });
     parts.push(
-      { type: "text", text: "I attached the free Savings Scan here." },
+      { type: "text", text: "I attached your Savings Scan here." },
       {
         type: "text",
         text: `I also put together ${planPhrase(input.planPageCount)} with the exact programs, who qualifies, deadlines, fine print, blackouts, direct links, etc.`,
@@ -214,34 +349,26 @@ export function buildInitialDraftEmail(input: DraftEmailInput): DraftEmail {
       parts.push({ type: "link", label: CHECKOUT_LINK_LABEL, href: input.checkoutUrl });
     }
     parts.push(
-      {
-        type: "text",
-        text: "And genuinely, if you get it and don't think it was worth $49 bucks, just reply and tell me. I'll refund it and you keep the Plan. No hoops or nonsense.",
-      },
+      { type: "text", text: REFUND_LANGUAGE },
       { type: "text", text: "Ben" },
+      { type: "text", text: FEEDBACK_PS },
     );
     return fromParts(scanUpsellSubject(), parts);
   }
 
   const parts: EmailPart[] = [
     { type: "text", text: `Hey ${firstName},` },
-    {
-      type: "text",
-      text: `I've put together a look at your options${around} for this season.`,
-    },
+    { type: "text", text: opening },
+    { type: "text", text: findings },
   ];
-  if (input.coreSavingsLow > 0 && input.savingsRange.trim()) {
-    parts.push({
-      type: "text",
-      text: `It looks like there's roughly ${input.savingsRange} worth a look.`,
-    });
-  }
+  if (savings) parts.push({ type: "text", text: savings });
   parts.push(
     {
       type: "text",
-      text: "I attached the complete Savings Plan. If you have questions, just reply.",
+      text: "I attached your Savings Plan here. If you have questions, just reply.",
     },
     { type: "text", text: "Ben" },
+    { type: "text", text: FEEDBACK_PS },
   );
   return fromParts(freePlanSubject(), parts);
 }
@@ -262,25 +389,21 @@ export function buildPaidPlanEmail(input: PaidEmailInput): DraftEmail {
     { type: "text", text: `Hey ${firstName},` },
     {
       type: "text",
-      text: "Thanks for grabbing the full Plan. I've attached it here with the exact programs, prices, deadlines, fine print, and links for your family.",
+      text: "Thanks for grabbing the full Plan. I attached it here with the exact programs, prices, deadlines, fine print, and links.",
     },
   ];
   if (recommendation) {
     parts.push({
       type: "text",
-      text: `My first recommendation: ${recommendation}.`,
+      text: `First thing I'd do: ${recommendation}.`,
     });
   }
   parts.push(
     {
       type: "text",
-      text: "If anything looks off or you want me to dig into another option, just reply. Happy to help.",
+      text: "If anything looks off or you want me to dig into another option, just reply.",
     },
-    {
-      type: "text",
-      text: "And if you get through it and don't feel like it was worth the $49, just tell me. I'll refund you and you keep the Plan. No hoops or nonsense.",
-    },
-    { type: "text", text: "Hope you guys have a great winter!" },
+    { type: "text", text: REFUND_LANGUAGE },
     { type: "text", text: "Ben" },
   );
   return fromParts(paidPlanSubject(), parts);
@@ -301,8 +424,25 @@ export function assertDraftCopySafe(options: {
   const body = options.body.toLowerCase();
   const html = options.html ?? "";
   const visibleHtml = html ? visibleEmailHtml(html) : "";
+  const combined = `${options.body}\n${html}`;
+
+  if (FUNNEL_LANGUAGE.test(combined)) {
+    issues.push("email uses funnel language");
+  }
 
   if (options.offerMode === "SCAN_UPSELL") {
+    if (!/^hey\s+\S+,/i.test(options.body.trim())) {
+      issues.push("SCAN_UPSELL email should start with Hey {name},");
+    }
+    if (!/i attached your savings scan/i.test(options.body)) {
+      issues.push("SCAN_UPSELL email should say the Savings Scan is attached");
+    }
+    if (!/savings plan/i.test(options.body)) {
+      issues.push("SCAN_UPSELL email should mention the Savings Plan");
+    }
+    if (!/no hoops or nonsense/i.test(options.body) || !/worth \$49 bucks/i.test(options.body)) {
+      issues.push("SCAN_UPSELL email is missing the human refund language");
+    }
     if (options.checkoutUrl && !options.body.includes(options.checkoutUrl)) {
       issues.push("SCAN_UPSELL email is missing the checkout URL");
     }
@@ -315,7 +455,8 @@ export function assertDraftCopySafe(options: {
     const withoutAllowed = stripPaidPlanPriceMentions(
       options.body
         .replace(options.checkoutUrl ?? "", "")
-        .replace(/roughly\s+[^.]+worth a look/i, ""),
+        .replace(/roughly\s+[^.]+?(?:worth a look|savings)/gi, "")
+        .replace(/worth \$49 bucks/gi, ""),
     );
     if (/\$(?!\s)\d/.test(withoutAllowed) || /\bhttps?:\/\//i.test(withoutAllowed)) {
       issues.push("SCAN_UPSELL email includes paid program details");
@@ -323,7 +464,6 @@ export function assertDraftCopySafe(options: {
   }
 
   if (options.offerMode === "FULL_PLAN_FREE") {
-    const combined = `${options.body}\n${html}`;
     if (mentionsPaidPlanPrice(combined) || /stripe|checkout|buy\.stripe/i.test(combined)) {
       issues.push("FULL_PLAN_FREE email contains purchase language");
     }
@@ -332,6 +472,9 @@ export function assertDraftCopySafe(options: {
     }
     if (/get the full savings plan/i.test(combined)) {
       issues.push("FULL_PLAN_FREE email includes upsell language");
+    }
+    if (/worth \$49 bucks|no hoops or nonsense/i.test(combined)) {
+      issues.push("FULL_PLAN_FREE email includes a paid refund pitch");
     }
   }
 
@@ -345,6 +488,10 @@ export function assertDraftCopySafe(options: {
 
   if (/\b(report id|internal id|uuid)\b/i.test(`${options.body}\n${visibleHtml}`)) {
     issues.push("email includes internal report information");
+  }
+
+  if (/\byou will save\b|\bguaranteed \$\d|\bclaim your guaranteed\b/i.test(combined)) {
+    issues.push("email treats savings as guaranteed");
   }
 
   return issues;

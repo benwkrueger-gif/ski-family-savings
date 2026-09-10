@@ -8,6 +8,7 @@ import {
   finalizeEditorialWriting,
   isNonRetryableWritingMessage,
 } from "../lib/copy/editorial.ts";
+import { familyMountains, highlightOpportunities } from "../lib/copy/reports.ts";
 import { mentionsPaidPlanPrice } from "../lib/copy/scan-amounts.ts";
 import { parseReportWriting, type ReportWriting } from "../lib/copy/writing-schema.ts";
 import { CRON_RECOVERABLE_RESEARCH_STATUSES, RECOVERABLE_RESEARCH_STATUSES } from "../lib/pipeline/status.ts";
@@ -88,8 +89,14 @@ function renderPath(research: CanonicalResearch, writing: ReportWriting, offerMo
     savingsRange: display.firmLow > 0 ? display.headlineSavings : "",
     checkoutUrl,
     coreSavingsLow: display.firmLow,
-    mountains: research.family.destinations,
+    mountains: familyMountains(research),
     findings: finalized.scan.findings.map((finding) => finding.heading),
+    programs: highlightOpportunities(display)
+      .filter((item) => item.firm)
+      .map((item) => item.opportunity.name),
+    extras: highlightOpportunities(display)
+      .filter((item) => !item.firm)
+      .map((item) => item.opportunity.name),
   });
   return { display, offerMode, finalized, issues, data, email, checkoutUrl };
 }

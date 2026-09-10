@@ -5,6 +5,7 @@ import { test } from "node:test";
 import { editorialQualityIssues } from "../lib/copy/editorial.ts";
 import { parseReportWriting, type ReportWriting } from "../lib/copy/writing-schema.ts";
 import { buildInitialDraftEmail } from "../lib/copy/emails.ts";
+import { familyMountains, highlightOpportunities } from "../lib/copy/reports.ts";
 import { summarizeDisplaySavings } from "../lib/research/display-savings.ts";
 import { parseResearch } from "../lib/research/schema.ts";
 import { freeScanLeakFlags, researchToReportData } from "../lib/research/to-report.ts";
@@ -162,15 +163,24 @@ test("destination fixture email matches SCAN_UPSELL and uses the same savings ra
     firstName: research.family.firstName,
     offerMode: summary.offer.offerMode,
     savingsRange: summary.headlineSavings,
-    personalizedObservation: writing.email.observation,
-    emailOpening: writing.email.opening,
     checkoutUrl: "https://buy.stripe.com/test_maya",
     coreSavingsLow: summary.firmLow,
+    mountains: familyMountains(research),
+    findings: writing.scan.findings.map((finding) => finding.heading),
+    programs: highlightOpportunities(summary)
+      .filter((item) => item.firm)
+      .map((item) => item.opportunity.name),
+    extras: highlightOpportunities(summary)
+      .filter((item) => !item.firm)
+      .map((item) => item.opportunity.name),
   });
-  assert.match(email.body, /Maya/);
+  assert.match(email.body, /Hey Maya,/);
+  assert.match(email.body, /Winter Park/);
   assert.match(email.body, /\$280-\$350/);
   assert.match(email.body, /\$49/);
   assert.match(email.body, /Savings Scan/);
+  assert.match(email.body, /save some \$\$/);
+  assert.doesNotMatch(email.body, /unlock|reveal your savings|claim your savings|upgrade now/i);
 });
 
 test("editorial quality rejects shortened program names in the Scan", () => {
